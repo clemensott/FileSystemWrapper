@@ -1,0 +1,77 @@
+﻿<Page
+    x:Class="FileSystemUWP.Sync.Definitions.SyncEditPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FileSystemUWP.Sync"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:con="using:StdOttUwp.Converters"
+    xmlns:ctl="using:StdOttUwp.Controls"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <con:ValueConverter x:Key="linesConverter" ConvertEvent="LinesConverter_ConvertEvent"
+                            ConvertBackEvent="LinesConverter_ConvertBackEvent"/>
+    </Page.Resources>
+
+    <ScrollViewer>
+        <StackPanel>
+            <TextBlock Text="Name:" Margin="5"/>
+            <TextBox Margin="3" Text="{Binding Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+
+            <TextBlock Text="Server path:" Margin="5,10,5,5"/>
+            <Grid Margin="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <AutoSuggestBox Text="{Binding ServerPath,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                TextChanged="AsbServerPath_TextChanged" QuerySubmitted="AsbServerPath_QuerySubmitted"/>
+                <SymbolIcon Name="sinServerPathValid" Grid.Column="1" Symbol="Help" Margin="8,0"/>
+            </Grid>
+
+            <TextBlock Text="Local path:" Margin="5,10,5,5"/>
+            <Grid Margin="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock VerticalAlignment="Center" Text="{Binding LocalFolder.Path}"/>
+                <ctl:IconButton Grid.Column="1" Symbol="Folder" Margin="8,0" Click="IbnSelectLocalFolder_Click"/>
+            </Grid>
+
+            <CheckBox Content="With subfolders" Margin="5,10,5,5" IsChecked="{Binding WithSubfolders,Mode=TwoWay}"/>
+
+            <TextBlock Text="Mode:" Margin="3,10,3,3" />
+            <ctl:EnumComboBox x:Name="ecbMode" Margin="5" SelectedItem="{Binding Path=Mode,Mode=TwoWay}"/>
+
+            <TextBlock Text="Files Compare Type:" Margin="3,10,3,3" />
+            <ctl:EnumComboBox x:Name="ecbCompareType" Margin="5" 
+                              SelectedItem="{Binding Path=CompareType,Mode=TwoWay}"/>
+
+            <TextBlock Text="Conflict handling:" Margin="3,10,3,3" />
+            <ctl:EnumComboBox x:Name="ecbConflictHandlingType" Margin="5"
+                              SelectedItem="{Binding Path=ConflictHandlingType,Mode=TwoWay}"/>
+
+            <TextBlock Text="Extensions whitelist:" Margin="3,10,3,3" />
+            <TextBox Margin="5" AcceptsReturn="True" 
+                     Text="{Binding Whitelist,Mode=TwoWay,Converter={StaticResource linesConverter}}"/>
+
+            <TextBlock Text="Extensions blacklist:" Margin="3,10,3,3" />
+            <TextBox Margin="5" AcceptsReturn="True" 
+                     Text="{Binding Blacklist,Mode=TwoWay,Converter={StaticResource linesConverter}}"/>
+        </StackPanel>
+    </ScrollViewer>
+    
+    <Page.BottomAppBar>
+        <CommandBar>
+            <CommandBar.PrimaryCommands>
+                <AppBarButton Icon="Accept" Label="Apply" Click="AbbApply_Click"/>
+                <AppBarButton Icon="Cancel" Label="Cancel" Click="AbbCancel_Click"/>
+            </CommandBar.PrimaryCommands>
+        </CommandBar>
+    </Page.BottomAppBar>
+</Page>

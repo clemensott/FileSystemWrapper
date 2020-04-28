@@ -1,0 +1,34 @@
+﻿<Page
+    x:Class="FileSystemUWP.FileViewers.FilesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FileSystemUWP.FileViewers"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:view="using:FileSystemUWP.FileViewers"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <FlipView Name="fvwFiles" Background="Transparent"
+                  SelectionChanged="FvwFiles_SelectionChanged">
+            <FlipView.ItemTemplate>
+                <DataTemplate>
+                    <view:FileControl Loaded="FileControl_Loaded" Unloaded="FileControl_Unloaded"/>
+                </DataTemplate>
+            </FlipView.ItemTemplate>
+        </FlipView>
+    </Grid>
+
+    <Page.BottomAppBar>
+        <CommandBar Name="cbrBottom">
+            <CommandBar.PrimaryCommands>
+                <AppBarButton Icon="Back" Label="Back" Click="AbbBack_Click"/>
+                <AppBarButton Name="abbStop" Icon="Stop" Label="Stop" 
+                              Visibility="Collapsed" Click="AbbStop_Click"/>
+                <AppBarButton Icon="Download" Label="Download" Click="AbbDownload_Click"/>
+                <AppBarButton Icon="List" Label="Details" Click="AbbDetails_Click"/>
+            </CommandBar.PrimaryCommands>
+        </CommandBar>
+    </Page.BottomAppBar>
+</Page>

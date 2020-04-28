@@ -1,0 +1,25 @@
+﻿<Page
+    x:Class="FileSystemUWP.Picker.PickerPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FileSystemUWP.Picker"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <local:PickerControl x:Name="pcView" FileSelected="PcView_FileSelected"/>
+    </Grid>
+
+
+    <Page.BottomAppBar>
+        <CommandBar>
+            <CommandBar.PrimaryCommands>
+                <AppBarButton Name="abbSelect" Icon="Accept" Label="Select"
+                              Visibility="Collapsed" Click="AbbSelect_Click"/>
+                <AppBarButton Icon="Cancel" Label="Cancel" Click="AbbCancel_Click"/>
+            </CommandBar.PrimaryCommands>
+        </CommandBar>
+    </Page.BottomAppBar>
+</Page>
