@@ -123,10 +123,7 @@ namespace FileSystemUWP.FileViewers
             picker.FileTypeChoices.Add(item.Extension, new string[] { item.Extension });
 
             StorageFile file = await picker.PickSaveFileAsync();
-            IInputStream readStream = await viewing.Api.GetFileInputStream(item.FullPath);
-            Stream writeStream = await file.OpenStreamForWriteAsync();
-
-            await readStream.AsStreamForRead().CopyToAsync(writeStream);
+            await viewing.Api.DownlaodFile(item.FullPath, file);
         }
 
         private void AbbDetails_Click(object sender, RoutedEventArgs e)

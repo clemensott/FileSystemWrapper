@@ -131,10 +131,7 @@ namespace FileSystemUWP
             picker.FileTypeChoices.Add(e.Item.Extension, new string[] { e.Item.Extension });
 
             StorageFile file = await picker.PickSaveFileAsync();
-            IInputStream readStream = await viewModel.Api.GetFileInputStream(e.Item.FullPath);
-            Stream writeStream = await file.OpenStreamForWriteAsync();
-
-            await readStream.AsStreamForRead().CopyToAsync(writeStream);
+            await viewModel.Api.DownlaodFile(e.Item.FullPath, file);
         }
 
         private async void FmiDelete_Click(object sender, FlyoutMenuItemClickEventArgs e)

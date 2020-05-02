@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Windows.Networking.BackgroundTransfer;
 using Windows.Security.Cryptography.Certificates;
+using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.Web.Http;
 using Windows.Web.Http.Filters;
@@ -113,9 +115,12 @@ namespace FileSystemUWP
             return RequestRandmomAccessStream(GetUriWithPath("/api/files", path), HttpMethod.Get);
         }
 
-        public Task<IInputStream> GetFileInputStream(string path)
+        public async Task DownlaodFile(string path, StorageFile destFile)
         {
-            return RequestInputStream(GetUriWithPath("/api/files", path), HttpMethod.Get);
+            BackgroundDownloader downloader = new BackgroundDownloader();
+            downloader.SetRequestHeader("password", Password);
+            DownloadOperation download = downloader.CreateDownload(GetUriWithPath("/api/files", path), destFile);
+            await download.StartAsync();
         }
 
         private async Task<TData> Request<TData>(Uri uri, HttpMethod method)
@@ -175,30 +180,6 @@ namespace FileSystemUWP
             try
             {
                 return await HttpRandomAccessStream.CreateAsync(GetClient(), uri);
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Debug.WriteLine(e);
-                return null;
-            }
-        }
-
-        private async Task<IInputStream> RequestInputStream(Uri uri, HttpMethod method)
-        {
-            try
-            {
-                using (HttpClient client = GetClient())
-                {
-                    using (HttpRequestMessage request = new HttpRequestMessage(method, uri))
-                    {
-                        using (HttpResponseMessage response = await client.SendRequestAsync(request))
-                        {
-                            if (!response.IsSuccessStatusCode) return null;
-
-                            return await response.Content.ReadAsInputStreamAsync();
-                        }
-                    }
-                }
             }
             catch (Exception e)
             {

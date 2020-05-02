@@ -394,7 +394,6 @@ namespace FileSystemUWP.Sync.Handling
 
                 try
                 {
-                    if (pair.Name == "22ijx4zwxrv41.jpg") { }
                     SyncActionType action = await ModeHandler.GetActionOfBothFiles(pair);
                     await HandleAction(action, pair);
                     await AddSafe(ComparedFiles, pair);
@@ -425,7 +424,6 @@ namespace FileSystemUWP.Sync.Handling
 
                 try
                 {
-                    if (pair.Name == "22ijx4zwxrv41.jpg") { }
                     SyncActionType action = await ModeHandler.GetActionOfSingleFiles(pair);
                     await HandleAction(action, pair);
                     await AddSafe(ComparedFiles, pair);
@@ -517,10 +515,7 @@ namespace FileSystemUWP.Sync.Handling
 
                 try
                 {
-                    IInputStream readStream = await Api.GetFileInputStream(pair.ServerFullPath);
-                    Stream writeStream = await tmpFile.OpenStreamForWriteAsync();
-
-                    await readStream.AsStreamForRead().CopyToAsync(writeStream);
+                    await Api.DownlaodFile(pair.ServerFullPath, tmpFile);
 
                     if (fileName != tmpFile.Name)
                     {
