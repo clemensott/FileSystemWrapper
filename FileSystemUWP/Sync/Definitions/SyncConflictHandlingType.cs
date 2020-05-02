@@ -1,6 +1,6 @@
 ﻿namespace FileSystemUWP.Sync.Definitions
 {
-    public enum SyncConfictHandlingType
+    public enum SyncConflictHandlingType
     {
         PreferServer,
         PreferLocal,

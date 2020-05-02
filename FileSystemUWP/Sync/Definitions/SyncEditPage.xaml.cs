@@ -27,8 +27,10 @@ namespace FileSystemUWP.Sync.Definitions
             ecbMode.Names = new Dictionary<object, string>()
             {
                 [SyncMode.TwoWay] = "Two way",
-                [SyncMode.ServerToLocal] = "Server to local only",
-                [SyncMode.LocalToServer] = "Local to server only",
+                [SyncMode.ServerToLocal] = "Server to local",
+                [SyncMode.ServerToLocalCreateOnly] = "Server to local (create and override only)",
+                [SyncMode.LocalToServer] = "Local to server",
+                [SyncMode.LocalToServerCreateOnly] = "Local to server (create and override only)",
             };
 
             ecbCompareType.Names = new Dictionary<object, string>()
@@ -40,9 +42,9 @@ namespace FileSystemUWP.Sync.Definitions
 
             ecbConflictHandlingType.Names = new Dictionary<object, string>()
             {
-                [SyncConfictHandlingType.PreferServer] = "Prefer server",
-                [SyncConfictHandlingType.PreferLocal] = "Prefer local",
-                [SyncConfictHandlingType.Igonre] = "Igonre",
+                [SyncConflictHandlingType.PreferServer] = "Prefer server",
+                [SyncConflictHandlingType.PreferLocal] = "Prefer local",
+                [SyncConflictHandlingType.Igonre] = "Igonre",
             };
         }
 

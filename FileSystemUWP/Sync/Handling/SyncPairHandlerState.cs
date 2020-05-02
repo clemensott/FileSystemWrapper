@@ -5,7 +5,7 @@
         WaitForStart,
         Running,
         Finished,
-        Failed,
+        Error,
         Canceled,
     }
 }

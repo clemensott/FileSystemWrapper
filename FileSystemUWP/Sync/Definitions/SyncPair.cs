@@ -15,7 +15,7 @@ namespace FileSystemUWP.Sync.Definitions
         private StorageFolder localFolder;
         private SyncMode mode;
         private SyncCompareType compareType;
-        private SyncConfictHandlingType conflictHandlingType;
+        private SyncConflictHandlingType conflictHandlingType;
         private ObservableCollection<string> whitelist, blacklist;
         private SyncedItem[] result;
 
@@ -104,7 +104,7 @@ namespace FileSystemUWP.Sync.Definitions
             }
         }
 
-        public SyncConfictHandlingType ConflictHandlingType
+        public SyncConflictHandlingType ConflictHandlingType
         {
             get => conflictHandlingType;
             set
