@@ -186,6 +186,9 @@
     <Compile Include="Sync\Handling\Mode\ServerToLocalCreateOnlyModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\SyncActionType.cs" />
     <Compile Include="Sync\Handling\SyncPairHandlerState.cs" />
+    <Compile Include="Sync\Handling\SyncPairHandlingPage.xaml.cs">
+      <DependentUpon>SyncPairHandlingPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Sync\Result\SyncedItem.cs" />
     <Compile Include="Sync\Definitions\SyncEditPage.xaml.cs">
       <DependentUpon>SyncEditPage.xaml</DependentUpon>
@@ -309,6 +312,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Sync\Definitions\SyncPairsPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Sync\Handling\SyncPairHandlingPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

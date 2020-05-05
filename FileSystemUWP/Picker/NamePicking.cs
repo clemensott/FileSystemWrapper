@@ -8,18 +8,18 @@ namespace FileSystemUWP.Picker
 
         public string Suggestion { get; }
 
-        public ConflictType FolderConfictType { get; }
+        public ConflictType FolderConflictType { get; }
 
         public ConflictType FileConfilctType { get; }
 
         public Api Api { get; }
 
-        public NamePicking(string folderPath, string suggestion, ConflictType folderConfictType,
+        public NamePicking(string folderPath, string suggestion, ConflictType folderConflictType,
             ConflictType fileConfilctType, Api api)
         {
             FolderPath = folderPath;
             Suggestion = suggestion;
-            FolderConfictType = folderConfictType;
+            FolderConflictType = folderConflictType;
             FileConfilctType = fileConfilctType;
             Api = api;
         }

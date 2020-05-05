@@ -1,0 +1,191 @@
+﻿<Page
+    x:Class="FileSystemUWP.Sync.Handling.SyncPairHandlingPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FileSystemUWP.Sync.Handling"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:con="using:StdOttUwp.Converters"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <con:VisibleCollapsedConverter x:Key="visCon" />
+        <con:CollapsedVisibleConverter x:Key="colCon" />
+
+        <con:ValueConverter x:Key="modeNameCon" ConvertEvent="ModeNameConverter_ConvertEvent"/>
+        <con:ValueConverter x:Key="fileCompareNameCon" ConvertEvent="FileCompareNameConverter_ConvertEvent"/>
+        <con:ValueConverter x:Key="conflictHandlingNameCon" ConvertEvent="ConflictHandling_ConvertEvent"/>
+
+        <con:ValueConverter x:Key="notNullStringConverter" ConvertEvent="NotNullString_ConvertEvent"/>
+        <con:ValueConverter x:Key="pairConverter" ConvertEvent="FilePairConverter_ConvertEvent"/>
+        <con:ValueConverter x:Key="isRunningConverter" ConvertEvent="IsRunningConverter_ConvertEvent"/>
+    </Page.Resources>
+
+    <ScrollViewer>
+        <StackPanel Margin="3" d:DataContext="{d:DesignInstance Type=local:SyncPairHandler}">
+            <TextBlock FontWeight="SemiBold" FontSize="30" Margin="3" Text="{Binding Name}"/>
+
+            <StackPanel Margin="2,5">
+                <TextBlock Text="Server path:" FontWeight="Bold"/>
+                <TextBlock Margin="1" Text="{Binding ServerPath}"/>
+            </StackPanel>
+
+            <StackPanel Margin="2,5">
+                <TextBlock Text="Local path:" FontWeight="Bold"/>
+                <TextBlock Margin="1" Text="{Binding LocalFolder.Path}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="2,1">
+                <TextBlock Text="Mode:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock VerticalAlignment="Center" Margin="5,0" 
+                           Text="{Binding ModeHandler,Converter={StaticResource modeNameCon}}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="2,1">
+                <TextBlock Text="Compare type:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock VerticalAlignment="Center" Margin="5,0"
+                           Text="{Binding FileComparer,Converter={StaticResource fileCompareNameCon}}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="2,1">
+                <TextBlock Text="Conflict handling:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock VerticalAlignment="Center" Margin="5,0" 
+                           Text="{Binding ConlictHandlingType,Converter={StaticResource conflictHandlingNameCon}}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="2,5">
+                <TextBlock Text="State:" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock VerticalAlignment="Center" Margin="5,0" Text="{Binding State}"/>
+            </StackPanel>
+
+            <con:MultipleInputs2Converter x:Name="micWaiting" Input0="{Binding State}"
+                                          Input1="{Binding TotalCount}" Convert="MicWaiting_Convert"/>
+
+            <ProgressBar Minimum="0" Value="0" Maximum="0" IsIndeterminate="True" Margin="5"
+                         Visibility="{Binding ElementName=micWaiting,Path=Output,Converter={StaticResource visCon}}"/>
+
+            <Grid Visibility="{Binding ElementName=micWaiting,Path=Output,Converter={StaticResource colCon}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Margin="2" Text="{Binding CurrentCount}"/>
+                <ProgressBar Grid.Column="1" Margin="3,0" Minimum="0" VerticalAlignment="Center"
+                             Value="{Binding CurrentCount}" Maximum="{Binding TotalCount}"/>
+                <TextBlock Grid.Column="2" Margin="2" Text="{Binding TotalCount}"/>
+            </Grid>
+
+            <Grid Margin="0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Column="0" Grid.Row="0" Text="Compared:" FontWeight="Bold"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           DataContext="{Binding ComparedFiles}" 
+                           PointerReleased="TblComparedFiles_PointerReleased" />
+                <TextBlock Grid.Column="2" Grid.Row="0" Margin="1" HorizontalAlignment="Right" 
+                           VerticalAlignment="Center" DataContext="{Binding ComparedFiles}" 
+                           Text="{Binding Count}" PointerReleased="TblComparedFiles_PointerReleased"/>
+
+                <TextBlock Grid.Column="0" Grid.Row="1" Text="Equal:" FontWeight="Bold"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           DataContext="{Binding EqualFiles}"
+                           PointerReleased="TblEqualFiles_PointerReleased" />
+                <TextBlock Grid.Column="2" Grid.Row="1" Margin="1" HorizontalAlignment="Right"
+                           VerticalAlignment="Center" DataContext="{Binding EqualFiles}" 
+                           Text="{Binding Count}" PointerReleased="TblEqualFiles_PointerReleased"/>
+
+                <TextBlock Grid.Column="0" Grid.Row="2" Text="Ignore:" FontWeight="Bold"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           DataContext="{Binding IgnoreFiles}"
+                           PointerReleased="TblIgnoreFiles_PointerReleased" />
+                <TextBlock Grid.Column="2" Grid.Row="2" Margin="1" HorizontalAlignment="Right"
+                           VerticalAlignment="Center" DataContext="{Binding IgnoreFiles}" 
+                           Text="{Binding Count}" PointerReleased="TblIgnoreFiles_PointerReleased"/>
+
+                <TextBlock Grid.Column="0" Grid.Row="3" Text="Confilcts:" FontWeight="Bold"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           DataContext="{Binding ConflictFiles}"
+                           PointerReleased="TblConflictFiles_PointerReleased" />
+                <TextBlock Grid.Column="2" Grid.Row="3" Margin="1" HorizontalAlignment="Right" 
+                           VerticalAlignment="Center" DataContext="{Binding ConflictFiles}" 
+                           Text="{Binding Count}" PointerReleased="TblConflictFiles_PointerReleased"/>
+
+                <TextBlock Grid.Column="0" Grid.Row="4" Text="Errors:" FontWeight="Bold"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           DataContext="{Binding ErrorFiles}"
+                           PointerReleased="TblErrorFiles_PointerReleased" />
+                <TextBlock Grid.Column="2" Grid.Row="4" Margin="1" HorizontalAlignment="Right"
+                           VerticalAlignment="Center" DataContext="{Binding ErrorFiles}" 
+                           Text="{Binding Count}" PointerReleased="TblErrorFiles_PointerReleased"/>
+
+                <TextBlock Grid.Column="0" Grid.Row="5" Text="Copied:" FontWeight="Bold"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           DataContext="{Binding CopiedFiles}"
+                           PointerReleased="TblCopiedFiles_PointerReleased" />
+                <TextBlock Grid.Column="2" Grid.Row="5" Margin="1" HorizontalAlignment="Right"
+                           VerticalAlignment="Center" DataContext="{Binding CopiedFiles}" 
+                           Text="{Binding Count}" PointerReleased="TblCopiedFiles_PointerReleased"/>
+
+                <TextBlock Grid.Column="0" Grid.Row="6" Text="Deleted:" FontWeight="Bold"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           DataContext="{Binding DeletedFiles}"
+                           PointerReleased="TblDeletedFiles_PointerReleased" />
+                <TextBlock Grid.Column="2" Grid.Row="6" Margin="1" HorizontalAlignment="Right"
+                           VerticalAlignment="Center" DataContext="{Binding DeletedFiles}"
+                           Text="{Binding Count}" PointerReleased="TblDeletedFiles_PointerReleased"/>
+            </Grid>
+
+            <StackPanel Margin="2,4">
+                <TextBlock Text="Quering folder path:" FontWeight="Bold"/>
+                <TextBlock Margin="1" Text="{Binding CurrentQueryFolderRelPath,Converter={StaticResource notNullStringConverter}}"/>
+            </StackPanel>
+
+            <StackPanel Margin="2,4">
+                <TextBlock Text="Coping to local path:" FontWeight="Bold"/>
+                <TextBlock Margin="3,1" Text="{Binding CurrentCopyToLocalFile,Converter={StaticResource pairConverter}}"/>
+            </StackPanel>
+
+            <StackPanel Margin="2,4">
+                <TextBlock Text="Coping to server path:" FontWeight="Bold"/>
+                <TextBlock Margin="3,1" Text="{Binding CurrentCopyToServerFile,Converter={StaticResource pairConverter}}"/>
+            </StackPanel>
+
+            <StackPanel Margin="2,4">
+                <TextBlock Text="Deleting from local path:" FontWeight="Bold"/>
+                <TextBlock Margin="3,1" Text="{Binding CurrentDeleteFromServerFile,Converter={StaticResource pairConverter}}"/>
+            </StackPanel>
+
+            <StackPanel Margin="2,4">
+                <TextBlock Text="Deleting  from server path:" FontWeight="Bold"/>
+                <TextBlock Margin="3,1" Text="{Binding CurrentDeleteFromLocalFile,Converter={StaticResource pairConverter}}"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+
+    <Page.BottomAppBar>
+        <CommandBar>
+            <CommandBar.PrimaryCommands>
+                <AppBarButton Label="Back" Icon="Back" Click="AbbBack_Click"/>
+                <AppBarButton Label="Cancel" Icon="Stop" Click="AbbStop_Click"
+                              IsEnabled="{Binding State,Converter={StaticResource isRunningConverter}}"/>
+            </CommandBar.PrimaryCommands>
+        </CommandBar>
+    </Page.BottomAppBar>
+</Page>

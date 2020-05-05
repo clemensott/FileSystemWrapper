@@ -90,6 +90,13 @@ namespace FileSystemUWP.Sync.Definitions
                state == SyncPairHandlerState.Running;
         }
 
+        private void IbnHandlerDetails_Click(object sender, RoutedEventArgs e)
+        {
+            SyncPairHandler handler = (SyncPairHandler)((FrameworkElement)sender).DataContext;
+
+            Frame.Navigate(typeof(SyncPairHandlingPage), handler);
+        }
+
         private async void IbnEditSync_Click(object sender, RoutedEventArgs e)
         {
             SyncPair oldSync = (SyncPair)((FrameworkElement)sender).DataContext;
@@ -134,51 +141,7 @@ namespace FileSystemUWP.Sync.Definitions
 
             return (int)args.Input1 == 0;
         }
-
-        private async void TblComparedFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
-            await ShowFileList("Compared", pairs);
-        }
-
-        private async void TblConfictFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
-            await ShowFileList("Conficts", pairs);
-        }
-
-        private async void TblErrorFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
-            await ShowFileList("Errors", pairs);
-        }
-
-        private async void TblEqualFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
-            await ShowFileList("Equals", pairs);
-        }
-
-        private async void TblCopiedFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
-            await ShowFileList("Copied", pairs);
-        }
-
-        private async void TblDeletedFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
-            await ShowFileList("Deleted", pairs);
-        }
-
-        private static async Task ShowFileList(string title, IEnumerable<FilePair> pairs)
-        {
-            string message = string.Join("\r\n", pairs.Select(p => p.RelativePath));
-            if (string.IsNullOrWhiteSpace(message)) message = "<None>";
-
-            await new MessageDialog(message, title).ShowAsync();
-        }
-
+        
         private void AbbBack_Click(object sender, RoutedEventArgs e)
         {
             Frame.GoBack();

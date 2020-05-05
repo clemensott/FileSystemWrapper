@@ -44,7 +44,7 @@ namespace FileSystemUWP.Picker
             }
 
             if (picking.FileConfilctType == ConflictType.Ignore &&
-                picking.FolderConfictType == ConflictType.Ignore) return;
+                picking.FolderConflictType == ConflictType.Ignore) return;
 
             sinStatus.Visibility = Visibility.Collapsed;
             prgLoading.IsActive = true;
@@ -59,7 +59,7 @@ namespace FileSystemUWP.Picker
             if (name != tbxName.Text) return;
 
             if (fileExists) sinStatus.Symbol = GetSymbol(picking.FileConfilctType);
-            else if (folderExists) sinStatus.Symbol = GetSymbol(picking.FolderConfictType);
+            else if (folderExists) sinStatus.Symbol = GetSymbol(picking.FolderConflictType);
             else sinStatus.Symbol = Symbol.Accept;
 
             prgLoading.IsActive = false;

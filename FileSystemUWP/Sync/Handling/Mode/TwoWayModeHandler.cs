@@ -38,11 +38,11 @@ namespace FileSystemUWP.Sync.Handling.Mode
                 }
                 else if (fileComparer.Equals(last.ServerCompareValue, pair.ServerCompareValue))
                 {
-                    return SyncActionType.CopyToLocal;
+                    return SyncActionType.CopyToServer;
                 }
                 else if (fileComparer.Equals(last.LocalCompareValue, pair.LocalCompareValue))
                 {
-                    return SyncActionType.CopyToServer;
+                    return SyncActionType.CopyToLocal;
                 }
             }
 
