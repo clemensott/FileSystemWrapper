@@ -37,9 +37,9 @@ namespace FileSystemUWP.Sync.Handling.Mode
             else return SyncActionType.CopyToLocal;
         }
 
-        public override async Task<SyncActionType> GetActionOfSingleFiles(FilePair pair)
+        public override Task<SyncActionType> GetActionOfSingleFiles(FilePair pair)
         {
-            return pair.ServerFileExists ? SyncActionType.CopyToLocal : SyncActionType.DeleteFromLocal;
+            return Task.FromResult(pair.ServerFileExists ? SyncActionType.CopyToLocal : SyncActionType.DeleteFromLocal);
         }
     }
 }

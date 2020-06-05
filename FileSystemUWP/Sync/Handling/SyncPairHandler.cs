@@ -343,8 +343,9 @@ namespace FileSystemUWP.Sync.Handling
             {
                 if (!string.IsNullOrWhiteSpace(ServerPath) && LocalFolder != null) await Query(string.Empty, LocalFolder);
             }
-            catch
+            catch (Exception e)
             {
+                System.Diagnostics.Debug.WriteLine("QueryFiles error: " + e);
                 State = SyncPairHandlerState.Error;
             }
             finally
@@ -354,7 +355,7 @@ namespace FileSystemUWP.Sync.Handling
 
             await bothFiles.End();
             await singleFiles.End();
-            System.Diagnostics.Debug.WriteLine("Query endded!!!!!!!");
+            System.Diagnostics.Debug.WriteLine($"Query endded!!!!!!!");
 
             async Task Query(string relPath, StorageFolder localFolder)
             {
@@ -364,14 +365,14 @@ namespace FileSystemUWP.Sync.Handling
 
                 int addedFilesCount = 0;
                 string serverFolderPath = Path.Combine(ServerPath, relPath);
-
+                
                 Task<List<string>> serverFilesTask = Api.ListFiles(serverFolderPath);
                 IAsyncOperation<IReadOnlyList<StorageFile>> localFilesTask = localFolder?.GetFilesAsync();
-
+                
                 List<string> serverFiles = await serverFilesTask ?? new List<string>();
                 List<StorageFile> localFiles = localFilesTask != null ?
                     (await localFilesTask).ToList() : new List<StorageFile>();
-
+                
                 if (IsCanceled) return;
 
                 foreach (string serverFilePath in serverFiles)
@@ -393,7 +394,7 @@ namespace FileSystemUWP.Sync.Handling
                     else await singleFiles.Enqueue(new FilePair(ServerPath, relFilePath, null, true));
                     addedFilesCount++;
                 }
-
+                
                 foreach (StorageFile localFile in localFiles)
                 {
                     string relFilePath = Path.Combine(relPath, localFile.Name);
@@ -404,18 +405,18 @@ namespace FileSystemUWP.Sync.Handling
                     await singleFiles.Enqueue(new FilePair(ServerPath, relFilePath, localFile, false));
                     addedFilesCount++;
                 }
-
+                
                 TotalCount += addedFilesCount;
 
                 if (!WithSubfolders) return;
-
+                
                 Task<List<string>> serverSubFolderTask = Api.ListFolders(serverFolderPath);
                 IAsyncOperation<IReadOnlyList<StorageFolder>> localSubFoldersTask = localFolder?.GetFoldersAsync();
-
-                List<string> serverSubFolders = await serverSubFolderTask;
+                
+                List<string> serverSubFolders = await serverSubFolderTask ?? new List<string>();
                 List<StorageFolder> localSubFolders = localSubFoldersTask != null ?
                     (await localSubFoldersTask).ToList() : new List<StorageFolder>();
-
+                
                 foreach (string serverSubFolderPath in serverSubFolders)
                 {
                     int index;

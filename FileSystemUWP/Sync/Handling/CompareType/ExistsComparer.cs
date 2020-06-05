@@ -10,9 +10,9 @@ namespace FileSystemUWP.Sync.Handling.CompareType
             return obj1 is bool value1 && obj2 is bool value2 && value1 == value2;
         }
 
-        public async Task<object> GetLocalCompareValue(StorageFile localFile)
+        public Task<object> GetLocalCompareValue(StorageFile localFile)
         {
-            return localFile != null;
+            return Task.FromResult<object>(localFile != null);
         }
 
         public async Task<object> GetServerCompareValue(string serverFilePath, Api api)
