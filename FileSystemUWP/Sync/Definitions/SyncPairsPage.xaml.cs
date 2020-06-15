@@ -5,11 +5,9 @@ using StdOttUwp;
 using StdOttUwp.Converters;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 
@@ -52,6 +50,11 @@ namespace FileSystemUWP.Sync.Definitions
         private void BackgroundTaskHelper_AddedHandler(object sender, SyncPairHandler e)
         {
             handlers[e.Token].Output = e;
+        }
+
+        private void GidSyncPair_Holding(object sender, HoldingRoutedEventArgs e)
+        {
+            FlyoutBase.ShowAttachedFlyout(sender as FrameworkElement);
         }
 
         private object SicHandler_ConvertRef(object sender, SingleInputsConvertEventArgs e)
@@ -97,7 +100,7 @@ namespace FileSystemUWP.Sync.Definitions
             Frame.Navigate(typeof(SyncPairHandlingPage), handler);
         }
 
-        private async void IbnEditSync_Click(object sender, RoutedEventArgs e)
+        private async void MfiEdit_Click(object sender, RoutedEventArgs e)
         {
             SyncPair oldSync = (SyncPair)((FrameworkElement)sender).DataContext;
             SyncPair newSync = oldSync.Clone();
@@ -109,7 +112,29 @@ namespace FileSystemUWP.Sync.Definitions
             if (await edit.Task && viewModel.Syncs.TryIndexOf(s => s.Token == oldSync.Token, out index))
             {
                 viewModel.Syncs[index] = newSync;
+                App.SaveSyncPairs();
             }
+        }
+
+        private async void MfiRemove_Click(object sender, RoutedEventArgs e)
+        {
+            SyncPair sync = (SyncPair)((FrameworkElement)sender).DataContext;
+
+            if (await MessageDialogUtils.Binary(sync.Name, "Delete?", "Yes", "No"))
+            {
+                viewModel.Syncs.Remove(sync);
+                App.SaveSyncPairs();
+            }
+        }
+
+        private void MfiTestRun_Click(object sender, RoutedEventArgs e)
+        {
+            SyncPairHandler handler;
+            SyncPair sync = (SyncPair)((FrameworkElement)sender).DataContext;
+
+            if (BackgroundTaskHelper.Current.TryGetHandler(sync.Token, out handler) &&
+                IsRunning(handler.State)) handler.Cancel();
+            else BackgroundTaskHelper.Current.Start(sync, viewModel.Api, true);
         }
 
         private void IbnRunSync_Click(object sender, RoutedEventArgs e)
@@ -120,13 +145,6 @@ namespace FileSystemUWP.Sync.Definitions
             if (BackgroundTaskHelper.Current.TryGetHandler(sync.Token, out handler) &&
                 IsRunning(handler.State)) handler.Cancel();
             else BackgroundTaskHelper.Current.Start(sync, viewModel.Api);
-        }
-
-        private async void IbnRemoveSync_Click(object sender, RoutedEventArgs e)
-        {
-            SyncPair sync = (SyncPair)((FrameworkElement)sender).DataContext;
-
-            if (await UwpUtils.DialogBinary(sync.Name, "Delete?", "Yes", "No")) viewModel.Syncs.Remove(sync);
         }
 
         private object SicVisHandling_Convert(object sender, SingleInputsConvertEventArgs e)
@@ -141,20 +159,24 @@ namespace FileSystemUWP.Sync.Definitions
 
             return (int)args.Input1 == 0;
         }
-        
+
         private void AbbBack_Click(object sender, RoutedEventArgs e)
         {
             Frame.GoBack();
         }
 
-        private async void AbbSyncPair_Click(object sender, RoutedEventArgs e)
+        private async void AbbAddSyncPair_Click(object sender, RoutedEventArgs e)
         {
             SyncPair newSync = new SyncPair();
             SyncPairEdit edit = new SyncPairEdit(newSync, viewModel.Api);
 
             Frame.Navigate(typeof(SyncEditPage), edit);
 
-            if (await edit.Task) viewModel.Syncs.Add(newSync);
+            if (await edit.Task)
+            {
+                viewModel.Syncs.Add(newSync);
+                App.SaveSyncPairs();
+            }
         }
 
         private async void AbbRunSync_Click(object sender, RoutedEventArgs e)

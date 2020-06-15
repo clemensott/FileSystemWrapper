@@ -93,6 +93,8 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Column="0" Grid.Row="0" Text="Compared:" FontWeight="Bold"
@@ -135,21 +137,37 @@
                            VerticalAlignment="Center" DataContext="{Binding ErrorFiles}" 
                            Text="{Binding Count}" PointerReleased="TblErrorFiles_PointerReleased"/>
 
-                <TextBlock Grid.Column="0" Grid.Row="5" Text="Copied:" FontWeight="Bold"
+                <TextBlock Grid.Column="0" Grid.Row="5" Text="Copied local:" FontWeight="Bold"
                            HorizontalAlignment="Right" VerticalAlignment="Center"
-                           DataContext="{Binding CopiedFiles}"
-                           PointerReleased="TblCopiedFiles_PointerReleased" />
+                           DataContext="{Binding CopiedLocalFiles}"
+                           PointerReleased="TblCopiedLocalFiles_PointerReleased" />
                 <TextBlock Grid.Column="2" Grid.Row="5" Margin="1" HorizontalAlignment="Right"
-                           VerticalAlignment="Center" DataContext="{Binding CopiedFiles}" 
-                           Text="{Binding Count}" PointerReleased="TblCopiedFiles_PointerReleased"/>
+                           VerticalAlignment="Center" DataContext="{Binding CopiedLocalFiles}" 
+                           Text="{Binding Count}" PointerReleased="TblCopiedLocalFiles_PointerReleased"/>
 
-                <TextBlock Grid.Column="0" Grid.Row="6" Text="Deleted:" FontWeight="Bold"
+                <TextBlock Grid.Column="0" Grid.Row="6" Text="Copied server:" FontWeight="Bold"
                            HorizontalAlignment="Right" VerticalAlignment="Center"
-                           DataContext="{Binding DeletedFiles}"
-                           PointerReleased="TblDeletedFiles_PointerReleased" />
+                           DataContext="{Binding CopiedServerFiles}"
+                           PointerReleased="TblCopiedServerFiles_PointerReleased" />
                 <TextBlock Grid.Column="2" Grid.Row="6" Margin="1" HorizontalAlignment="Right"
-                           VerticalAlignment="Center" DataContext="{Binding DeletedFiles}"
-                           Text="{Binding Count}" PointerReleased="TblDeletedFiles_PointerReleased"/>
+                           VerticalAlignment="Center" DataContext="{Binding CopiedServerFiles}" 
+                           Text="{Binding Count}" PointerReleased="TblCopiedServerFiles_PointerReleased"/>
+
+                <TextBlock Grid.Column="0" Grid.Row="7" Text="Deleted local:" FontWeight="Bold"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           DataContext="{Binding DeletedLocalFiles}"
+                           PointerReleased="TblDeletedLocalFiles_PointerReleased" />
+                <TextBlock Grid.Column="2" Grid.Row="7" Margin="1" HorizontalAlignment="Right"
+                           VerticalAlignment="Center" DataContext="{Binding DeletedLocalFiles}"
+                           Text="{Binding Count}" PointerReleased="TblDeletedLocalFiles_PointerReleased"/>
+
+                <TextBlock Grid.Column="0" Grid.Row="8" Text="Deleted server:" FontWeight="Bold"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           DataContext="{Binding DeletedServerFiles}"
+                           PointerReleased="TblDeletedServerFiles_PointerReleased" />
+                <TextBlock Grid.Column="2" Grid.Row="8" Margin="1" HorizontalAlignment="Right"
+                           VerticalAlignment="Center" DataContext="{Binding DeletedServerFiles}"
+                           Text="{Binding Count}" PointerReleased="TblDeletedServerFiles_PointerReleased"/>
             </Grid>
 
             <StackPanel Margin="2,4">

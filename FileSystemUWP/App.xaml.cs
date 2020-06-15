@@ -122,6 +122,11 @@ namespace FileSystemUWP
             catch { }
         }
 
+        public static void SaveSyncPairs()
+        {
+            ((App)Current).SaveSyncs();
+        }
+
         protected override async void OnBackgroundActivated(BackgroundActivatedEventArgs args)
         {
             BackgroundTaskDeferral deferral = args.TaskInstance.GetDeferral();
@@ -144,7 +149,7 @@ namespace FileSystemUWP
                     await handler.Start();
 
                     SyncPair sync;
-                    if (handler.State == SyncPairHandlerState.Finished &&
+                    if (!handler.IsTestRun && handler.State == SyncPairHandlerState.Finished &&
                         viewModel.Syncs.TryFirst(s => s.Token == handler.Token, out sync))
                     {
                         sync.Result = handler.NewResult.ToArray();

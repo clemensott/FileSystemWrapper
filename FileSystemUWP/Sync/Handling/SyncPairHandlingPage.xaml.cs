@@ -154,16 +154,28 @@ namespace FileSystemUWP.Sync.Handling
             await ShowFileList("Errors", pairs);
         }
 
-        private async void TblCopiedFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
+        private async void TblCopiedLocalFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
             IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
-            await ShowFileList("Copied", pairs);
+            await ShowFileList("Copied local", pairs);
         }
 
-        private async void TblDeletedFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
+        private async void TblCopiedServerFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
             IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
-            await ShowFileList("Deleted", pairs);
+            await ShowFileList("Copied server", pairs);
+        }
+
+        private async void TblDeletedLocalFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
+            await ShowFileList("Deleted local", pairs);
+        }
+
+        private async void TblDeletedServerFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
+            await ShowFileList("Deleted server", pairs);
         }
 
         private static async Task ShowFileList(string title, IEnumerable<FilePair> pairs)

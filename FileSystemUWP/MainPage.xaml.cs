@@ -138,7 +138,7 @@ namespace FileSystemUWP
         {
             if (e.Item.IsFile)
             {
-                bool delete = await UwpUtils.DialogBinary(e.Item.Name, "Delete File?", "Yes", "No");
+                bool delete = await MessageDialogUtils.Binary(e.Item.Name, "Delete File?", "Yes", "No");
                 if (!delete) return;
 
                 await viewModel.Api.DeleteFile(e.Item.FullPath);
@@ -146,7 +146,7 @@ namespace FileSystemUWP
             }
             else
             {
-                bool delete = await UwpUtils.DialogBinary(e.Item.Name, "Delete Folder?", "Yes", "No");
+                bool delete = await MessageDialogUtils.Binary(e.Item.Name, "Delete Folder?", "Yes", "No");
                 if (!delete) return;
 
                 await viewModel.Api.DeleteFolder(e.Item.FullPath, true);
