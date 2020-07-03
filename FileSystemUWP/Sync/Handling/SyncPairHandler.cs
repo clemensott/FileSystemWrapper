@@ -25,7 +25,8 @@ namespace FileSystemUWP.Sync.Handling
         private int currentCount, totalCount;
         private string currentQueryFolderRelPath;
         private ObservableCollection<FilePair> comparedFiles, equalFiles, conflictFiles, copiedLocalFiles,
-            copiedServerFiles, deletedLocalFiles, deletedServerFiles, errorFiles, ignoreFiles;
+            copiedServerFiles, deletedLocalFiles, deletedServerFiles, ignoreFiles;
+        private ObservableCollection<ErrorFilePair> errorFiles;
         private readonly AsyncQueue<FilePair> bothFiles, singleFiles, copyToLocalFiles,
             copyToServerFiles, deleteLocalFiles, deleteSeverFiles;
         private FilePair currentCopyToLocalFile, currentCopyToServerFile,
@@ -162,7 +163,7 @@ namespace FileSystemUWP.Sync.Handling
             }
         }
 
-        public ObservableCollection<FilePair> ErrorFiles
+        public ObservableCollection<ErrorFilePair> ErrorFiles
         {
             get => errorFiles;
             private set
@@ -292,7 +293,7 @@ namespace FileSystemUWP.Sync.Handling
             copiedServerFiles = new ObservableCollection<FilePair>();
             deletedLocalFiles = new ObservableCollection<FilePair>();
             deletedServerFiles = new ObservableCollection<FilePair>();
-            errorFiles = new ObservableCollection<FilePair>();
+            errorFiles = new ObservableCollection<ErrorFilePair>();
             ignoreFiles = new ObservableCollection<FilePair>();
 
             CurrentCount = 0;
@@ -496,9 +497,9 @@ namespace FileSystemUWP.Sync.Handling
                     await HandleAction(action, pair);
                     await AddSafe(ComparedFiles, pair);
                 }
-                catch
+                catch (Exception e)
                 {
-                    await ErrorFile(pair);
+                    await ErrorFile(pair, "Compare both file error", e);
                 }
             }
 
@@ -526,9 +527,9 @@ namespace FileSystemUWP.Sync.Handling
                     await HandleAction(action, pair);
                     await AddSafe(ComparedFiles, pair);
                 }
-                catch
+                catch (Exception e)
                 {
-                    await ErrorFile(pair);
+                    await ErrorFile(pair, "Compare single file error", e);
                 }
             }
 
@@ -600,11 +601,16 @@ namespace FileSystemUWP.Sync.Handling
 
                 CurrentCopyToLocalFile = pair;
 
-                (StorageFolder localFolder, string fileName) = await TryCreateLocalFolder(pair.RelativePath, LocalFolder);
+                StorageFolder localFolder;
+                string fileName;
 
-                if (localFolder == null)
+                try
                 {
-                    await ErrorFile(pair);
+                    (localFolder, fileName) = await TryCreateLocalFolder(pair.RelativePath, LocalFolder);
+                }
+                catch (Exception e)
+                {
+                    await ErrorFile(pair, "Create local folder error", e);
                     continue;
                 }
 
@@ -614,9 +620,9 @@ namespace FileSystemUWP.Sync.Handling
                 {
                     tmpFile = await localFolder.CreateFileAsync(fileName, CreationCollisionOption.GenerateUniqueName);
                 }
-                catch
+                catch (Exception e)
                 {
-                    await ErrorFile(pair);
+                    await ErrorFile(pair, "Create local tmpFile error", e);
                     continue;
                 }
 
@@ -635,15 +641,16 @@ namespace FileSystemUWP.Sync.Handling
                     await CopiedLocalFile(pair);
                     continue;
                 }
-                catch { }
+                catch (Exception e)
+                {
+                    await ErrorFile(pair, "Copy file to local error", e);
+                }
 
                 try
                 {
                     await tmpFile.DeleteAsync();
                 }
                 catch { }
-
-                await ErrorFile(pair);
             }
 
             System.Diagnostics.Debug.WriteLine($"To Local ended!!!!!!!!!!!!!");
@@ -654,19 +661,12 @@ namespace FileSystemUWP.Sync.Handling
             string[] parts = relPath.Split('\\');
             StorageFolder preFolder = localBaseFolder;
 
-            try
+            for (int i = 0; i < parts.Length - 1; i++)
             {
-                for (int i = 0; i < parts.Length - 1; i++)
-                {
-                    preFolder = await preFolder.CreateFolderAsync(parts[i], CreationCollisionOption.OpenIfExists);
-                }
+                preFolder = await preFolder.CreateFolderAsync(parts[i], CreationCollisionOption.OpenIfExists);
+            }
 
-                return (preFolder, parts[parts.Length - 1]);
-            }
-            catch
-            {
-                return (null, null);
-            }
+            return (preFolder, parts[parts.Length - 1]);
         }
 
         private async Task CopyFilesToServer()
@@ -688,7 +688,7 @@ namespace FileSystemUWP.Sync.Handling
 
                 if (!await TryCreateServerFolder(pair.ServerFullPath))
                 {
-                    await ErrorFile(pair);
+                    await ErrorFile(pair, "Create server folder, to copy file to, failed");
                     continue;
                 }
 
@@ -705,9 +705,10 @@ namespace FileSystemUWP.Sync.Handling
                         continue;
                     }
                 }
-                catch { }
-
-                await ErrorFile(pair);
+                catch (Exception e)
+                {
+                    await ErrorFile(pair, "Copy file to server error", e);
+                }
             }
 
             System.Diagnostics.Debug.WriteLine($"To Server ended!!!!!!!!!!!!!");
@@ -751,9 +752,9 @@ namespace FileSystemUWP.Sync.Handling
                     await pair.LocalFile.DeleteAsync();
                     await DeletedLocalFile(pair);
                 }
-                catch
+                catch (Exception e)
                 {
-                    await ErrorFile(pair);
+                    await ErrorFile(pair, "Delete local file error", e);
                 }
             }
 
@@ -783,7 +784,7 @@ namespace FileSystemUWP.Sync.Handling
                     continue;
                 }
 
-                await ErrorFile(pair);
+                await ErrorFile(pair, "Delete file from server error");
             }
 
             System.Diagnostics.Debug.WriteLine($"Del Server ended!!!!!!!!!!!!!");
@@ -849,9 +850,9 @@ namespace FileSystemUWP.Sync.Handling
             CurrentCount++;
         }
 
-        private async Task ErrorFile(FilePair pair)
+        private async Task ErrorFile(FilePair pair, string message, Exception e = null)
         {
-            await AddSafe(ErrorFiles, pair);
+            await AddSafe(ErrorFiles, new ErrorFilePair(pair, new Exception(message, e)));
             CurrentCount++;
         }
 
@@ -888,7 +889,7 @@ namespace FileSystemUWP.Sync.Handling
                 deleteSeverFiles.End());
         }
 
-        private static Task AddSafe(IList<FilePair> list, FilePair pair)
+        private static Task AddSafe<T>(IList<T> list, T pair)
         {
             return UwpUtils.RunSafe(() => list.Add(pair));
         }

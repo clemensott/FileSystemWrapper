@@ -1,8 +1,8 @@
 ﻿using FileSystemCommon.Model;
+using StdOttUwp;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -90,14 +90,14 @@ namespace FileSystemUWP
                 if (info != null) DataContext = info;
                 else
                 {
-                    await new MessageDialog("Loading infos failed").ShowAsync();
+                    await MessageDialogUtils.ShowSafeAsync("Loading infos failed");
                     Frame.GoBack();
                 }
 
             }
             catch (Exception exc)
             {
-                await new MessageDialog(exc.Message, "Load infos error").ShowAsync();
+                await MessageDialogUtils.ShowSafeAsync(exc.Message, "Load infos error");
                 Frame.GoBack();
             }
         }

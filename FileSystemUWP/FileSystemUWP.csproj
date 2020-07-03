@@ -176,6 +176,7 @@
     <Compile Include="Sync\Handling\CompareType\ExistsComparer.cs" />
     <Compile Include="Sync\Handling\CompareType\SizeComparer.cs" />
     <Compile Include="Sync\Handling\CompareType\HashComparer.cs" />
+    <Compile Include="Sync\Handling\ErrorFilePair.cs" />
     <Compile Include="Sync\Handling\FilePair.cs" />
     <Compile Include="Sync\Handling\CompareType\ISyncFileComparer.cs" />
     <Compile Include="Sync\Handling\Mode\LocalToServerModeHandler.cs" />

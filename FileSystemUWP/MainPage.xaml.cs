@@ -1,16 +1,12 @@
 ﻿using FileSystemUWP.FileViewers;
 using FileSystemUWP.Picker;
-using FileSystemUWP.Sync;
 using FileSystemUWP.Sync.Definitions;
 using StdOttUwp;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using Windows.Storage.Streams;
-using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -119,7 +115,7 @@ namespace FileSystemUWP
         {
             if (e.Item.IsFolder)
             {
-                await new MessageDialog("Doanloading a folder is not implemented").ShowAsync();
+                await MessageDialogUtils.ShowSafeAsync("Downloading a folder is not implemented");
                 return;
             }
 
@@ -205,11 +201,10 @@ namespace FileSystemUWP
 
             if (string.IsNullOrWhiteSpace(exceptionText)) exceptionText = "<None>";
 
-            await new MessageDialog(exceptionText, formatedExceptionTime).ShowAsync();
+            await MessageDialogUtils.ShowSafeAsync(exceptionText, formatedExceptionTime);
 
             string formatedTimerSyncTime = Settings.Current.SyncTimerTime.ToString();
-            await new MessageDialog(formatedTimerSyncTime, "Timer synced").ShowAsync();
-
+            await MessageDialogUtils.ShowSafeAsync(formatedTimerSyncTime, "Timer synced");
         }
     }
 }

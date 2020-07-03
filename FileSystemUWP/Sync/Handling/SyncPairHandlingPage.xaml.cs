@@ -1,12 +1,13 @@
 ﻿using FileSystemUWP.Sync.Definitions;
 using FileSystemUWP.Sync.Handling.CompareType;
 using FileSystemUWP.Sync.Handling.Mode;
+using StdOttStandard;
 using StdOttStandard.Converter.MultipleInputs;
+using StdOttUwp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -150,8 +151,27 @@ namespace FileSystemUWP.Sync.Handling
 
         private async void TblErrorFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
-            await ShowFileList("Errors", pairs);
+            IList<ErrorFilePair> pairs = (IList<ErrorFilePair>)((FrameworkElement)sender).DataContext;
+
+            if (pairs.Count == 0)
+            {
+                await MessageDialogUtils.ShowSafeAsync("<none>", "Errors");
+                return;
+            }
+
+            int i = 0;
+            while (true)
+            {
+                ErrorFilePair errorPair = pairs[i];
+                string title = $"Error: {i + 1} / {pairs.Count}";
+                string message = $"{errorPair.Pair.RelativePath}\r\n{errorPair.Exception}";
+
+                bool? result = await MessageDialogUtils.Threestate(message, title, "Next", "Cancel", "Previous");
+
+                if (result == true) i = StdUtils.OffsetIndex(i, pairs.Count, 1).index;
+                if (result == null) i = StdUtils.OffsetIndex(i, pairs.Count, -1).index;
+                else break;
+            }
         }
 
         private async void TblCopiedLocalFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
@@ -183,7 +203,7 @@ namespace FileSystemUWP.Sync.Handling
             string message = string.Join("\r\n", pairs.Take(30).Select(p => p.RelativePath));
             if (string.IsNullOrWhiteSpace(message)) message = "<None>";
 
-            await new MessageDialog(message, title).ShowAsync();
+            await MessageDialogUtils.ShowSafeAsync(message, title);
         }
 
         private void AbbBack_Click(object sender, RoutedEventArgs e)
