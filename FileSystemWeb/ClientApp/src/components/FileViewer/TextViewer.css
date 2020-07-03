@@ -1,0 +1,17 @@
+﻿.text-viewer-text {
+    height: 100%;
+    text-align: left;
+    overflow: auto;
+    color: black;
+    background-color: white;
+    padding: 5pt;
+}
+
+.text-viewer-error {
+    color: red;
+}
+
+.text-viewer-no-text {
+    color: orange;
+    font-style: italic;
+}

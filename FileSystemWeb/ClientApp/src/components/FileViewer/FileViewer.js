@@ -1,97 +1,65 @@
 ﻿import React from 'react';
-import { getName, getExtension, getParent, encodeToURI } from '../../Helpers/Path';
+import { getName, getParent, encodeToURI, getFileType } from '../../Helpers/Path';
 import ImageViewer from './ImageViewer';
 import TextViewer from './TextViewer';
 import MediaViewer from './MediaViewer';
 import './FileViewer.css';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
+import PdfViewer from './PdfViewer';
 
 function getViewer(path, password) {
-    const extension = getExtension(path) || '';
-
-    switch (extension.toLowerCase()) {
-        case ".apng":
-        case ".bmp":
-        case ".gif":
-        case ".ico":
-        case ".cur":
-        case ".jpg":
-        case ".jpeg":
-        case ".jfif":
-        case ".pjpeg":
-        case ".pjp":
-        case ".png":
-        case ".svg":
-        case ".tif":
-        case ".tiff":
-        case ".webp":
+    switch (getFileType(path)) {
+        case 'image':
             return <ImageViewer path={path} password={password} />
 
-        case ".js":
-        case ".json":
-        case ".xml":
-        case ".css":
-        case ".htm":
-        case ".html":
-        case ".txt":
-        case ".log":
-        case ".ini":
-        case ".rtx":
-        case ".rtf":
-        case ".tsv":
-        case ".csv":
+        case 'text':
             return <TextViewer path={path} password={password} />;
 
-        case ".aac":
-        case ".mp3":
-        case ".mp2":
-        case ".wav":
-        case ".oga":
-        case ".mpeg":
-        case ".mpg":
-        case ".mpe":
-        case ".mp4":
-        case ".ogg":
-        case ".ogv":
-        case ".qt":
-        case ".mov":
-        case ".viv":
-        case ".vivo":
-        case ".webm":
-        case ".mkv":
-        case ".avi":
-        case ".movie":
-        case ".3gp":
-        case ".3g2":
-            return <MediaViewer path={path} password={password} />;
+        case 'audio':
+            return <MediaViewer path={path} password={password} type="audio" />;
+
+        case 'video':
+            return <MediaViewer path={path} password={password} type="video" />;
+
+        case 'pdf':
+            return <PdfViewer path={path} password={password} />;
     }
 
-    return <div />
+    return '<No viewer>';
 }
 
 export default function (props) {
-    const normal = getName(props.path);
+    const name = getName(props.path);
     const viewer = getViewer(props.path, props.password);
 
     const folderPath = getParent(props.path);
     const folderUrl = '/' + encodeToURI(folderPath);
-
-    const className = normal ? 'file-overlay' : 'file-overlay hidden';
+    const history = useHistory();
 
     return (
-        <div className={className}>
-            <div className="file-container">
-                <div className="file-content">
+        <div className={`file-overlay ${name ? '' : 'd-none'}`} onClick={e => {
+            if (e.target.classList.contains('file-overlay') ||
+                e.target.classList.contains('file-overlay-container') ||
+                e.target.classList.contains('file-content')) {
+                history.push(folderUrl);
+            }
+        }}>
+            <div className="file-overlay-container">
+                <div className="file-overlay-content">
                     <div>
-                        <h4 className="file-title">{normal}</h4>
+                        <h4 className="file-title">{name}</h4>
                     </div>
-                    <div className="file-remaining">
-                        {viewer}
+                    <div className="file-overlay-content-remaining">
+                        <div className="file-content-container">
+                            <div className="file-content">
+                                {viewer}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <Link to={folderUrl} className="file-close">
-                <button>Close</button>
+            <Link to={folderUrl}>
+                <i className="fas fa-times fa-3x file-close" />
             </Link>
         </div>
     );

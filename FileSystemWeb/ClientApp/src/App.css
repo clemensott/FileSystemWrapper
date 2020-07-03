@@ -1,10 +1,11 @@
-﻿.hidden {
-    display: none;
-}
-
-.center{
+﻿.center {
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
+}
+
+a:visited, a:hover, a:active, a:focus {
+    text-decoration: none !important;
+    outline: none !important;
 }

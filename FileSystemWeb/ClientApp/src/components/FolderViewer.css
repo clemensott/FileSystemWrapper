@@ -1,0 +1,21 @@
+﻿.folder-viewer-list {
+    list-style-type: none;
+}
+
+.folder-viewer-head-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.folder-viewer-head-path {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.folder-viewer-to-top-container {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 20px; /* Place the button at the bottom of the page */
+    right: 30px; /* Place the button 30px from the right */
+    z-index: 9; /* Make sure it does not overlap */
+}

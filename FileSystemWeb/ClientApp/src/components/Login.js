@@ -6,7 +6,7 @@ export class Login extends Component {
 
     constructor(props) {
         super(props);
-        
+
         this.passwordInput = React.createRef();
         this.state = {
             password: localStorage.getItem('password') || '',
@@ -29,18 +29,21 @@ export class Login extends Component {
             );
         }
 
+        document.title = 'Login - File System';
+
         return (
-            <div>
-                <div>
-                    <label>Password</label>
+            <form onSubmit={e => {
+                e.preventDefault();
+                this.submit();
+            }}>
+                <div className="form-group">
+                    <label >Password</label>
+                    <input ref={this.passwordInput} type="password" className="form-control" defaultValue={this.state.password} />
                 </div>
                 <div>
-                    <input ref={this.passwordInput} type="password" defaultValue={this.state.password} />
+                    <button className="btn btn-primary" onClick={() => this.submit()}>Login</button>
                 </div>
-                <div>
-                    <button onClick={() => this.submit()}>Login</button>
-                </div>
-            </div>
+            </form>
         );
     }
 

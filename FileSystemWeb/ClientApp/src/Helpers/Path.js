@@ -23,7 +23,7 @@ export function getParent(path) {
 }
 
 export function encodeToURI(path) {
-    return path && normalizeFile(path).split('\\').join('|');
+    return path && encodeURIComponent(normalizeFile(path).split('\\').join('|'));
 }
 
 export function getExtension(path) {
@@ -34,6 +34,73 @@ export function getExtension(path) {
     return index >= 0 ? normal.substr(index) : '';
 }
 
+export function getFileType(path) {
+    const extension = getExtension(path) || '';
+    switch (extension.toLowerCase()) {
+        case '.apng':
+        case '.bmp':
+        case '.gif':
+        case '.ico':
+        case '.cur':
+        case '.jpg':
+        case '.jpeg':
+        case '.jfif':
+        case '.pjpeg':
+        case '.pjp':
+        case '.png':
+        case '.svg':
+        case '.tif':
+        case '.tiff':
+        case '.webp':
+            return 'image';
+
+        case '.js':
+        case '.json':
+        case '.xml':
+        case '.css':
+        case '.htm':
+        case '.html':
+        case '.txt':
+        case '.log':
+        case '.ini':
+        case '.rtx':
+        case '.rtf':
+        case '.tsv':
+        case '.csv':
+            return 'text';
+
+        case '.aac':
+        case '.mp3':
+        case '.mp2':
+            return 'audio';
+
+        case '.wav':
+        case '.oga':
+        case '.mpeg':
+        case '.mpg':
+        case '.mpe':
+        case '.mp4':
+        case '.ogg':
+        case '.ogv':
+        case '.qt':
+        case '.mov':
+        case '.viv':
+        case '.vivo':
+        case '.webm':
+        case '.mkv':
+        case '.avi':
+        case '.movie':
+        case '.3gp':
+        case '.3g2':
+            return 'video';
+
+        case '.pdf':
+            return 'pdf';
+    }
+
+    return null;
+}
+
 
 export default {
     normalizeFile,
@@ -41,4 +108,5 @@ export default {
     getName,
     getParent,
     encodeToURI,
+    getFileType,
 }

@@ -1,10 +1,10 @@
 ﻿import React, { Component } from 'react';
 import { formatUrl } from '../../Helpers/Fetch';
 import Loading from '../Loading/Loading';
-import './TextViewer.css'
+import './PdfViewer.css'
 
-export default class TextViewer extends Component {
-    static displayName = TextViewer.name;
+export default class PdfViewer extends Component {
+    static displayName = PdfViewer.name;
 
     constructor(props) {
         super(props);
@@ -13,8 +13,7 @@ export default class TextViewer extends Component {
         this.fetchPath = null;
         this.state = {
             loading: true,
-            filePath: null,
-            text: null,
+            localUrl: null,
             error: null,
         };
     }
@@ -27,22 +26,20 @@ export default class TextViewer extends Component {
                 </div>
             );
         }
-        if (this.state.text) {
+        if (this.state.localUrl) {
             return (
-                <div className="text-viewer-text">
-                    {this.state.text}
-                </div>
+                <embed src={this.state.localUrl} type="application/pdf" className="pdf-viewer-pdf" />
             );
         }
         if (this.state.error) {
             return (
-                <div className="text-viewer-error">
+                <div className="pdf-viewer-error">
                     {this.state.error}
                 </div>
             );
         }
         return (
-            <label className="text-viewer-no-text">
+            <label className="pdf-viewer-no-pdf">
                 &lt;No Text&gt;
             </label>
         );
@@ -50,20 +47,20 @@ export default class TextViewer extends Component {
 
     async componentDidMount() {
         this.isUnmounted = false;
-        await this.checkUpdateText();
+        await this.checkUpdatePdf();
     }
 
     async componentDidUpdate() {
-        await this.checkUpdateText();
+        await this.checkUpdatePdf();
     }
 
-    async checkUpdateText() {
+    async checkUpdatePdf() {
         const path = this.props.path;
-        if (path !== this.fetchPath && path !== this.state.filePath) await this.updateText(path);
+        if (path !== this.fetchPath && path !== this.state.filePath) await this.updatePdf(path);
     }
 
-    async updateText(path) {
-        const textUrl = formatUrl({
+    async updatePdf(path) {
+        const pdfUrl = formatUrl({
             resource: '/api/files',
             path: path,
             password: this.props.password,
@@ -71,26 +68,21 @@ export default class TextViewer extends Component {
 
         try {
             this.fetchPath = path;
-            this.setState({
-                loading: true,
-                error: null,
-            });
-            const response = await fetch(textUrl);
+            const response = await fetch(pdfUrl);
 
             if (this.isUnmounted || this.fetchPath !== path) return;
-            const text = await response.text();
 
             if (response.ok) {
+                const blob = await response.blob();
                 this.setState({
                     loading: false,
-                    filePath: path,
-                    text,
+                    localUrl: URL.createObjectURL(blob),
                 });
             } else {
+                const error = await response.text();
                 this.setState({
                     loading: false,
-                    filePath: path,
-                    error: text || response.statusText || response.status,
+                    error: error || response.statusText || response.status,
                 });
             }
         } catch (err) {
@@ -98,7 +90,6 @@ export default class TextViewer extends Component {
             if (this.fetchPath === path) {
                 this.setState({
                     loading: false,
-                    filePath: path,
                     error: err.message,
                 });
             }
@@ -107,5 +98,6 @@ export default class TextViewer extends Component {
 
     componentWillUnmount() {
         this.isUnmounted = true;
+        if (this.state.localUrl) URL.revokeObjectURL(this.state.localUrl);
     }
 }

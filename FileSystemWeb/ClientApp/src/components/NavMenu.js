@@ -36,9 +36,6 @@ export class NavMenu extends Component {
                                 <NavItem>
                                     <NavLink tag={RRNavLink} className="text-dark" to={authUrl}>{authTitle}</NavLink>
                                 </NavItem>
-                                <NavItem>
-                                    <NavLink tag={RRNavLink} className="text-dark" to="/test">Test</NavLink>
-                                </NavItem>
                             </ul>
                         </Collapse>
                     </Container>

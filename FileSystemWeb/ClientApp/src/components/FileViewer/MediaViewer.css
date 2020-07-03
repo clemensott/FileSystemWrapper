@@ -1,6 +1,12 @@
-﻿.media-content {
+﻿.media-viewer-error {
+    color: red;
+}
+
+audio.media-viewer-content {
     width: 100%;
-    height: 100%;
+}
+
+video.media-viewer-content {
     max-width: 100%;
-    max-height: 100%;
+    height: 100%;
 }

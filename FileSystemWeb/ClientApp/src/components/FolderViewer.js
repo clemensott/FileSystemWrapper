@@ -4,6 +4,7 @@ import { getName, getParent, encodeToURI } from '../Helpers/Path'
 import { Link } from 'react-router-dom';
 import { fetchApi } from '../Helpers/Fetch';
 import Loading from './Loading/Loading';
+import './FolderViewer.css';
 
 export class FolderViewer extends Component {
     static displayName = FolderViewer.name;
@@ -19,7 +20,10 @@ export class FolderViewer extends Component {
             filesPath: null,
             folders: [],
             files: [],
+            isOnTop: true,
         }
+
+        this.onScroll = this.onScroll.bind(this);
     }
 
     async updateItems(path) {
@@ -52,7 +56,7 @@ export class FolderViewer extends Component {
     async updateFiles(path) {
         if (this.filesFetchPath === path) return;
         this.filesFetchPath = path;
-        
+
         const response = await fetchApi({ resource: '/api/folders/listfiles', path, password: this.props.password });
         const files = await response.json();
 
@@ -77,21 +81,21 @@ export class FolderViewer extends Component {
         if (item.isFile) {
             const fileLink = `/${encodeToURI(this.props.path)}/${encodeToURI(item.path)}`;
             return (
-                <li key={item.path}>
+                <div key={item.path} className="m-2">
                     <Link to={fileLink}>
                         <FSItem isFile={true} path={item.path} name={item.name} />
                     </Link>
-                </li>
+                </div>
             )
         }
 
         const folderLink = `/${encodeToURI(item.path)}`;
         return (
-            <li key={item.path}>
+            <div key={item.path} className="m-2">
                 <Link to={folderLink}>
                     <FSItem isFile={false} path={item.path} name={item.name} />
                 </Link>
-            </li>
+            </div>
         )
     }
 
@@ -108,24 +112,44 @@ export class FolderViewer extends Component {
 
         return (
             <div>
-                <span>
+                <div className="folder-viewer-head-container">
                     <Link to={parentUrl} >
-                        <button disabled={parentPath === null}>
-                            Parent
-                        </button>
+                        <i className={`fa fa-arrow-up fa-2x ${parentPath === null ? 'd-none' : ''}`} />
                     </Link>
-                    <label className="path">
+                    <div className="path pl-2 folder-viewer-head-path">
                         {path}
-                    </label>
-                </span>
-                <ul>
+                    </div>
+                </div>
+                <div className="folder-viewer-list">
                     {folders}
                     {files}
-                </ul>
-                <div className={isLoading ? 'center' : 'center hidden'}>
+                </div>
+                <div className={`folder-viewer-to-top-container ${this.state.isOnTop ? 'd-none' : ''}`}>
+                    <button className="btn btn-info" onClick={() => {
+                        document.body.scrollTop = 0; // For Safari
+                        document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+                    }}>
+                        BACK TO TOP
+                    </button>
+                </div>
+                <div className={isLoading ? 'center' : 'center d-none'}>
                     <Loading />
                 </div>
             </div>
         );
+    }
+
+    componentDidMount() {
+        window.onscroll = this.onScroll;
+    }
+
+    componentWillUnmount() {
+        window.onscroll = this.onScroll;
+    }
+
+    onScroll() {
+        this.setState({
+            isOnTop: document.body.scrollTop < 20 && document.documentElement.scrollTop < 20,
+        });
     }
 }
