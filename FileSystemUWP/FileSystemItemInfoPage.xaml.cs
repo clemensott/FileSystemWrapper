@@ -90,14 +90,14 @@ namespace FileSystemUWP
                 if (info != null) DataContext = info;
                 else
                 {
-                    await MessageDialogUtils.ShowSafeAsync("Loading infos failed");
+                    await DialogUtils.ShowSafeAsync("Loading infos failed");
                     Frame.GoBack();
                 }
 
             }
             catch (Exception exc)
             {
-                await MessageDialogUtils.ShowSafeAsync(exc.Message, "Load infos error");
+                await DialogUtils.ShowSafeAsync(exc.Message, "Load infos error");
                 Frame.GoBack();
             }
         }

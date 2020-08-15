@@ -115,7 +115,7 @@ namespace FileSystemUWP
         {
             if (e.Item.IsFolder)
             {
-                await MessageDialogUtils.ShowSafeAsync("Downloading a folder is not implemented");
+                await DialogUtils.ShowSafeAsync("Downloading a folder is not implemented");
                 return;
             }
 
@@ -134,7 +134,7 @@ namespace FileSystemUWP
         {
             if (e.Item.IsFile)
             {
-                bool delete = await MessageDialogUtils.Binary(e.Item.Name, "Delete File?", "Yes", "No");
+                bool delete = await DialogUtils.ShowTwoOptionsAsync(e.Item.Name, "Delete File?", "Yes", "No");
                 if (!delete) return;
 
                 await viewModel.Api.DeleteFile(e.Item.FullPath);
@@ -142,7 +142,7 @@ namespace FileSystemUWP
             }
             else
             {
-                bool delete = await MessageDialogUtils.Binary(e.Item.Name, "Delete Folder?", "Yes", "No");
+                bool delete = await DialogUtils.ShowTwoOptionsAsync(e.Item.Name, "Delete Folder?", "Yes", "No");
                 if (!delete) return;
 
                 await viewModel.Api.DeleteFolder(e.Item.FullPath, true);
@@ -201,10 +201,10 @@ namespace FileSystemUWP
 
             if (string.IsNullOrWhiteSpace(exceptionText)) exceptionText = "<None>";
 
-            await MessageDialogUtils.ShowSafeAsync(exceptionText, formatedExceptionTime);
+            await DialogUtils.ShowSafeAsync(exceptionText, formatedExceptionTime);
 
             string formatedTimerSyncTime = Settings.Current.SyncTimerTime.ToString();
-            await MessageDialogUtils.ShowSafeAsync(formatedTimerSyncTime, "Timer synced");
+            await DialogUtils.ShowSafeAsync(formatedTimerSyncTime, "Timer synced");
         }
     }
 }

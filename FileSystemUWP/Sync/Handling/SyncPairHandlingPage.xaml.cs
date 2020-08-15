@@ -155,7 +155,7 @@ namespace FileSystemUWP.Sync.Handling
 
             if (pairs.Count == 0)
             {
-                await MessageDialogUtils.ShowSafeAsync("<none>", "Errors");
+                await DialogUtils.ShowSafeAsync("<none>", "Errors");
                 return;
             }
 
@@ -166,10 +166,10 @@ namespace FileSystemUWP.Sync.Handling
                 string title = $"Error: {i + 1} / {pairs.Count}";
                 string message = $"{errorPair.Pair.RelativePath}\r\n{errorPair.Exception}";
 
-                bool? result = await MessageDialogUtils.Threestate(message, title, "Next", "Cancel", "Previous");
+                ContentDialogResult result = await DialogUtils.ShowContentAsync(message, title, "Cancel", "Previous", "Next", ContentDialogButton.Secondary);
 
-                if (result == true) i = StdUtils.OffsetIndex(i, pairs.Count, 1).index;
-                if (result == null) i = StdUtils.OffsetIndex(i, pairs.Count, -1).index;
+                if (result == ContentDialogResult.Primary) i = StdUtils.OffsetIndex(i, pairs.Count, -1).index;
+                else if (result == ContentDialogResult.Secondary) i = StdUtils.OffsetIndex(i, pairs.Count, 1).index;
                 else break;
             }
         }
@@ -203,7 +203,7 @@ namespace FileSystemUWP.Sync.Handling
             string message = string.Join("\r\n", pairs.Take(30).Select(p => p.RelativePath));
             if (string.IsNullOrWhiteSpace(message)) message = "<None>";
 
-            await MessageDialogUtils.ShowSafeAsync(message, title);
+            await DialogUtils.ShowSafeAsync(message, title);
         }
 
         private void AbbBack_Click(object sender, RoutedEventArgs e)

@@ -2,6 +2,7 @@
 using FileSystemUWP.Sync.Handling;
 using StdOttStandard;
 using StdOttStandard.Linq;
+using StdOttUwp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -47,6 +48,7 @@ namespace FileSystemUWP
         /// <param name="e">Details über Startanforderung und -prozess.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
+            BackPressHandler.Current.Activate();
             BackgroundTaskHelper.Current.RegisterTimerBackgroundTask();
 
             Frame rootFrame = Window.Current.Content as Frame;
