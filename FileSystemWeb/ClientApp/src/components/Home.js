@@ -1,19 +1,20 @@
 import React from 'react';
-import { useParams, Redirect } from 'react-router-dom';
-import { normalizeFolder, normalizeFile, getName } from '../Helpers/Path';
-import { FolderViewer } from './FolderViewer';
+import {useParams, Redirect} from 'react-router-dom';
+import {normalizeFolder, normalizeFile, getName, DecodePath} from '../Helpers/Path';
+import {FolderViewer} from './FolderViewer';
 import FileViewer from './FileViewer/FileViewer';
 import {getCookieValue} from "../Helpers/cookies";
 
 export default function () {
     const isLoggedIn = !!getCookieValue('fs_login');
     if (!isLoggedIn) {
-        return <Redirect to="/login" />
+        return <Redirect to="/login"/>
     }
 
-    const { folder, file } = useParams();
-    const folderNorm = normalizeFolder(folder && decodeURIComponent(folder)) || '';
-    const fileNorm = normalizeFile(file && decodeURIComponent(file));
+    const {folder, file} = useParams();
+    const folderNorm = normalizeFolder(folder && DecodePath(folder)) || '';
+    const fileNameDecoded = normalizeFile(file && DecodePath(file));
+    const fileNorm = folderNorm && fileNameDecoded && (folderNorm + fileNameDecoded);
 
     let name;
     if (fileNorm) {
@@ -31,8 +32,8 @@ export default function () {
 
     return (
         <div>
-            <FolderViewer path={folderNorm} />
-            <FileViewer path={fileNorm} />
+            <FolderViewer path={folderNorm}/>
+            <FileViewer path={fileNorm}/>
         </div>
     );
 }

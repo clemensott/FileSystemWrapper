@@ -1,11 +1,12 @@
 ﻿import React from 'react';
-import { getName, getParent, encodeToURI, getFileType } from '../../Helpers/Path';
+import {getName, getParent, getFileType, encodeBase64Custom} from '../../Helpers/Path';
 import ImageViewer from './ImageViewer';
 import TextViewer from './TextViewer';
 import MediaViewer from './MediaViewer';
-import './FileViewer.css';
 import { Link, useHistory } from 'react-router-dom';
 import PdfViewer from './PdfViewer';
+import {formatUrl} from "../../Helpers/Fetch";
+import './FileViewer.css';
 
 function getViewer(path) {
     switch (getFileType(path)) {
@@ -40,8 +41,18 @@ export default function (props) {
     const viewer = getViewer(props.path);
 
     const folderPath = getParent(props.path);
-    const folderUrl = '/' + encodeToURI(folderPath);
+    const folderUrl = '/' + encodeBase64Custom(folderPath);
     const history = useHistory();
+
+    const isSupportedFile = ['image', 'audio', 'video', 'text', 'pdf'].includes(getFileType(props.path));
+    const fileOpenLink = formatUrl({
+        resource: '/api/files',
+        path: props.path,
+    });
+    const fileDownloadLink = formatUrl({
+        resource: '/api/files/download',
+        path: props.path,
+    });
 
     return (
         <div className={`file-overlay ${name ? '' : 'd-none'}`} onClick={e => {
@@ -54,8 +65,15 @@ export default function (props) {
         }}>
             <div className="file-overlay-container">
                 <div className="file-overlay-content">
-                    <div>
+                    <div className="file-overlay-header-container">
                         <h4 className="file-title">{name}</h4>
+                        <a href={fileOpenLink} target="_blank"
+                           className={`text-info ${isSupportedFile ? '' : 'd-none'}`}>
+                            <i className="m-2 fas fa-external-link-square-alt fa-2x"/>
+                        </a>
+                        <a href={fileDownloadLink} download={props.name} className="text-light">
+                            <i className="m-2 fas fa-download fa-2x"/>
+                        </a>
                     </div>
                     <div className="file-overlay-content-remaining">
                         <div className="file-content-container">

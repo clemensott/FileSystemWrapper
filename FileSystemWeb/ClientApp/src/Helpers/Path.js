@@ -1,5 +1,4 @@
-﻿
-// replaces / and | with \ and removes last \
+﻿// replaces / and | with \ and removes last \
 export function normalizeFile(path) {
     return path && path.split(/[\/\\|]/).filter(Boolean).join('\\');
 }
@@ -22,8 +21,29 @@ export function getParent(path) {
     return index >= 0 ? normal.substr(0, index) : '';
 }
 
-export function encodeToURI(path) {
-    return path && encodeURIComponent(normalizeFile(path).split('\\').join('|'));
+export function encodeBase64Custom(path) {
+    return path && window.btoa(normalizeFile(path))
+        .replace(/\//g, '_')   // replaces all '/' with '_'
+        .replace(/=+$/g, '');  // trims all '=' at the end
+}
+
+export function decodeBase64Custom(raw) {
+    return window.atob(raw.replace(/_/g, '/'));
+}
+
+function toUnicode(char) {
+    const code = char.charCodeAt(0);
+    return String.fromCharCode(code % 256) + String.fromCharCode(code / 256);
+}
+
+export function encodeBase64UnicodeCustom(path) {
+    const unicodeString = path && normalizeFile(path).split('')
+        .reduce((sum, cur) => sum + toUnicode(cur), '');
+    console.log('unicode:', unicodeString, window.btoa(unicodeString));
+    return unicodeString &&
+        window.btoa(unicodeString)
+            .replace(/\//g, '_')   // replaces all '/' with '_'
+            .replace(/=/g, '!');   // replaces all '=' with '!'
 }
 
 export function getExtension(path) {
@@ -99,14 +119,4 @@ export function getFileType(path) {
     }
 
     return null;
-}
-
-
-export default {
-    normalizeFile,
-    normalizeFolder,
-    getName,
-    getParent,
-    encodeToURI,
-    getFileType,
 }

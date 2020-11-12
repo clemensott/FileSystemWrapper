@@ -16,12 +16,14 @@ namespace FileSystemWeb.Controllers
         [HttpGet("exists")]
         public bool Exists([FromQuery] string path)
         {
+            path = Utils.DecodePath(path).TrimEnd('\\') + "\\";
             return Directory.Exists(path);
         }
 
         [HttpGet("listfiles")]
         public ActionResult<IEnumerable<string>> ListFiles([FromQuery] string path)
         {
+            path = Utils.DecodePath(path ?? string.Empty);
             if (string.IsNullOrWhiteSpace(path))
             {
                 return new string[0];
@@ -29,7 +31,7 @@ namespace FileSystemWeb.Controllers
 
             try
             {
-                return Directory.GetFiles(path);
+                return Directory.GetFiles(path.TrimEnd('\\') + "\\");
             }
             catch (DirectoryNotFoundException)
             {
@@ -40,6 +42,7 @@ namespace FileSystemWeb.Controllers
         [HttpGet("listfolders")]
         public ActionResult<IEnumerable<string>> ListFolders([FromQuery] string path)
         {
+            path = Utils.DecodePath(path ?? string.Empty);
             if (string.IsNullOrWhiteSpace(path))
             {
                 return DriveInfo.GetDrives().Select(d => d.Name).ToArray();
@@ -47,7 +50,7 @@ namespace FileSystemWeb.Controllers
 
             try
             {
-                return Directory.GetDirectories(path);
+                return Directory.GetDirectories(path.TrimEnd('\\') + "\\");
             }
             catch (DirectoryNotFoundException)
             {
@@ -58,6 +61,7 @@ namespace FileSystemWeb.Controllers
         [HttpGet("info")]
         public ActionResult<FolderItemInfo> GetInfo([FromQuery] string path)
         {
+            path = Utils.DecodePath(path ?? string.Empty);
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("Path is missing");
@@ -65,7 +69,7 @@ namespace FileSystemWeb.Controllers
 
             try
             {
-                DirectoryInfo info = new DirectoryInfo(path);
+                DirectoryInfo info = new DirectoryInfo(path.TrimEnd('\\') + "\\");
                 return Utils.GetInfo(info);
             }
             catch (DirectoryNotFoundException)
@@ -77,18 +81,20 @@ namespace FileSystemWeb.Controllers
         [HttpPost]
         public ActionResult<FolderItemInfo> Create([FromQuery] string path)
         {
+            path = Utils.DecodePath(path ?? string.Empty);
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("Path is missing");
             }
 
-            DirectoryInfo info = Directory.CreateDirectory(path);
+            DirectoryInfo info = Directory.CreateDirectory(path.TrimEnd('\\') + "\\");
             return Utils.GetInfo(info);
         }
 
         [HttpDelete]
-        public async Task<ActionResult> Delete([FromQuery] string path, [FromQuery] bool recrusive)
+        public async Task<ActionResult> Delete([FromQuery] string path, [FromQuery] bool recursive)
         {
+            path = Utils.DecodePath(path ?? string.Empty);
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("Path is missing");
@@ -96,7 +102,7 @@ namespace FileSystemWeb.Controllers
 
             try
             {
-                await Task.Run(() => Directory.Delete(path, recrusive));
+                await Task.Run(() => Directory.Delete(path.TrimEnd('\\') + "\\", recursive));
             }
             catch (DirectoryNotFoundException)
             {

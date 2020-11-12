@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FileSystemWeb.Controllers
 {
+    [Route("api/[controller]")]
     public class PingController : ControllerBase
     {
         [HttpGet]

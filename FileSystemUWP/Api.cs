@@ -1,4 +1,5 @@
-﻿using FileSystemCommon.Models.Auth;
+﻿using FileSystemCommon;
+using FileSystemCommon.Models.Auth;
 using FileSystemCommon.Models.FileSystem;
 using Newtonsoft.Json;
 using StdOttStandard.Linq;
@@ -93,8 +94,8 @@ namespace FileSystemUWP
 
         public Task<bool> DeleteFolder(string path, bool recrusive)
         {
-            IEnumerable<KeyValuePair<string, string>> values =
-                KeyValuePairsUtils.CreatePairs("path", path, "recrusive", recrusive.ToString());
+            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils.CreatePairs(
+                "path", Utils.EncodePath(path), "recrusive", recrusive.ToString());
 
             return Request(GetUri("/api/folders", values), HttpMethod.Delete);
         }
@@ -116,16 +117,18 @@ namespace FileSystemUWP
 
         public Task<bool> CopyFile(string srcPath, string destPath)
         {
-            IEnumerable<KeyValuePair<string, string>> values =
-                KeyValuePairsUtils.CreatePairs("srcPath", srcPath, "destPath", destPath);
+            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils.CreatePairs(
+                "srcPath", Utils.EncodePath(srcPath),
+                "destPath", Utils.EncodePath(destPath));
 
             return Request(GetUri("/api/files/copy", values), HttpMethod.Post);
         }
 
         public Task<bool> MoveFile(string srcPath, string destPath)
         {
-            IEnumerable<KeyValuePair<string, string>> values =
-                KeyValuePairsUtils.CreatePairs("srcPath", srcPath, "destPath", destPath);
+            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils.CreatePairs(
+                "srcPath", Utils.EncodePath(srcPath),
+                "destPath", Utils.EncodePath(destPath));
 
             return Request(GetUri("/api/files/move", values), HttpMethod.Post);
         }
@@ -265,9 +268,7 @@ namespace FileSystemUWP
 
         public Uri GetUriWithPath(string resource, string path)
         {
-            KeyValuePair<string, string>[] values = new[] { new KeyValuePair<string, string>("path", path) };
-
-            return GetUri(resource, KeyValuePairsUtils.CreatePairs("path", path));
+            return GetUri(resource, KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
         }
 
         public Uri GetUri(string resource, IEnumerable<KeyValuePair<string, string>> values)

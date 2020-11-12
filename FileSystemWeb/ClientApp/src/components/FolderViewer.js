@@ -1,8 +1,8 @@
 ﻿import React, {Component} from 'react';
 import FSItem from './FSItem'
-import {getName, getParent, encodeToURI} from '../Helpers/Path'
+import {getName, getParent, getFileType, encodeBase64Custom} from '../Helpers/Path'
 import {Link} from 'react-router-dom';
-import {fetchApi} from '../Helpers/Fetch';
+import {fetchApi, formatUrl} from '../Helpers/Fetch';
 import Loading from './Loading/Loading';
 import './FolderViewer.css';
 
@@ -23,22 +23,24 @@ export class FolderViewer extends Component {
             isOnTop: true,
         }
 
+        this.headOffsetTop = null;
+        this.headContainerRef = React.createRef();
         this.onScroll = this.onScroll.bind(this);
     }
 
-    async updateItems(path) {
+    async updateItems(path, force = false) {
         try {
             await Promise.all([
-                this.updateFolders(path),
-                this.updateFiles(path),
+                this.updateFolders(path, force),
+                this.updateFiles(path, force),
             ]);
         } catch (e) {
             console.log(e);
         }
     }
 
-    async updateFolders(path) {
-        if (this.foldersFetchPath === path) return;
+    async updateFolders(path, force) {
+        if (!force && this.foldersFetchPath === path) return;
         this.foldersFetchPath = path;
 
         const response = await fetchApi({resource: '/api/folders/listfolders', path});
@@ -56,8 +58,8 @@ export class FolderViewer extends Component {
         }
     }
 
-    async updateFiles(path) {
-        if (this.filesFetchPath === path) return;
+    async updateFiles(path, force) {
+        if (!force && this.filesFetchPath === path) return;
         this.filesFetchPath = path;
 
         const response = await fetchApi({resource: '/api/folders/listfiles', path});
@@ -84,19 +86,36 @@ export class FolderViewer extends Component {
     }
 
     renderItem(item) {
-
         if (item.isFile) {
-            const fileLink = `/${encodeToURI(this.props.path)}/${encodeToURI(item.path)}`;
+            const fileLink = `/${encodeBase64Custom(this.props.path)}/${encodeBase64Custom(item.name)}`;
+            const fileOpenLink = formatUrl({
+                resource: '/api/files',
+                path: item.path,
+            });
+            const fileDownloadLink = formatUrl({
+                resource: '/api/files/download',
+                path: item.path,
+            });
+            const isSupportedFile = ['image', 'audio', 'video', 'text', 'pdf'].includes(getFileType(item.path));
+
             return (
-                <div key={item.path} className="m-2">
-                    <Link to={fileLink}>
-                        <FSItem isFile={true} path={item.path} name={item.name}/>
-                    </Link>
+                <div key={item.path} className="folder-viewer-file-item-container">
+                    <div className="m-2 folder-viewer-file-item-content">
+                        <Link to={fileLink}>
+                            <FSItem isFile={true} path={item.path} name={item.name}/>
+                        </Link>
+                    </div>
+                    <a href={fileOpenLink} target="_blank" className={isSupportedFile ? '' : 'd-none'}>
+                        <i className="m-2 fas fa-external-link-square-alt fa-2x"/>
+                    </a>
+                    <a href={fileDownloadLink} download={item.name} className="text-dark">
+                        <i className="m-2 fas fa-download fa-2x"/>
+                    </a>
                 </div>
             )
         }
 
-        const folderLink = `/${encodeToURI(item.path)}`;
+        const folderLink = `/${encodeBase64Custom(item.path)}`;
         return (
             <div key={item.path} className="m-2">
                 <Link to={folderLink}>
@@ -109,7 +128,7 @@ export class FolderViewer extends Component {
     render() {
         const path = this.props.path;
         const parentPath = getParent(path);
-        const parentUrl = parentPath ? '/' + encodeToURI(parentPath) : '/';
+        const parentUrl = parentPath ? '/' + encodeBase64Custom(parentPath) : '/';
         const folders = this.state.foldersPath === path ? this.state.folders.map(i => this.renderItem(i)) : [];
         const files = this.state.filesPath === path ? this.state.files.map(i => this.renderItem(i)) : [];
 
@@ -117,15 +136,21 @@ export class FolderViewer extends Component {
 
         return (
             <div>
-                <div className="folder-viewer-head-container">
+                <div ref={this.headContainerRef}
+                     className={`folder-viewer-head-container ${this.state.isOnTop ? '' : 'folder-viewer-head-sticky'}`}>
+                    <div onClick={() => this.updateItems(this.props.path, true)}>
+                        <i className="folder-viewer-head-update-icon fa fa-retweet fa-2x"/>
+                    </div>
                     <Link to={parentUrl}>
-                        <i className={`fa fa-arrow-up fa-2x ${parentPath === null ? 'd-none' : ''}`}/>
+                        <i className={`pl-2 fa fa-arrow-up fa-2x ${parentPath === null ? 'd-none' : ''}`}/>
                     </Link>
                     <div className="path pl-2 folder-viewer-head-path">
                         {path}
                     </div>
                 </div>
-                <div className="folder-viewer-list">
+                <div className="folder-viewer-list" style={{
+                    paddingTop: `${!this.state.isOnTop && this.headContainerRef.current && this.headContainerRef.current.offsetHeight || 0}px`
+                }}>
                     {folders}
                     {files}
                 </div>
@@ -149,9 +174,10 @@ export class FolderViewer extends Component {
 
     componentDidMount() {
         window.onscroll = this.onScroll;
-        return  this.updateItems(this.props.path);
+        this.headOffsetTop = this.headContainerRef.current.offsetTop;
+        return this.updateItems(this.props.path);
     }
-    
+
     componentDidUpdate(prevProps, prevState, snapshot) {
         return this.updateItems(this.props.path);
     }
@@ -162,7 +188,7 @@ export class FolderViewer extends Component {
 
     onScroll() {
         this.setState({
-            isOnTop: document.body.scrollTop < 20 && document.documentElement.scrollTop < 20,
+            isOnTop: document.body.scrollTop < this.headOffsetTop && document.documentElement.scrollTop < this.headOffsetTop,
         });
     }
 }

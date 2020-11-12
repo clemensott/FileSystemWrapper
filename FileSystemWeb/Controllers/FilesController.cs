@@ -17,6 +17,7 @@ namespace FileSystemWeb.Controllers
         [HttpGet]
         public ActionResult<object> Get([FromQuery] string path)
         {
+            path = Utils.DecodePath(path ?? string.Empty);
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("Path is missing");
@@ -30,6 +31,7 @@ namespace FileSystemWeb.Controllers
         [HttpGet("download")]
         public ActionResult<object> Download([FromQuery] string path)
         {
+            path = Utils.DecodePath(path ?? string.Empty);
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("Path is missing");
@@ -43,12 +45,14 @@ namespace FileSystemWeb.Controllers
         [HttpGet("exists")]
         public bool Exists([FromQuery] string path)
         {
+            path = Utils.DecodePath(path ?? string.Empty);
             return System.IO.File.Exists(path);
         }
 
         [HttpGet("info")]
         public ActionResult<FileItemInfo> GetInfo([FromQuery] string path)
         {
+            path = Utils.DecodePath(path ?? string.Empty);
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("Path is missing");
@@ -68,6 +72,7 @@ namespace FileSystemWeb.Controllers
         [HttpGet("hash")]
         public ActionResult<string> GetHash([FromQuery] string path)
         {
+            path = Utils.DecodePath(path ?? string.Empty);
             if (string.IsNullOrWhiteSpace(path))
             {
                 return BadRequest("Path is missing");
@@ -92,6 +97,9 @@ namespace FileSystemWeb.Controllers
         [HttpPost("copy")]
         public async Task<ActionResult> Copy([FromQuery] string srcPath, [FromQuery] string destPath)
         {
+            srcPath = Utils.DecodePath(srcPath ?? string.Empty);
+            destPath = Utils.DecodePath(destPath ?? string.Empty);
+            
             if (string.IsNullOrWhiteSpace(srcPath))
             {
                 return BadRequest("Source path is missing");
@@ -123,6 +131,9 @@ namespace FileSystemWeb.Controllers
         [HttpPost("move")]
         public async Task<ActionResult> Move([FromQuery] string srcPath, [FromQuery] string destPath)
         {
+            srcPath = Utils.DecodePath(srcPath ?? string.Empty);
+            destPath = Utils.DecodePath(destPath ?? string.Empty);
+            
             if (string.IsNullOrWhiteSpace(srcPath))
             {
                 return BadRequest("Source path is missing");
@@ -149,7 +160,8 @@ namespace FileSystemWeb.Controllers
         [HttpPost]
         public async Task<ActionResult> Write([FromQuery] string path)
         {
-            if (string.IsNullOrWhiteSpace(path))
+            path = Utils.DecodePath(path ?? string.Empty);
+            if (string.IsNullOrWhiteSpace(path ?? string.Empty))
             {
                 return BadRequest("Path is missing");
             }
@@ -167,8 +179,7 @@ namespace FileSystemWeb.Controllers
                     {
                         size = await src.ReadAsync(buffer, 0, buffer.Length);
                         await dest.WriteAsync(buffer, 0, size);
-                    }
-                    while (size > 0);
+                    } while (size > 0);
                 }
 
                 if (tmpPath != path)
@@ -177,7 +188,7 @@ namespace FileSystemWeb.Controllers
                     System.IO.File.Move(tmpPath, path);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 try
                 {
@@ -187,13 +198,15 @@ namespace FileSystemWeb.Controllers
 
                 throw;
             }
+
             return Ok();
         }
 
         [HttpDelete]
         public ActionResult Delete([FromQuery] string path)
         {
-            if (string.IsNullOrWhiteSpace(path))
+            path = Utils.DecodePath(path ?? string.Empty);
+            if (string.IsNullOrWhiteSpace(path ?? string.Empty))
             {
                 return BadRequest("Path is missing");
             }

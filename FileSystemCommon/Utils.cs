@@ -1,10 +1,30 @@
-﻿using FileSystemCommon.Models.FileSystem;
+﻿using System;
+using FileSystemCommon.Models.FileSystem;
 using System.IO;
+using System.Text;
 
 namespace FileSystemCommon
 {
     public static class Utils
     {
+        /// <summary>
+        /// Encodes a text with Unicode to Base64 but replaces '/' and '='. Is used for file oder folder paths to replace URI encoding.
+        /// This has the advantage of URLs with no whitespaces and other special characters that need escacping.
+        /// </summary>
+        /// <param name="path">The path or text to encode.</param>
+        /// <returns>The encoded text.</returns>
+        public static string EncodePath(string path)
+        {
+            return Convert.ToBase64String(Encoding.Unicode.GetBytes(path))
+                .Replace('/', '_').Replace('=','!');
+        }
+
+        public static string DecodePath(string customBase64)
+        {
+            string base64 = customBase64.Replace('_', '/').Replace('!', '=');
+            return Encoding.Unicode.GetString(Convert.FromBase64String(base64));
+        }
+
         public static string GetContentType(string extension)
         {
             switch (extension.ToLower())
