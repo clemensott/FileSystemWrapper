@@ -2,7 +2,7 @@
 using FileSystemUWP.Sync.Handling;
 using StdOttStandard;
 using StdOttStandard.Linq;
-using StdOttUwp;
+using StdOttUwp.BackPress;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -37,7 +37,7 @@ namespace FileSystemUWP
             viewModel = CreateViewModel();
 
             viewModel.Api.BaseUrl = Settings.Current.BaseUrl;
-            viewModel.Api.Password = Settings.Current.Password;
+            viewModel.Api.RawCookies = Settings.Current.RawCookies;
             viewModel.CurrentFolderPath = Settings.Current.FolderPath;
         }
 
@@ -111,7 +111,7 @@ namespace FileSystemUWP
         private void SaveSettings()
         {
             Settings.Current.BaseUrl = viewModel.Api.BaseUrl;
-            Settings.Current.Password = viewModel.Api.Password;
+            Settings.Current.RawCookies = viewModel.Api.RawCookies;
             Settings.Current.FolderPath = viewModel.CurrentFolderPath;
         }
 
@@ -136,7 +136,7 @@ namespace FileSystemUWP
 
             try
             {
-                if (!await viewModel.Api.Ping()) return;
+                if (!await viewModel.Api.IsAuthorized()) return;
 
                 if (args.TaskInstance.Task.Name == BackgroundTaskHelper.TimerBackgroundTaskBuilderName)
                 {

@@ -63,7 +63,6 @@ export default class PdfViewer extends Component {
         const pdfUrl = formatUrl({
             resource: '/api/files',
             path: path,
-            password: this.props.password,
         });
 
         try {

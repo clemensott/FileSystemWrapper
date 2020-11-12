@@ -1,15 +1,21 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FileSystemWeb.Controllers
 {
-    [Route("api/[controller]")]
     public class PingController : ControllerBase
     {
-        public static string Debug;
         [HttpGet]
         public ActionResult<string> Get()
         {
-            return "New Hello Word! " + Debug;
+            return "Success";
+        }
+        
+        [HttpGet("auth")]
+        [Authorize]
+        public ActionResult<string> GetIsAuthorized()
+        {
+            return "Success";
         }
     }
 }

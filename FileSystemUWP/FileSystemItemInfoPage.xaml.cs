@@ -1,4 +1,4 @@
-﻿using FileSystemCommon.Model;
+﻿using FileSystemCommon.Models.FileSystem;
 using StdOttUwp;
 using System;
 using System.Linq;
@@ -32,7 +32,7 @@ namespace FileSystemUWP
             base.OnNavigatedTo(e);
         }
 
-        private async void Page_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             await RefreshInfos();
         }

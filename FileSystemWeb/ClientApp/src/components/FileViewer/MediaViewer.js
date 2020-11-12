@@ -32,10 +32,9 @@ export default class MediaViewer extends Component {
         const mediaUrl = formatUrl({
             resource: '/api/files',
             path: this.props.path,
-            password: this.props.password,
         });
 
-        if (this.state.type == 'audio') {
+        if (this.state.type === 'audio') {
             return (
                 <audio
                     className="media-viewer-content"

@@ -76,8 +76,8 @@ namespace FileSystemUWP
         private static async Task<bool> Ping(Api api)
         {
             return !string.IsNullOrWhiteSpace(api.BaseUrl) &&
-                !string.IsNullOrWhiteSpace(api.Password) &&
-                await api.Ping();
+                api.RawCookies != null && api.RawCookies.Length > 0 &&
+                await api.IsAuthorized();
         }
 
         private async void PcView_Loaded(object sender, RoutedEventArgs e)

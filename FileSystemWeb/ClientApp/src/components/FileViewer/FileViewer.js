@@ -7,30 +7,37 @@ import './FileViewer.css';
 import { Link, useHistory } from 'react-router-dom';
 import PdfViewer from './PdfViewer';
 
-function getViewer(path, password) {
+function getViewer(path) {
     switch (getFileType(path)) {
         case 'image':
-            return <ImageViewer path={path} password={password} />
+            return <ImageViewer path={path} />
 
         case 'text':
-            return <TextViewer path={path} password={password} />;
+            return <TextViewer path={path} />;
 
         case 'audio':
-            return <MediaViewer path={path} password={password} type="audio" />;
+            return <MediaViewer path={path} type="audio" />;
 
         case 'video':
-            return <MediaViewer path={path} password={password} type="video" />;
+            return <MediaViewer path={path} type="video" />;
 
         case 'pdf':
-            return <PdfViewer path={path} password={password} />;
+            return <PdfViewer path={path} />;
     }
 
-    return '<No viewer>';
+    return (
+        <div className="text-center'">
+            <h3 className="font-italic"
+                style={{color: 'lightgray'}}>
+                &lt;MINE type is not supported&gt;
+            </h3>
+        </div>
+    );
 }
 
 export default function (props) {
     const name = getName(props.path);
-    const viewer = getViewer(props.path, props.password);
+    const viewer = getViewer(props.path);
 
     const folderPath = getParent(props.path);
     const folderUrl = '/' + encodeToURI(folderPath);
@@ -40,7 +47,8 @@ export default function (props) {
         <div className={`file-overlay ${name ? '' : 'd-none'}`} onClick={e => {
             if (e.target.classList.contains('file-overlay') ||
                 e.target.classList.contains('file-overlay-container') ||
-                e.target.classList.contains('file-content')) {
+                e.target.classList.contains('file-content') ||
+                e.target.classList.contains('image-container')) {
                 history.push(folderUrl);
             }
         }}>

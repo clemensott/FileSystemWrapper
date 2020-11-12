@@ -3,7 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using FileSystemCommon;
-using FileSystemCommon.Model;
+using FileSystemCommon.Models.FileSystem;
 using FileSystemWeb.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,8 +24,20 @@ namespace FileSystemWeb.Controllers
 
             if (!System.IO.File.Exists(path)) return NotFound();
 
+            return PhysicalFile(path, Utils.GetContentType(Path.GetExtension(path)), true);
+        }
 
-            return PhysicalFile(path, Utils.GetContentType(Path.GetExtension(path)), Path.GetFileName(path), true);
+        [HttpGet("download")]
+        public ActionResult<object> Download([FromQuery] string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return BadRequest("Path is missing");
+            }
+
+            if (!System.IO.File.Exists(path)) return NotFound();
+
+            return PhysicalFile(path, Utils.GetContentType(Path.GetExtension(path)), Path.GetFileName(path));
         }
 
         [HttpGet("exists")]

@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
-import { Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink } from 'reactstrap';
-import { NavLink as RRNavLink } from 'react-router-dom';
+import React, {Component} from 'react';
+import {Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink} from 'reactstrap';
+import {NavLink as RRNavLink} from 'react-router-dom';
 import './NavMenu.css';
+import {getCookieValue} from "../Helpers/cookies";
 
 export class NavMenu extends Component {
     static displayName = NavMenu.name;
@@ -22,16 +23,17 @@ export class NavMenu extends Component {
     }
 
     render() {
-        const authUrl = localStorage.getItem('password') ? '/logout' : '/login';
-        const authTitle = localStorage.getItem('password') ? 'Logout' : 'Login';
-        
+        const authUrl = this.props.isLoggedIn ? '/logout' : '/login';
+        const authTitle = this.props.isLoggedIn ? 'Logout' : 'Login';
+
         return (
             <header>
                 <Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3" light>
                     <Container>
                         <NavbarBrand tag={RRNavLink} to="/">Root</NavbarBrand>
-                        <NavbarToggler onClick={this.toggleNavbar} className="mr-2" />
-                        <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!this.state.collapsed} navbar>
+                        <NavbarToggler onClick={this.toggleNavbar} className="mr-2"/>
+                        <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!this.state.collapsed}
+                                  navbar>
                             <ul className="navbar-nav flex-grow">
                                 <NavItem>
                                     <NavLink tag={RRNavLink} className="text-dark" to={authUrl}>{authTitle}</NavLink>

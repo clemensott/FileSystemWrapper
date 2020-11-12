@@ -1,5 +1,6 @@
-﻿import React, { Component } from 'react';
-import { formatUrl } from '../../Helpers/Fetch';
+﻿import React, {Component} from 'react';
+import {formatUrl} from '../../Helpers/Fetch';
+import Loading from "../Loading/Loading";
 import './ImageViewer.css'
 
 export default class ImageViewer extends Component {
@@ -7,17 +8,29 @@ export default class ImageViewer extends Component {
 
     constructor(props) {
         super(props);
+
+        this.state = {
+            isLoading: true,
+            error: null,
+        };
     }
 
     render() {
         const imageUrl = formatUrl({
             resource: '/api/files',
             path: this.props.path,
-            password: this.props.password,
         });
 
         return (
-            <img src={imageUrl} className="image-content" />
+            <div className="image-container">
+                <img src={imageUrl} className={`image-content ${this.state.error ? 'd-none' : ''}`}
+                     onLoad={() => this.setState({isLoading: false,})}
+                     onError={() => this.setState({error: true})}/>
+
+                <div className={this.state.isLoading ? 'center' : 'd-none'}>
+                    <Loading/>
+                </div>
+            </div>
         );
     }
 }

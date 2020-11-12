@@ -3,11 +3,11 @@ import { useParams, Redirect } from 'react-router-dom';
 import { normalizeFolder, normalizeFile, getName } from '../Helpers/Path';
 import { FolderViewer } from './FolderViewer';
 import FileViewer from './FileViewer/FileViewer';
+import {getCookieValue} from "../Helpers/cookies";
 
-export default function (props) {
-    const password = localStorage.getItem('password');
-
-    if (!password) {
+export default function () {
+    const isLoggedIn = !!getCookieValue('fs_login');
+    if (!isLoggedIn) {
         return <Redirect to="/login" />
     }
 
@@ -31,8 +31,8 @@ export default function (props) {
 
     return (
         <div>
-            <FolderViewer password={password} path={folderNorm} />
-            <FileViewer password={password} path={fileNorm} />
+            <FolderViewer path={folderNorm} />
+            <FileViewer path={fileNorm} />
         </div>
     );
 }

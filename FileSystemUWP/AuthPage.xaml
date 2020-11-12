@@ -8,24 +8,38 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid>
+    <Grid Margin="5">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Base Url:" VerticalAlignment="Center" Margin="5"/>
-        <TextBox Grid.Column="1" Grid.Row="0" Name="tbxBaseUrl" 
-                 VerticalAlignment="Center" Margin="3"/>
+        <TextBlock Grid.ColumnSpan="3" Text="Login" FontSize="25" FontWeight="SemiBold" Margin="10"/>
 
-        <TextBlock Grid.Row="1" Text="Password:" VerticalAlignment="Center" Margin="5"/>
-        <PasswordBox Grid.Column="1" Grid.Row="1" Name="pbxPassword" 
-                     VerticalAlignment="Center" Margin="3"/>
+        <TextBlock Grid.Row="1" Text="Base Url:" VerticalAlignment="Center" Margin="5" FontWeight="SemiBold"/>
+        <TextBox Grid.Column="1" Grid.Row="1" Name="tbxBaseUrl" Margin="3"
+                 VerticalAlignment="Center" LostFocus="TbxBaseUrl_LostFocus"/>
+        <SymbolIcon Grid.Column="2" Grid.Row="1" Name="sinBaseUrlStatus" Margin="5,0"/>
+
+        <TextBlock Grid.Row="2" Text="Username:" VerticalAlignment="Center" Margin="5" FontWeight="SemiBold"/>
+        <TextBox Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2" Name="tbxUsername"
+                 Margin="3" VerticalAlignment="Center"/>
+
+        <TextBlock Grid.Row="3" Text="Password:" VerticalAlignment="Center" Margin="5" FontWeight="SemiBold"/>
+        <PasswordBox Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="3" Name="pbxPassword"
+                     Margin="3" VerticalAlignment="Center"/>
+
+        <TextBlock Grid.ColumnSpan="3" Grid.Row="4" Name="tblError" FontWeight="SemiBold"
+                   Foreground="Red" Visibility="Collapsed" Margin="5"/>
     </Grid>
 
     <Page.BottomAppBar>

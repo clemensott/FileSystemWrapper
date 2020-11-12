@@ -3,14 +3,17 @@ import { Route, Switch } from 'react-router-dom';
 import { Login } from './components/Login';
 import { NavMenu } from './components/NavMenu';
 import { Container } from 'reactstrap';
-import Logout from './components/Logout';
+import { Logout } from './components/Logout';
 import Home from './components/Home';
+import {getCookieValue} from "./Helpers/cookies";
 import './App.css';
 
 export default function () {
+    const isLoggedIn = !!getCookieValue('fs_login');
+    
     return (
         <div>
-            <NavMenu />
+            <NavMenu isLoggedIn={isLoggedIn}/>
             <Container>
                 <Switch>
                     <Route path='/login' component={Login} />

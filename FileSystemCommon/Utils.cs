@@ -1,4 +1,4 @@
-﻿using FileSystemCommon.Model;
+﻿using FileSystemCommon.Models.FileSystem;
 using System.IO;
 
 namespace FileSystemCommon

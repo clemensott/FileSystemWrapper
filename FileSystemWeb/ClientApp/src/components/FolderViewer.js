@@ -1,8 +1,8 @@
-﻿import React, { Component } from 'react';
+﻿import React, {Component} from 'react';
 import FSItem from './FSItem'
-import { getName, getParent, encodeToURI } from '../Helpers/Path'
-import { Link } from 'react-router-dom';
-import { fetchApi } from '../Helpers/Fetch';
+import {getName, getParent, encodeToURI} from '../Helpers/Path'
+import {Link} from 'react-router-dom';
+import {fetchApi} from '../Helpers/Fetch';
 import Loading from './Loading/Loading';
 import './FolderViewer.css';
 
@@ -32,8 +32,7 @@ export class FolderViewer extends Component {
                 this.updateFolders(path),
                 this.updateFiles(path),
             ]);
-        }
-        catch (e) {
+        } catch (e) {
             console.log(e);
         }
     }
@@ -42,8 +41,12 @@ export class FolderViewer extends Component {
         if (this.foldersFetchPath === path) return;
         this.foldersFetchPath = path;
 
-        const response = await fetchApi({ resource: '/api/folders/listfolders', path, password: this.props.password });
-        const folders = await response.json();
+        const response = await fetchApi({resource: '/api/folders/listfolders', path});
+
+        let folders = [];
+        if (response.ok) {
+            folders = await response.json();
+        }
 
         if (path === this.props.path) {
             this.setState({
@@ -57,8 +60,12 @@ export class FolderViewer extends Component {
         if (this.filesFetchPath === path) return;
         this.filesFetchPath = path;
 
-        const response = await fetchApi({ resource: '/api/folders/listfiles', path, password: this.props.password });
-        const files = await response.json();
+        const response = await fetchApi({resource: '/api/folders/listfiles', path});
+
+        let files = [];
+        if (response.ok) {
+            files = await response.json();
+        }
 
         if (path === this.props.path) {
             this.setState({
@@ -83,7 +90,7 @@ export class FolderViewer extends Component {
             return (
                 <div key={item.path} className="m-2">
                     <Link to={fileLink}>
-                        <FSItem isFile={true} path={item.path} name={item.name} />
+                        <FSItem isFile={true} path={item.path} name={item.name}/>
                     </Link>
                 </div>
             )
@@ -93,15 +100,13 @@ export class FolderViewer extends Component {
         return (
             <div key={item.path} className="m-2">
                 <Link to={folderLink}>
-                    <FSItem isFile={false} path={item.path} name={item.name} />
+                    <FSItem isFile={false} path={item.path} name={item.name}/>
                 </Link>
             </div>
         )
     }
 
     render() {
-        this.updateItems(this.props.path);
-
         const path = this.props.path;
         const parentPath = getParent(path);
         const parentUrl = parentPath ? '/' + encodeToURI(parentPath) : '/';
@@ -113,8 +118,8 @@ export class FolderViewer extends Component {
         return (
             <div>
                 <div className="folder-viewer-head-container">
-                    <Link to={parentUrl} >
-                        <i className={`fa fa-arrow-up fa-2x ${parentPath === null ? 'd-none' : ''}`} />
+                    <Link to={parentUrl}>
+                        <i className={`fa fa-arrow-up fa-2x ${parentPath === null ? 'd-none' : ''}`}/>
                     </Link>
                     <div className="path pl-2 folder-viewer-head-path">
                         {path}
@@ -123,6 +128,9 @@ export class FolderViewer extends Component {
                 <div className="folder-viewer-list">
                     {folders}
                     {files}
+                </div>
+                <div className={isLoading || folders.length || files.length ? 'd-none' : 'text-center'}>
+                    <h3 className="font-italic">&lt;Empty&gt;</h3>
                 </div>
                 <div className={`folder-viewer-to-top-container ${this.state.isOnTop ? 'd-none' : ''}`}>
                     <button className="btn btn-info" onClick={() => {
@@ -133,7 +141,7 @@ export class FolderViewer extends Component {
                     </button>
                 </div>
                 <div className={isLoading ? 'center' : 'center d-none'}>
-                    <Loading />
+                    <Loading/>
                 </div>
             </div>
         );
@@ -141,6 +149,11 @@ export class FolderViewer extends Component {
 
     componentDidMount() {
         window.onscroll = this.onScroll;
+        return  this.updateItems(this.props.path);
+    }
+    
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        return this.updateItems(this.props.path);
     }
 
     componentWillUnmount() {

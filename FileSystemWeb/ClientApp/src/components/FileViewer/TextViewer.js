@@ -29,16 +29,14 @@ export default class TextViewer extends Component {
         }
         if (this.state.text) {
             return (
-                <div className="text-viewer-text">
-                    {this.state.text}
-                </div>
+                <textarea className="text-viewer-text" readOnly="true" defaultValue={this.state.text}/>
             );
         }
         if (this.state.error) {
             return (
-                <div className="text-viewer-error">
+                <label className="text-viewer-error">
                     {this.state.error}
-                </div>
+                </label>
             );
         }
         return (
@@ -66,7 +64,6 @@ export default class TextViewer extends Component {
         const textUrl = formatUrl({
             resource: '/api/files',
             path: path,
-            password: this.props.password,
         });
 
         try {

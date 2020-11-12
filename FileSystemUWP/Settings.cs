@@ -1,4 +1,5 @@
-﻿using StdOttUwp.ApplicationDataObjects;
+﻿using Newtonsoft.Json;
+using StdOttUwp.ApplicationDataObjects;
 using System;
 using Windows.Storage;
 
@@ -24,16 +25,10 @@ namespace FileSystemUWP
             set => SetValue(nameof(BaseUrl), value);
         }
 
-        public string Username
+        public string[] RawCookies
         {
-            get => GetValue<string>(nameof(Username));
-            set => SetValue(nameof(Username), value);
-        }
-
-        public string Password
-        {
-            get => GetValue<string>(nameof(Password));
-            set => SetValue(nameof(Password), value);
+            get => TryGetValue(nameof(RawCookies), out string json) ? JsonConvert.DeserializeObject<string[]>(json) : new string[0];
+            set => SetValue(nameof(RawCookies), JsonConvert.SerializeObject(value ?? new string[0]));
         }
 
         public string FolderPath

@@ -66,7 +66,7 @@ namespace FileSystemUWP.FileViewers
             if (stream == null)
             {
                 SetSelect("Loading stream failed");
-                bool ping = await Api.Ping();
+                bool ping = await Api.IsAuthorized();
 
                 if (!ping) SetSelect("No connection to server");
                 return;

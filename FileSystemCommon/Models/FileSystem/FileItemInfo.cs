@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace FileSystemCommon.Model
+namespace FileSystemCommon.Models.FileSystem
 {
     public struct FileItemInfo
     {

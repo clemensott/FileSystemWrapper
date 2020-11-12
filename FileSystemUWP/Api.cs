@@ -1,12 +1,13 @@
-﻿using FileSystemCommon.Model;
+﻿using FileSystemCommon.Models.Auth;
+using FileSystemCommon.Models.FileSystem;
 using Newtonsoft.Json;
 using StdOttStandard.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Windows.Networking.BackgroundTransfer;
 using Windows.Security.Cryptography.Certificates;
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -17,7 +18,7 @@ namespace FileSystemUWP
 {
     public class Api
     {
-        public string Password { get; set; }
+        public string[] RawCookies { get; set; }
 
         public string BaseUrl { get; set; }
 
@@ -25,15 +26,44 @@ namespace FileSystemUWP
         {
         }
 
-        public Api(string password, string baseUrl) : this()
-        {
-            Password = password;
-            BaseUrl = baseUrl;
-        }
-
         public Task<bool> Ping()
         {
             return Request(GetUri("/api/ping"), HttpMethod.Get);
+        }
+
+        public Task<bool> IsAuthorized()
+        {
+            return Request(GetUri("/api/ping/auth"), HttpMethod.Get);
+        }
+
+        public async Task<bool> Login(LoginBody body)
+        {
+            Uri uri = GetUri("/api/auth/login");
+            if (uri == null) return false;
+
+            try
+            {
+                using (HttpClient client = GetClient())
+                {
+                    using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uri))
+                    {
+                        request.Content = new HttpStringContent(JsonConvert.SerializeObject(body), UnicodeEncoding.Utf8, "application/json");
+
+                        using (HttpResponseMessage response = await client.SendRequestAsync(request))
+                        {
+                            if (!response.IsSuccessStatusCode) return false;
+
+                            RawCookies = response.Headers.Where(p => p.Key == "set-cookie").Select(p => p.Value).ToArray();
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine(e);
+                return false;
+            }
         }
 
         public Task<bool> FolderExists(string path)
@@ -117,15 +147,25 @@ namespace FileSystemUWP
 
         public async Task DownlaodFile(string path, StorageFile destFile)
         {
-            BackgroundDownloader downloader = new BackgroundDownloader();
-            downloader.SetRequestHeader("password", Password);
-            DownloadOperation download = downloader.CreateDownload(GetUriWithPath("/api/files", path), destFile);
-            await download.StartAsync();
+            Uri uri = GetUriWithPath("/api/files/download", path);
+            if (uri == null) return;
+
+            using (IRandomAccessStream fileStream = await destFile.OpenAsync(FileAccessMode.ReadWrite))
+            {
+                using (HttpClient client = GetClient())
+                {
+                    using (IInputStream downloadStream = await client.GetInputStreamAsync(uri))
+                    {
+                        await downloadStream.AsStreamForRead().CopyToAsync(fileStream.AsStream());
+                    }
+                }
+            }
         }
 
         private async Task<TData> Request<TData>(Uri uri, HttpMethod method)
         {
             string responseText;
+            if (uri == null) return default(TData);
 
             try
             {
@@ -153,6 +193,8 @@ namespace FileSystemUWP
 
         private async Task<string> RequestString(Uri uri, HttpMethod method)
         {
+            if (uri == null) return null;
+
             try
             {
                 using (HttpClient client = GetClient())
@@ -177,6 +219,8 @@ namespace FileSystemUWP
 
         private async Task<IRandomAccessStreamWithContentType> RequestRandmomAccessStream(Uri uri, HttpMethod method)
         {
+            if (uri == null) return null;
+
             try
             {
                 return await HttpRandomAccessStream.CreateAsync(GetClient(), uri);
@@ -190,6 +234,8 @@ namespace FileSystemUWP
 
         private async Task<bool> Request(Uri uri, HttpMethod method, IInputStream body = null)
         {
+            if (uri == null) return false;
+
             try
             {
                 using (HttpClient client = GetClient())
@@ -226,28 +272,129 @@ namespace FileSystemUWP
 
         public Uri GetUri(string resource, IEnumerable<KeyValuePair<string, string>> values)
         {
+            if (string.IsNullOrWhiteSpace(BaseUrl)) return null;
+
             IEnumerable<string> queryPairs = values?.Select(p => string.Format("{0}={1}", p.Key, WebUtility.UrlEncode(p.Value)));
             string query = string.Join("&", queryPairs ?? Enumerable.Empty<string>());
             string url = string.Format("{0}/{1}?{2}", BaseUrl?.TrimEnd('/'), resource?.TrimStart('/'), query);
 
-            return new Uri(url);
+            try
+            {
+                return new Uri(url);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private HttpClient GetClient()
         {
             HttpClient client = new HttpClient(GetFilter());
-            client.DefaultRequestHeaders.Add("password", Password);
             return client;
         }
 
-        private static HttpBaseProtocolFilter GetFilter()
+        private HttpBaseProtocolFilter GetFilter()
         {
             HttpBaseProtocolFilter filter = new HttpBaseProtocolFilter();
             filter.IgnorableServerCertificateErrors.Add(ChainValidationResult.Expired);
             filter.IgnorableServerCertificateErrors.Add(ChainValidationResult.Untrusted);
             filter.IgnorableServerCertificateErrors.Add(ChainValidationResult.InvalidName);
 
+            filter.CacheControl.ReadBehavior = HttpCacheReadBehavior.NoCache;
+            filter.CacheControl.WriteBehavior = HttpCacheWriteBehavior.NoCache;
+
+            if (RawCookies != null && RawCookies.Length > 0)
+            {
+                foreach (string rawCookie in RawCookies)
+                {
+                    HttpCookie cookie = ParseCookie(rawCookie, BaseUrl);
+                    if (cookie != null) filter.CookieManager.SetCookie(cookie);
+                }
+            }
+
             return filter;
+        }
+
+        private static HttpCookie ParseCookie(string raw, string domain)
+        {
+            bool? secure = null, httpOnly = null;
+            string cookieName = null, cookieValue = null,
+                rawMaxAge = null, rawExpires = null, path = "/", samesite;
+
+            foreach (string pair in raw.Split(';').Select(p => p.Trim()))
+            {
+                string key, value;
+
+                int index = pair.IndexOf('=');
+                if (index == -1)
+                {
+                    key = pair;
+                    value = null;
+                }
+                else
+                {
+                    key = pair.Remove(index);
+                    value = pair.Substring(index + 1);
+                }
+
+                switch (key.ToLower())
+                {
+                    case "expires":
+                        rawExpires = value;
+                        break;
+
+                    case "max-age":
+                        rawMaxAge = value;
+                        break;
+
+                    case "domain":
+                        domain = value;
+                        break;
+
+                    case "path":
+                        path = value;
+                        break;
+
+                    case "secure":
+                        secure = true;
+                        break;
+
+                    case "httponly":
+                        httpOnly = true;
+                        break;
+
+                    case "samesite":
+                        samesite = value;
+                        break;
+
+                    default:
+                        if (cookieName == null)
+                        {
+                            cookieName = key;
+                            cookieValue = value;
+                        }
+                        break;
+                }
+            }
+
+            DateTime expires;
+            if (DateTime.TryParse(rawExpires, out expires) && expires < DateTime.Now) return null;
+
+            try
+            {
+                HttpCookie cookie = new HttpCookie(cookieName, domain, path);
+                cookie.Value = cookieValue;
+
+                if (secure.HasValue) cookie.Secure = secure.Value;
+                if (httpOnly.HasValue) cookie.HttpOnly = httpOnly.Value;
+
+                return cookie;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
