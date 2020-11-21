@@ -187,8 +187,11 @@ export class FolderViewer extends Component {
     }
 
     onScroll() {
-        this.setState({
-            isOnTop: document.body.scrollTop < this.headOffsetTop && document.documentElement.scrollTop < this.headOffsetTop,
-        });
+        const newIsOnTop = document.body.scrollTop < this.headOffsetTop && document.documentElement.scrollTop < this.headOffsetTop;
+        if (this.state.isOnTop !== newIsOnTop) {
+            this.setState({
+                isOnTop: document.body.scrollTop < this.headOffsetTop && document.documentElement.scrollTop < this.headOffsetTop,
+            });
+        }
     }
 }

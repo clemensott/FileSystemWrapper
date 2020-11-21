@@ -1,6 +1,6 @@
 import React from 'react';
 import {useParams, Redirect} from 'react-router-dom';
-import {normalizeFolder, normalizeFile, getName, DecodePath} from '../Helpers/Path';
+import {normalizeFolder, normalizeFile, getName, decodeBase64Custom} from '../Helpers/Path';
 import {FolderViewer} from './FolderViewer';
 import FileViewer from './FileViewer/FileViewer';
 import {getCookieValue} from "../Helpers/cookies";
@@ -12,8 +12,8 @@ export default function () {
     }
 
     const {folder, file} = useParams();
-    const folderNorm = normalizeFolder(folder && DecodePath(folder)) || '';
-    const fileNameDecoded = normalizeFile(file && DecodePath(file));
+    const folderNorm = normalizeFolder(folder && decodeBase64Custom(folder)) || '';
+    const fileNameDecoded = normalizeFile(file && decodeBase64Custom(file));
     const fileNorm = folderNorm && fileNameDecoded && (folderNorm + fileNameDecoded);
 
     let name;

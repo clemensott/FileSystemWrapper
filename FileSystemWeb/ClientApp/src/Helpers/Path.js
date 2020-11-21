@@ -39,7 +39,6 @@ function toUnicode(char) {
 export function encodeBase64UnicodeCustom(path) {
     const unicodeString = path && normalizeFile(path).split('')
         .reduce((sum, cur) => sum + toUnicode(cur), '');
-    console.log('unicode:', unicodeString, window.btoa(unicodeString));
     return unicodeString &&
         window.btoa(unicodeString)
             .replace(/\//g, '_')   // replaces all '/' with '_'
