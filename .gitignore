@@ -351,3 +351,6 @@ MigrationBackup/
 
 # JetBrains IDEs
 .idea/
+
+# Database
+auth.db
