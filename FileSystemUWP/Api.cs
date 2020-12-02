@@ -1,6 +1,8 @@
 ﻿using FileSystemCommon;
 using FileSystemCommon.Models.Auth;
 using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Files;
+using FileSystemCommon.Models.FileSystem.Folders;
 using Newtonsoft.Json;
 using StdOttStandard.Linq;
 using System;
@@ -69,88 +71,74 @@ namespace FileSystemUWP
 
         public Task<bool> FolderExists(string path)
         {
-            return Request<bool>(GetUriWithPath("/api/folders/exists", path), HttpMethod.Get);
+            return Request<bool>(GetUri($"/api/folders/{Utils.EncodePath(path)}/exists"), HttpMethod.Get);
         }
 
-        public Task<List<string>> ListFolders(string path)
+        public Task<FolderContent> FolderContent(string path)
         {
-            return Request<List<string>>(GetUriWithPath("/api/folders/listfolders", path), HttpMethod.Get);
-        }
-
-        public Task<List<string>> ListFiles(string path)
-        {
-            return Request<List<string>>(GetUriWithPath("/api/folders/listfiles", path), HttpMethod.Get);
+            return Request<FolderContent>(GetUri($"/api/folders/content/{Utils.EncodePath(path)}"), HttpMethod.Get);
         }
 
         public Task<FolderItemInfo> GetFolderInfo(string path)
         {
-            return Request<FolderItemInfo>(GetUriWithPath("/api/folders/info", path), HttpMethod.Get);
+            return Request<FolderItemInfo>(GetUri($"/api/folders/{Utils.EncodePath(path)}/info"), HttpMethod.Get);
         }
 
         public Task<bool> CreateFolder(string path)
         {
-            return Request(GetUriWithPath("/api/folders", path), HttpMethod.Post);
+            return Request(GetUri($"/api/folders/{Utils.EncodePath(path)}"), HttpMethod.Post);
         }
 
         public Task<bool> DeleteFolder(string path, bool recrusive)
         {
-            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils.CreatePairs(
-                "path", Utils.EncodePath(path), "recrusive", recrusive.ToString());
+            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils.CreatePairs("recrusive", recrusive.ToString());
 
-            return Request(GetUri("/api/folders", values), HttpMethod.Delete);
+            return Request(GetUri($"/api/folders/{Utils.EncodePath(path)}", values), HttpMethod.Delete);
         }
 
         public Task<bool> FileExists(string path)
         {
-            return Request<bool>(GetUriWithPath("/api/files/exists", path), HttpMethod.Get);
+            return Request<bool>(GetUri($"/api/files/{Utils.EncodePath(path)}/exists"), HttpMethod.Get);
         }
 
         public Task<FileItemInfo> GetFileInfo(string path)
         {
-            return Request<FileItemInfo>(GetUriWithPath("/api/files/info", path), HttpMethod.Get);
+            return Request<FileItemInfo>(GetUri($"/api/files/{Utils.EncodePath(path)}/info"), HttpMethod.Get);
         }
 
         public Task<string> GetFileHash(string path)
         {
-            return RequestString(GetUriWithPath("/api/files/hash", path), HttpMethod.Get);
+            return RequestString(GetUri($"/api/files/{Utils.EncodePath(path)}/hash"), HttpMethod.Get);
         }
 
         public Task<bool> CopyFile(string srcPath, string destPath)
         {
-            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils.CreatePairs(
-                "srcPath", Utils.EncodePath(srcPath),
-                "destPath", Utils.EncodePath(destPath));
-
-            return Request(GetUri("/api/files/copy", values), HttpMethod.Post);
+            return Request(GetUri($"/api/files/{Utils.EncodePath(srcPath)}/{Utils.EncodePath(destPath)}/copy"), HttpMethod.Post);
         }
 
         public Task<bool> MoveFile(string srcPath, string destPath)
         {
-            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils.CreatePairs(
-                "srcPath", Utils.EncodePath(srcPath),
-                "destPath", Utils.EncodePath(destPath));
-
-            return Request(GetUri("/api/files/move", values), HttpMethod.Post);
+            return Request(GetUri($"/api/files/{Utils.EncodePath(srcPath)}/{Utils.EncodePath(destPath)}/move"), HttpMethod.Post);
         }
 
         public Task<bool> WriteFile(string path, IInputStream stream)
         {
-            return Request(GetUriWithPath("/api/files", path), HttpMethod.Post, stream);
+            return Request(GetUri($"/api/files/{Utils.EncodePath(path)}"), HttpMethod.Post, stream);
         }
 
         public Task<bool> DeleteFile(string path)
         {
-            return Request(GetUriWithPath("/api/files", path), HttpMethod.Delete);
+            return Request(GetUri($"/api/files/{Utils.EncodePath(path)}"), HttpMethod.Delete);
         }
 
         public Task<IRandomAccessStreamWithContentType> GetFileRandomAccessStream(string path)
         {
-            return RequestRandmomAccessStream(GetUriWithPath("/api/files", path), HttpMethod.Get);
+            return RequestRandmomAccessStream(GetUri($"/api/files/{Utils.EncodePath(path)}"), HttpMethod.Get);
         }
 
         public async Task DownlaodFile(string path, StorageFile destFile)
         {
-            Uri uri = GetUriWithPath("/api/files/download", path);
+            Uri uri = GetUri($"/api/files/{Utils.EncodePath(path)}/download");
             if (uri == null) return;
 
             using (IRandomAccessStream fileStream = await destFile.OpenAsync(FileAccessMode.ReadWrite))
@@ -264,11 +252,6 @@ namespace FileSystemUWP
         public Uri GetUri(string resource)
         {
             return GetUri(resource, null);
-        }
-
-        public Uri GetUriWithPath(string resource, string path)
-        {
-            return GetUri(resource, KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
         }
 
         public Uri GetUri(string resource, IEnumerable<KeyValuePair<string, string>> values)

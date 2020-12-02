@@ -27,8 +27,14 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <AutoSuggestBox Text="{Binding ServerPath,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-                                TextChanged="AsbServerPath_TextChanged" QuerySubmitted="AsbServerPath_QuerySubmitted"/>
+                <AutoSuggestBox x:Name="asbServerPath" TextChanged="AsbServerPath_TextChanged"
+                                QuerySubmitted="AsbServerPath_QuerySubmitted">
+                    <AutoSuggestBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}"/>
+                        </DataTemplate>
+                    </AutoSuggestBox.ItemTemplate>
+                </AutoSuggestBox>
                 <SymbolIcon Name="sinServerPathValid" Grid.Column="1" Symbol="Help" Margin="8,0"/>
             </Grid>
 

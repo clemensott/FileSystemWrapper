@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using FileSystemCommon;
+using System.IO;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -62,22 +63,22 @@ namespace FileSystemUWP.Picker
             switch (picking.Type)
             {
                 case FileSystemPickType.Folder:
-                    picking.SetValue(pcView.CurrentFolderPath);
+                    picking.SetValue(pcView.CurrentFolder?.FullPath);
                     Frame.GoBack();
                     break;
 
                 case FileSystemPickType.FileSave:
-                    picking.SuggestedStartLocation = pcView.CurrentFolderPath;
+                    picking.SuggestedStartLocation = pcView.CurrentFolder?.FullPath;
 
                     NamePicking namePicking = NamePicking.ForFile(picking.Api,
-                        pcView.CurrentFolderPath, picking.SuggestedFileName);
+                        pcView.CurrentFolder?.FullPath, picking.SuggestedFileName);
                     Frame.Navigate(typeof(NamePickerPage), namePicking);
 
                     string name = await namePicking.Task;
 
                     if (!namePicking.HasResult) return;
 
-                    string path = Path.Combine(pcView.CurrentFolderPath, name);
+                    string path = Utils.JoinPaths(pcView.CurrentFolder?.FullPath, name);
                     picking.SetValue(path);
                     Frame.GoBack();
                     break;

@@ -28,7 +28,7 @@
 
             <StackPanel Margin="2,5">
                 <TextBlock Text="Server path:" FontWeight="Bold"/>
-                <TextBlock Margin="1" Text="{Binding ServerPath}"/>
+                <TextBlock Margin="1" Text="{Binding ServerNamePath}"/>
             </StackPanel>
 
             <StackPanel Margin="2,5">

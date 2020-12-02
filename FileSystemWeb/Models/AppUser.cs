@@ -8,6 +8,6 @@ namespace FileSystemWeb.Models
 {
     public class AppUser : IdentityUser
     {
-
+        public ICollection<ShareFile> SharedFiles { get; set; }
     }
 }

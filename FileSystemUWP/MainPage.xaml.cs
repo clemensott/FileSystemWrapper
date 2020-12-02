@@ -3,6 +3,7 @@ using FileSystemUWP.Picker;
 using FileSystemUWP.Sync.Definitions;
 using StdOttUwp;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Storage;
@@ -66,7 +67,7 @@ namespace FileSystemUWP
 
             if (!ping)
             {
-                viewModel.CurrentFolderPath = pcView.CurrentFolderPath;
+                viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
 
                 Frame.Navigate(typeof(AuthPage), viewModel.Api);
             }
@@ -80,19 +81,25 @@ namespace FileSystemUWP
                 await api.IsAuthorized();
         }
 
+        private void GidThrough_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            if (abbDetails != null) abbDetails.IsEnabled = ((FileSystemItem?)args.NewValue).HasValue;
+        }
+
         private async void PcView_Loaded(object sender, RoutedEventArgs e)
         {
-            await pcView.SetCurrentFolder(viewModel.CurrentFolderPath);
             pcView.Type = FileSystemItemViewType.Files | FileSystemItemViewType.Folders;
-
             pcView.FlyoutMenuItems = new FlyoutMenuItem[] {
                 CreateFlyoutMenuItem(Symbol.List, "Details", FmiDetails_Click),
                 CreateFlyoutMenuItem(Symbol.Download, "Download", FmiDownload_Click),
                 CreateFlyoutMenuItem(Symbol.Cancel, "Delete", FmiDelete_Click),
             };
+
+            await pcView.SetCurrentFolder(viewModel.CurrentFolderPath);
         }
 
-        private static FlyoutMenuItem CreateFlyoutMenuItem(Symbol? symbol, string text, EventHandler<FlyoutMenuItemClickEventArgs> clickHandler)
+        private static FlyoutMenuItem CreateFlyoutMenuItem(Symbol? symbol, string text,
+            EventHandler<FlyoutMenuItemClickEventArgs> clickHandler)
         {
             FlyoutMenuItem item = new FlyoutMenuItem()
             {
@@ -106,7 +113,7 @@ namespace FileSystemUWP
 
         private void FmiDetails_Click(object sender, FlyoutMenuItemClickEventArgs e)
         {
-            viewModel.CurrentFolderPath = pcView.CurrentFolderPath;
+            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
 
             Frame.Navigate(typeof(FileSystemItemInfoPage), (e.Item, viewModel.Api));
         }
@@ -138,7 +145,6 @@ namespace FileSystemUWP
                 if (!delete) return;
 
                 await viewModel.Api.DeleteFile(e.Item.FullPath);
-                await pcView.UpdateFiles();
             }
             else
             {
@@ -146,8 +152,9 @@ namespace FileSystemUWP
                 if (!delete) return;
 
                 await viewModel.Api.DeleteFolder(e.Item.FullPath, true);
-                await pcView.UpdateFolders();
             }
+
+            await pcView.UpdateContent();
         }
 
         private async void AbbParent_Click(object sender, RoutedEventArgs e)
@@ -166,30 +173,34 @@ namespace FileSystemUWP
 
         private void PcView_FileSelected(object sender, FileSystemItem e)
         {
-            viewModel.CurrentFolderPath = pcView.CurrentFolderPath;
+            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
 
-            FilesViewing viewing = new FilesViewing(e, pcView.GetCurrentItems(), viewModel.Api);
+            FilesViewing viewing = new FilesViewing(e, pcView.GetCurrentItems().Where(i => i.IsFile), viewModel.Api);
             Frame.Navigate(typeof(FilesPage), viewing);
         }
 
         private void AbbOpenSyncs_Click(object sender, RoutedEventArgs e)
         {
-            viewModel.CurrentFolderPath = pcView.CurrentFolderPath;
+            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
 
             Frame.Navigate(typeof(SyncPairsPage), viewModel);
         }
 
+        private void AbbDetails_Loaded(object sender, RoutedEventArgs e)
+        {
+            abbDetails.IsEnabled = pcView.CurrentFolder.HasValue;
+        }
+
         private void AbbDetails_Click(object sender, RoutedEventArgs e)
         {
-            viewModel.CurrentFolderPath = pcView.CurrentFolderPath;
+            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
 
-            FileSystemItem item = FileSystemItem.FromFolder(viewModel.CurrentFolderPath);
-            Frame.Navigate(typeof(FileSystemItemInfoPage), (item, viewModel.Api));
+            Frame.Navigate(typeof(FileSystemItemInfoPage), (pcView.CurrentFolder.Value, viewModel.Api));
         }
 
         private void AbbSettings_Click(object sender, RoutedEventArgs e)
         {
-            viewModel.CurrentFolderPath = pcView.CurrentFolderPath;
+            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
 
             Frame.Navigate(typeof(AuthPage), viewModel.Api);
         }

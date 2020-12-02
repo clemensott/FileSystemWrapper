@@ -1,92 +1,148 @@
-﻿import React from 'react';
-import {getName, getParent, getFileType, encodeBase64Custom} from '../../Helpers/Path';
+﻿import React, {Component} from 'react';
+import {getFileType, encodeBase64UnicodeCustom} from '../../Helpers/Path';
 import ImageViewer from './ImageViewer';
 import TextViewer from './TextViewer';
 import MediaViewer from './MediaViewer';
-import { Link, useHistory } from 'react-router-dom';
 import PdfViewer from './PdfViewer';
-import {formatUrl} from "../../Helpers/Fetch";
+import FileActionsDropdown from "../FileActionsDropdown";
 import './FileViewer.css';
 
-function getViewer(path) {
-    switch (getFileType(path)) {
-        case 'image':
-            return <ImageViewer path={path} />
+export class FileViewer extends Component {
+    static displayName = FileViewer.name;
 
-        case 'text':
-            return <TextViewer path={path} />;
+    constructor(props) {
+        super(props);
 
-        case 'audio':
-            return <MediaViewer path={path} type="audio" />;
+        this.fileFetchPath = null;
 
-        case 'video':
-            return <MediaViewer path={path} type="video" />;
-
-        case 'pdf':
-            return <PdfViewer path={path} />;
+        this.state = {
+            filePath: null,
+            file: null,
+            error: null,
+        }
     }
 
-    return (
-        <div className="text-center'">
-            <h3 className="font-italic"
-                style={{color: 'lightgray'}}>
-                &lt;MINE type is not supported&gt;
-            </h3>
-        </div>
-    );
-}
+    async updateFile(path, force = false) {
+        if (!force && this.fileFetchPath === path) return;
+        this.fileFetchPath = path;
 
-export default function (props) {
-    const name = getName(props.path);
-    const viewer = getViewer(props.path);
+        let file = null;
+        let error = false;
+        if (path) {
+            try {
+                const response = await fetch(`/api/files/${encodeBase64UnicodeCustom(path)}/info`, {
+                    credentials: 'include',
+                });
 
-    const folderPath = getParent(props.path);
-    const folderUrl = '/' + encodeBase64Custom(folderPath);
-    const history = useHistory();
-
-    const isSupportedFile = ['image', 'audio', 'video', 'text', 'pdf'].includes(getFileType(props.path));
-    const fileOpenLink = formatUrl({
-        resource: '/api/files',
-        path: props.path,
-    });
-    const fileDownloadLink = formatUrl({
-        resource: '/api/files/download',
-        path: props.path,
-    });
-
-    return (
-        <div className={`file-overlay ${name ? '' : 'd-none'}`} onClick={e => {
-            if (e.target.classList.contains('file-overlay') ||
-                e.target.classList.contains('file-overlay-container') ||
-                e.target.classList.contains('file-content') ||
-                e.target.classList.contains('image-container')) {
-                history.push(folderUrl);
+                if (response.ok) {
+                    file = await response.json();
+                } else if (response.status === 403) {
+                    error = 'Forbidden to access file';
+                } else if (response.status === 404) {
+                    error = 'File not found';
+                } else if (response.status === 401) {
+                    error = 'Unauthorized. It seems like your are not logged in';
+                } else {
+                    error = 'An error occured';
+                }
+            } catch (e) {
+                console.log(e);
+                error = e.message;
             }
-        }}>
-            <div className="file-overlay-container">
-                <div className="file-overlay-content">
-                    <div className="file-overlay-header-container">
-                        <h4 className="file-title">{name}</h4>
-                        <a href={fileOpenLink} target="_blank"
-                           className={`text-info ${isSupportedFile ? '' : 'd-none'}`}>
-                            <i className="m-2 fas fa-external-link-square-alt fa-2x"/>
-                        </a>
-                        <a href={fileDownloadLink} download={props.name} className="text-light">
-                            <i className="m-2 fas fa-download fa-2x"/>
-                        </a>
+        }
+
+        if (path === this.props.path) {
+            this.props.onFileInfoLoaded && this.props.onFileInfoLoaded(file);
+            this.setState({
+                filePath: path,
+                file,
+                error,
+            });
+        }
+    }
+
+    getViewer(file) {
+        if (!file.permission.read) {
+            return (
+                <div className="text-center'">
+                    <h3 className={`font-italic file-viewer-info-text ${this.props.theme}`}>
+                        Not authorized for reading
+                    </h3>
+                </div>
+            );
+        }
+
+        switch (getFileType(file.extension)) {
+            case 'image':
+                return <ImageViewer path={file.path}/>
+
+            case 'text':
+                return <TextViewer path={file.path}/>;
+
+            case 'audio':
+                return <MediaViewer path={file.path} type="audio"/>;
+
+            case 'video':
+                return <MediaViewer path={file.path} type="video"/>;
+
+            case 'pdf':
+                return <PdfViewer path={file.path}/>;
+        }
+
+        return (
+            <div className="text-center'">
+                <h3 className={`font-italic file-viewer-info-text ${this.props.theme}`}>
+                    No preview for this file available
+                </h3>
+            </div>
+        );
+    }
+
+    render() {
+        if (this.state.error) {
+            return (
+                <div className="text-center'">
+                    <h3 className={`font-italic file-viewer-info-text ${this.props.theme}`}>
+                        {this.state.error}
+                    </h3>
+                </div>
+            );
+        }
+        if (!this.state.file) {
+            return null;
+        }
+
+        const file = this.state.file;
+        const viewer = this.getViewer(file);
+
+        return (
+            <div className="file-viewer-container">
+                <div className="file-viewer-header-container">
+                    <div style={{flexGrow: 1}}/>
+                    <h4 className={`file-viewer-title ${this.props.theme}`}>{file.name}</h4>
+                    <div style={{flexGrow: 1}}/>
+                    <div className="m-1">
+                        <FileActionsDropdown file={file}
+                                             title="Options"
+                                             hideOpenFileLink={this.props.hideOpenFileLinkAction}/>
                     </div>
-                    <div className="file-overlay-content-remaining">
-                        <div className="file-content-container">
-                            <div className="file-content">
-                                {viewer}
-                            </div>
+                </div>
+                <div className="file-viewer-content-remaining">
+                    <div className="file-viewer-content-container">
+                        <div className="file-viewer-content">
+                            {viewer}
                         </div>
                     </div>
                 </div>
             </div>
-            <Link to={folderUrl}>
-                <i className="fas fa-times fa-3x file-close" />
-            </Link>
-        </div>
-    );
+        );
+    }
+
+    componentDidMount() {
+        return this.updateFile(this.props.path);
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        return this.updateFile(this.props.path);
+    }
 }

@@ -1,4 +1,11 @@
-﻿using System.IO;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Files;
+using FileSystemCommon.Models.FileSystem.Folders;
+using FileSystemWeb.Models;
 
 namespace FileSystemWeb.Helpers
 {
@@ -31,7 +38,7 @@ namespace FileSystemWeb.Helpers
         /// <returns>Returns true if find Numeration</returns>
         private static bool EndsWithNumberation(ref string fileName, out int number)
         {
-            if (fileName.Length < 3 || 
+            if (fileName.Length < 3 ||
                 fileName[fileName.Length - 1] != ')' ||
                 char.IsNumber(fileName[fileName.Length - 2]))
             {
@@ -54,6 +61,110 @@ namespace FileSystemWeb.Helpers
             number = int.Parse(numberText);
             fileName = fileName.Remove(fileName.Length - numberText.Length);
             return true;
+        }
+
+        public static FileItemInfo GetInfo(InternalFile file, FileInfo info)
+        {
+            return new FileItemInfo()
+            {
+                Name = info.Name,
+                Extension = info.Extension,
+                Permission = file.Permission.ToFileItemPermission(),
+                Size = info.Length,
+                Path = file.VirtualPath,
+                LastAccessTime = info.LastAccessTime,
+                LastWriteTime = info.LastWriteTime,
+                CreationTime = info.CreationTime,
+                Attributes = info.Attributes,
+            };
+        }
+
+        public static FolderItemInfo GetInfo(InternalFolder folder, DirectoryInfo info)
+        {
+            int count;
+            long size;
+            GetFileCountAndSize(info, out count, out size);
+
+            return new FolderItemInfo()
+            {
+                Name = info.Name,
+                Path = folder.VirtualPath,
+                Permission = folder.Permission.ToFolderItemPermission(),
+                FileCount = count,
+                Size = size,
+                LastAccessTime = info.LastAccessTime,
+                LastWriteTime = info.LastWriteTime,
+                CreationTime = info.CreationTime,
+                Attributes = info.Attributes,
+            };
+        }
+
+        public static void GetFileCountAndSize(DirectoryInfo dir, out int count, out long size)
+        {
+            count = 0;
+            size = 0;
+
+            try
+            {
+                foreach (FileInfo file in dir.EnumerateFiles())
+                {
+                    count++;
+                    size += file.Length;
+                }
+
+                foreach (DirectoryInfo subDir in dir.EnumerateDirectories())
+                {
+                    int subCount;
+                    long subSize;
+                    GetFileCountAndSize(subDir, out subCount, out subSize);
+
+                    count += subCount;
+                    size += subSize;
+                }
+            }
+            catch
+            {
+                count = -1;
+                size = 0;
+            }
+        }
+
+        public static PathPart[] GetPathParts(InternalFolder folder)
+        {
+            return GetPathParts(folder.VirtualPath, folder.BaseName);
+        }
+
+        public static PathPart[] GetPathParts(string virtualPath, string baseName)
+        {
+            string[] parts = virtualPath.TrimEnd('\\').Split('\\');
+            return parts.Select((p, i) => new PathPart()
+            {
+                Name = i == 0 ? baseName : p,
+                Path = string.Join(@"\", parts[..(i + 1)]),
+            }).ToArray();
+        }
+
+        public static string ToFilePath(IEnumerable<string> paths)
+        {
+            return ToFilePath(Path.Join(paths.ToArray()));
+        }
+
+        public static string ToFilePath(string path)
+        {
+            return path?.TrimEnd('\\');
+        }
+
+        public static string ToFolderPath(IEnumerable<string> paths)
+        {
+            return ToFolderPath(Path.Join(paths.ToArray()));
+        }
+
+        public static string ToFolderPath(string path)
+        {
+            if (path == null) return null;
+
+            path = path.TrimEnd('\\');
+            return path.Length > 0 ? path + @"\\" : path;
         }
     }
 }

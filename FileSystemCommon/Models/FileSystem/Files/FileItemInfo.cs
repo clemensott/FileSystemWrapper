@@ -1,15 +1,17 @@
 ﻿using System;
 using System.IO;
 
-namespace FileSystemCommon.Models.FileSystem
+namespace FileSystemCommon.Models.FileSystem.Files
 {
-    public struct FileItemInfo
+    public struct FileItemInfo : IFileItem
     {
         public string Name { get; set; }
 
         public string Extension { get; set; }
 
-        public string FullPath { get; set; }
+        public string Path { get; set; }
+
+        public FileItemPermission Permission { get; set; }
 
         public long Size { get; set; }
 

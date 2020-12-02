@@ -1,6 +1,6 @@
 ﻿import React, { Component } from 'react';
-import { formatUrl } from '../../Helpers/Fetch';
 import Loading from '../Loading/Loading';
+import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
 import './PdfViewer.css'
 
 export default class PdfViewer extends Component {
@@ -60,10 +60,7 @@ export default class PdfViewer extends Component {
     }
 
     async updatePdf(path) {
-        const pdfUrl = formatUrl({
-            resource: '/api/files',
-            path: path,
-        });
+        const pdfUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
 
         try {
             this.fetchPath = path;

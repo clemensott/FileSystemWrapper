@@ -21,16 +21,6 @@ export function getParent(path) {
     return index >= 0 ? normal.substr(0, index) : '';
 }
 
-export function encodeBase64Custom(path) {
-    return path && window.btoa(normalizeFile(path))
-        .replace(/\//g, '_')   // replaces all '/' with '_'
-        .replace(/=+$/g, '');  // trims all '=' at the end
-}
-
-export function decodeBase64Custom(raw) {
-    return window.atob(raw.replace(/_/g, '/'));
-}
-
 function toUnicode(char) {
     const code = char.charCodeAt(0);
     return String.fromCharCode(code % 256) + String.fromCharCode(code / 256);
@@ -53,9 +43,8 @@ export function getExtension(path) {
     return index >= 0 ? normal.substr(index) : '';
 }
 
-export function getFileType(path) {
-    const extension = getExtension(path) || '';
-    switch (extension.toLowerCase()) {
+export function getFileType(extension) {
+    switch (extension ? extension.toLowerCase() : '') {
         case '.apng':
         case '.bmp':
         case '.gif':

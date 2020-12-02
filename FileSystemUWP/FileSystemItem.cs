@@ -1,4 +1,9 @@
-﻿using System.IO;
+﻿using FileSystemCommon;
+using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Files;
+using FileSystemCommon.Models.FileSystem.Folders;
+using StdOttStandard.Linq;
+using System.Linq;
 
 namespace FileSystemUWP
 {
@@ -14,25 +19,38 @@ namespace FileSystemUWP
 
         public string FullPath { get; }
 
-        public FileSystemItem(bool isFile, string fullPath) : this()
+        public PathPart[] PathParts { get; }
+
+        public IFileSystemItemPermission Permission { get; }
+
+        public FileSystemItem(bool isFile, string name, string extension, string fullPath,
+            PathPart[] pathParts, IFileSystemItemPermission permission) : this()
         {
             IsFile = isFile;
             IsFolder = !isFile;
-            Name = Path.GetFileName(fullPath);
-            Extension = Path.GetExtension(fullPath);
+            Name = name;
+            Extension = extension;
             FullPath = fullPath;
-
-            if (Name.Length == 0) Name = FullPath;
+            PathParts = pathParts;
+            Permission = permission;
         }
 
-        public static FileSystemItem FromFile(string path)
+        public static FileSystemItem FromFile(FileItem file, PathPart[] parentPath)
         {
-            return new FileSystemItem(true, path);
+            PathPart[] pathParts = parentPath.GetChildPathParts(file).ToArray();
+            return new FileSystemItem(true, file.Name, file.Extension, file.Path, pathParts, file.Permission);
         }
 
-        public static FileSystemItem FromFolder(string path)
+        public static FileSystemItem FromFolder(FolderItem folder, PathPart[] parentPath)
         {
-            return new FileSystemItem(false, path);
+            PathPart[] pathParts = parentPath.GetChildPathParts(folder).ToArray();
+            return new FileSystemItem(false, folder.Name, null, folder.Path, pathParts, folder.Permission);
+        }
+
+        public static FileSystemItem FromFolderContent(FolderContent folder)
+        {
+            return new FileSystemItem(false, folder.Path.LastOrDefault().Name, null,
+                folder.Path.ToPath(), folder.Path, folder.Permission);
         }
     }
 }

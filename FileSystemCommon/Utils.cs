@@ -1,7 +1,9 @@
 ﻿using System;
-using FileSystemCommon.Models.FileSystem;
-using System.IO;
 using System.Text;
+using System.Collections.Generic;
+using System.Linq;
+using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Folders;
 
 namespace FileSystemCommon
 {
@@ -16,13 +18,20 @@ namespace FileSystemCommon
         public static string EncodePath(string path)
         {
             return Convert.ToBase64String(Encoding.Unicode.GetBytes(path))
-                .Replace('/', '_').Replace('=','!');
+                .Replace('/', '_').Replace('=', '!');
         }
 
         public static string DecodePath(string customBase64)
         {
-            string base64 = customBase64.Replace('_', '/').Replace('!', '=');
-            return Encoding.Unicode.GetString(Convert.FromBase64String(base64));
+            try
+            {
+                string base64 = customBase64.Replace('_', '/').Replace('!', '=');
+                return Encoding.Unicode.GetString(Convert.FromBase64String(base64));
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public static string GetContentType(string extension)
@@ -121,68 +130,41 @@ namespace FileSystemCommon
             return "application/octet-stream";
         }
 
-        public static FileItemInfo GetInfo(FileInfo info)
+        public static string ToPath(this IEnumerable<PathPart> parts)
         {
-            return new FileItemInfo()
-            {
-                Name = info.Name,
-                Extension = info.Extension,
-                Size = info.Length,
-                FullPath = info.FullName,
-                LastAccessTime = info.LastAccessTime,
-                LastWriteTime = info.LastWriteTime,
-                CreationTime = info.CreationTime,
-                Attributes = info.Attributes,
-            };
+            return parts?.LastOrDefault().Path ?? string.Empty;
         }
 
-        public static FolderItemInfo GetInfo(DirectoryInfo info)
+        public static string JoinPaths(params string[] paths)
         {
-            int count;
-            long size;
-            GetFileCountAndSize(info, out count, out size);
-
-            return new FolderItemInfo()
-            {
-                Name = info.Name,
-                FullPath = info.FullName,
-                FileCount = count,
-                Size = size,
-                LastAccessTime = info.LastAccessTime,
-                LastWriteTime = info.LastWriteTime,
-                CreationTime = info.CreationTime,
-                Attributes = info.Attributes,
-            };
+            return JoinPaths((IEnumerable<string>)paths);
         }
 
-        public static void GetFileCountAndSize(DirectoryInfo dir, out int count, out long size)
+        public static string JoinPaths(IEnumerable<string> paths)
         {
-            count = 0;
-            size = 0;
+            return paths == null ? string.Empty : string.Join(@"\", paths.Select(TrimPath).Where(p => p != null && p.Length > 0));
 
-            try
+            string TrimPath(string path)
             {
-                foreach (FileInfo file in dir.EnumerateFiles())
-                {
-                    count++;
-                    size += file.Length;
-                }
-
-                foreach (DirectoryInfo subDir in dir.EnumerateDirectories())
-                {
-                    int subCount;
-                    long subSize;
-                    GetFileCountAndSize(subDir, out subCount, out subSize);
-
-                    count += subCount;
-                    size += subSize;
-                }
+                return path?.Trim(' ', '\\');
             }
-            catch
-            {
-                count = -1;
-                size = 0;
-            }
+        }
+
+        public static string GetParentPath(string path)
+        {
+            int index = path.LastIndexOf('\\');
+            return index == -1 ? string.Empty : path.Substring(0, index + 1);
+        }
+
+        public static IEnumerable<PathPart> GetChildPathParts(this PathPart[] parentPath, IPathItem item)
+        {
+            return parentPath.Concat(new PathPart[]{
+                new PathPart()
+                {
+                    Name = item.Name,
+                    Path = item.Path,
+                },
+            });
         }
     }
 }

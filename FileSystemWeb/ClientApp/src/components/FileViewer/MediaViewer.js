@@ -1,5 +1,5 @@
 ﻿import React, { Component } from 'react';
-import { formatUrl } from '../../Helpers/Fetch';
+import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
 import './MediaViewer.css'
 
 export default class MediaViewer extends Component {
@@ -24,15 +24,12 @@ export default class MediaViewer extends Component {
         if (this.state.error) {
             return (
                 <div className="media-viewer-error">
-                    {this.state.error}
+                    {this.state.error.message}
                 </div>
             );
         }
 
-        const mediaUrl = formatUrl({
-            resource: '/api/files',
-            path: this.props.path,
-        });
+        const mediaUrl = `/api/files/${encodeBase64UnicodeCustom(this.props.path)}`;
 
         if (this.state.type === 'audio') {
             return (

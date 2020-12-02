@@ -1,4 +1,5 @@
-﻿using FileSystemUWP.Sync.Handling;
+﻿using FileSystemCommon.Models.FileSystem;
+using FileSystemUWP.Sync.Handling;
 using StdOttStandard.Converter.MultipleInputs;
 using StdOttStandard.Linq;
 using StdOttUwp;
@@ -52,7 +53,12 @@ namespace FileSystemUWP.Sync.Definitions
             handlers[e.Token].Output = e;
         }
 
-        private void GidSyncPair_Holding(object sender, HoldingRoutedEventArgs e)
+        private object ServerPathConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
+        {
+            return ((PathPart[])value).GetNamePath();
+        }
+
+        private void GidSyncPair_Holding(object sender, object e)
         {
             FlyoutBase.ShowAttachedFlyout(sender as FrameworkElement);
         }

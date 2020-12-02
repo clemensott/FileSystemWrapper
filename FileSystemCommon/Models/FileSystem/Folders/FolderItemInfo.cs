@@ -1,13 +1,15 @@
 ﻿using System;
 using System.IO;
 
-namespace FileSystemCommon.Models.FileSystem
+namespace FileSystemCommon.Models.FileSystem.Folders
 {
-    public struct FolderItemInfo
+    public struct FolderItemInfo : IFolderItem
     {
         public string Name { get; set; }
 
-        public string FullPath { get; set; }
+        public string Path { get; set; }
+        
+        public FolderItemPermission Permission { get; set; }
 
         public int FileCount { get; set; }
 

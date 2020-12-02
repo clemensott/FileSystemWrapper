@@ -1,6 +1,6 @@
 ﻿import React, { Component } from 'react';
-import { formatUrl } from '../../Helpers/Fetch';
 import Loading from '../Loading/Loading';
+import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
 import './TextViewer.css'
 
 export default class TextViewer extends Component {
@@ -61,10 +61,7 @@ export default class TextViewer extends Component {
     }
 
     async updateText(path) {
-        const textUrl = formatUrl({
-            resource: '/api/files',
-            path: path,
-        });
+        const textUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
 
         try {
             this.fetchPath = path;

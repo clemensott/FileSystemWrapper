@@ -12,10 +12,15 @@
     Loaded="Page_Loaded" Unloaded="Page_Unloaded">
 
     <Page.Resources>
+        <con:TruthyConverter x:Key="truthyCon"/>
         <con:FalsyConverter x:Key="invertCon"/>
+        <x:Boolean x:Key="false">False</x:Boolean>
     </Page.Resources>
 
     <Grid>
+        <Grid DataContext="{Binding ElementName=pcView,Path=CurrentFolder}"
+              Visibility="Collapsed" DataContextChanged="GidThrough_DataContextChanged"/>
+
         <pick:PickerControl x:Name="pcView" Api="{Binding Api}"
                             Loaded="PcView_Loaded" FileSelected="PcView_FileSelected"/>
     </Grid>
@@ -26,7 +31,8 @@
                 <AppBarButton Icon="Up" Label="To parent" Click="AbbParent_Click"/>
                 <AppBarButton Icon="Refresh" Label="Refresh" Click="AbbRefesh_Click"
                               IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
-                <AppBarButton Icon="List" Label="Details" Click="AbbDetails_Click"/>
+                <AppBarButton x:Name="abbDetails" Icon="List" Label="Details"
+                              Loaded="AbbDetails_Loaded" Click="AbbDetails_Click" />
             </CommandBar.PrimaryCommands>
             <CommandBar.SecondaryCommands>
                 <AppBarButton Icon="Sync" Label="Open syncs" Click="AbbOpenSyncs_Click"/>

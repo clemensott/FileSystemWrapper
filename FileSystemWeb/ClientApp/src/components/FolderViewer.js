@@ -1,10 +1,10 @@
 ﻿import React, {Component} from 'react';
 import FSItem from './FSItem'
-import {getName, getParent, getFileType, encodeBase64Custom} from '../Helpers/Path'
+import {getParent, encodeBase64UnicodeCustom, getName} from '../Helpers/Path'
 import {Link} from 'react-router-dom';
-import {fetchApi, formatUrl} from '../Helpers/Fetch';
 import Loading from './Loading/Loading';
 import './FolderViewer.css';
+import FileActionsDropdown from "./FileActionsDropdown";
 
 export class FolderViewer extends Component {
     static displayName = FolderViewer.name;
@@ -12,14 +12,11 @@ export class FolderViewer extends Component {
     constructor(props) {
         super(props);
 
-        this.foldersFetchPath = null;
-        this.filesFetchPath = null;
+        this.contentFetchPath = null;
 
         this.state = {
-            foldersPath: null,
-            filesPath: null,
-            folders: [],
-            files: [],
+            contentPath: null,
+            content: null,
             isOnTop: true,
         }
 
@@ -28,99 +25,94 @@ export class FolderViewer extends Component {
         this.onScroll = this.onScroll.bind(this);
     }
 
-    async updateItems(path, force = false) {
+    async updateContent(path, force = false) {
+        if (!force && this.contentFetchPath === path) return;
+        this.contentFetchPath = path;
+
+        let content = null;
         try {
-            await Promise.all([
-                this.updateFolders(path, force),
-                this.updateFiles(path, force),
-            ]);
+            const response = await fetch(`/api/folders/content/${encodeBase64UnicodeCustom(path)}`, {
+                credentials: 'include',
+            });
+
+            if (response.ok) {
+                content = await response.json();
+                content.folders.forEach(f => f.isFile = false);
+                content.files.forEach(f => f.isFile = true);
+            }
         } catch (e) {
             console.log(e);
         }
-    }
-
-    async updateFolders(path, force) {
-        if (!force && this.foldersFetchPath === path) return;
-        this.foldersFetchPath = path;
-
-        const response = await fetchApi({resource: '/api/folders/listfolders', path});
-
-        let folders = [];
-        if (response.ok) {
-            folders = await response.json();
-        }
 
         if (path === this.props.path) {
+            this.props.onFolderLoaded && this.props.onFolderLoaded(content);
             this.setState({
-                foldersPath: path,
-                folders: folders.map(f => this.getItem(f, false)),
+                contentPath: path,
+                content,
             });
         }
     }
 
-    async updateFiles(path, force) {
-        if (!force && this.filesFetchPath === path) return;
-        this.filesFetchPath = path;
-
-        const response = await fetchApi({resource: '/api/folders/listfiles', path});
-
-        let files = [];
-        if (response.ok) {
-            files = await response.json();
-        }
-
-        if (path === this.props.path) {
-            this.setState({
-                filesPath: path,
-                files: files.map(f => this.getItem(f, true)),
-            });
-        }
-    }
-
-    getItem(path, isFile) {
-        return {
-            isFile,
-            path: path,
-            name: getName(path),
-        }
+    renderPathParts(parts) {
+        const renderParts = [];
+        parts.forEach((part, i) => {
+            if (i + 1 === parts.length) {
+                renderParts.push(part.name);
+            } else {
+                const link = `/?folder=${encodeURIComponent(part.path)}`
+                renderParts.push(<Link key={part.path} to={link}>{part.name}</Link>);
+                renderParts.push('\\');
+            }
+        });
+        return renderParts;
     }
 
     renderItem(item) {
         if (item.isFile) {
-            const fileLink = `/${encodeBase64Custom(this.props.path)}/${encodeBase64Custom(item.name)}`;
-            const fileOpenLink = formatUrl({
-                resource: '/api/files',
-                path: item.path,
-            });
-            const fileDownloadLink = formatUrl({
-                resource: '/api/files/download',
-                path: item.path,
-            });
-            const isSupportedFile = ['image', 'audio', 'video', 'text', 'pdf'].includes(getFileType(item.path));
+            try{
+                encodeURIComponent(this.props.path)
+            }catch (e) {
+                console.log('error encode:',this.props.path);
+            }
+            try{
+                encodeURIComponent(getName(item.path))
+            }catch (e) {
+                console.log('error encode:',getName(item.path));
+            }
+            const fileLink = `/?folder=${encodeURIComponent(this.props.path)}&file=${encodeURIComponent(getName(item.path))}`;
 
             return (
                 <div key={item.path} className="folder-viewer-file-item-container">
-                    <div className="m-2 folder-viewer-file-item-content">
-                        <Link to={fileLink}>
-                            <FSItem isFile={true} path={item.path} name={item.name}/>
-                        </Link>
+                    <div
+                        className={`m-2 folder-viewer-file-item-content ${item.permission.info ? 'folder-viewer-item-container-link' : ''}`}>
+                        {item.permission.info ? (
+                            <Link to={fileLink}>
+                                <FSItem item={item}/>
+                            </Link>
+                        ) : (
+                            <div>
+                                <FSItem item={item}/>
+                            </div>
+                        )}
                     </div>
-                    <a href={fileOpenLink} target="_blank" className={isSupportedFile ? '' : 'd-none'}>
-                        <i className="m-2 fas fa-external-link-square-alt fa-2x"/>
-                    </a>
-                    <a href={fileDownloadLink} download={item.name} className="text-dark">
-                        <i className="m-2 fas fa-download fa-2x"/>
-                    </a>
+                    <FileActionsDropdown file={item}/>
                 </div>
             )
         }
 
-        const folderLink = `/${encodeBase64Custom(item.path)}`;
+        const folderLink = `/?folder=${encodeURIComponent(item.path)}`;
         return (
-            <div key={item.path} className="m-2">
-                <Link to={folderLink}>
-                    <FSItem isFile={false} path={item.path} name={item.name}/>
-                </Link>
+            <div key={item.path}
+                 className={`m-2 ${item.permission.list ? 'folder-viewer-item-container-link' : ''}`}>
+                {item.permission.list ? (
+                    <Link to={folderLink}>
+                        <FSItem item={item}/>
+                    </Link>
+                ) : (
+                    <div>
+                        <FSItem item={item}/>
+                    </div>
+                )}
             </div>
         )
     }
@@ -128,24 +120,26 @@ export class FolderViewer extends Component {
     render() {
         const path = this.props.path;
         const parentPath = getParent(path);
-        const parentUrl = parentPath ? '/' + encodeBase64Custom(parentPath) : '/';
-        const folders = this.state.foldersPath === path ? this.state.folders.map(i => this.renderItem(i)) : [];
-        const files = this.state.filesPath === path ? this.state.files.map(i => this.renderItem(i)) : [];
+        const parentUrl = `/?folder=${encodeURIComponent(parentPath)}`;
+        const {contentPath, content} = this.state;
+        const pathParts = contentPath === path && content && content.path ? this.renderPathParts(content.path) : [];
+        const folders = contentPath === path && content && content.folders ? content.folders.map(i => this.renderItem(i)) : [];
+        const files = contentPath === path && content && content.files ? content.files.map(i => this.renderItem(i)) : [];
 
-        const isLoading = this.state.foldersPath !== path || this.state.filesPath !== path;
+        const isLoading = contentPath !== path;
 
         return (
             <div>
                 <div ref={this.headContainerRef}
                      className={`folder-viewer-head-container ${this.state.isOnTop ? '' : 'folder-viewer-head-sticky'}`}>
-                    <div onClick={() => this.updateItems(this.props.path, true)}>
+                    <div onClick={() => this.updateContent(this.props.path, true)}>
                         <i className="folder-viewer-head-update-icon fa fa-retweet fa-2x"/>
                     </div>
                     <Link to={parentUrl}>
                         <i className={`pl-2 fa fa-arrow-up fa-2x ${parentPath === null ? 'd-none' : ''}`}/>
                     </Link>
                     <div className="path pl-2 folder-viewer-head-path">
-                        {path}
+                        {pathParts}
                     </div>
                 </div>
                 <div className="folder-viewer-list" style={{
@@ -175,11 +169,11 @@ export class FolderViewer extends Component {
     componentDidMount() {
         window.onscroll = this.onScroll;
         this.headOffsetTop = this.headContainerRef.current.offsetTop;
-        return this.updateItems(this.props.path);
+        return this.updateContent(this.props.path);
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        return this.updateItems(this.props.path);
+        return this.updateContent(this.props.path);
     }
 
     componentWillUnmount() {

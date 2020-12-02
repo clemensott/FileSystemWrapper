@@ -1,4 +1,5 @@
-﻿using FileSystemUWP.Sync.Result;
+﻿using FileSystemCommon.Models.FileSystem;
+using FileSystemUWP.Sync.Result;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -11,7 +12,8 @@ namespace FileSystemUWP.Sync.Definitions
     public class SyncPair : INotifyPropertyChanged
     {
         private bool withSubfolders;
-        private string token, name, serverPath;
+        private string token, name;
+        private PathPart[] serverPath;
         private StorageFolder localFolder;
         private SyncMode mode;
         private SyncCompareType compareType;
@@ -55,7 +57,7 @@ namespace FileSystemUWP.Sync.Definitions
             }
         }
 
-        public string ServerPath
+        public PathPart[] ServerPath
         {
             get => serverPath;
             set

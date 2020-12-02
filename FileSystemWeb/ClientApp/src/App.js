@@ -4,6 +4,8 @@ import { Login } from './components/Login';
 import { NavMenu } from './components/NavMenu';
 import { Container } from 'reactstrap';
 import { Logout } from './components/Logout';
+import FilePage from "./components/FilePage";
+import ShareFileSystemItemPage from "./components/ShareFileSystemItemPage";
 import Home from './components/Home';
 import {getCookieValue} from "./Helpers/cookies";
 import './App.css';
@@ -18,9 +20,10 @@ export default function () {
                 <Switch>
                     <Route path='/login' component={Login} />
                     <Route path='/logout' component={Logout} />
-                    <Route exact path='/' component={Home} />
-                    <Route exact path='/:folder' component={Home} />
-                    <Route exact path='/:folder/:file' component={Home} />
+                    <Route exact path='/file/view/:path' component={FilePage} />
+                    <Route exact path='/share/file/:path' component={ShareFileSystemItemPage} />
+                    <Route exact path='/share/folder/:path' component={ShareFileSystemItemPage} />
+                    <Route exact path='/' exec component={Home} />
                 </Switch>
             </Container>
         </div>

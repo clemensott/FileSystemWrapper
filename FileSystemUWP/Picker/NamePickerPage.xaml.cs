@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using FileSystemCommon;
+using System.IO;
 using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -50,7 +51,7 @@ namespace FileSystemUWP.Picker
             prgLoading.IsActive = true;
             abbAccept.IsEnabled = false;
 
-            string path = Path.Combine(picking.FolderPath, name);
+            string path = Utils.JoinPaths(picking.FolderPath, name);
             Task<bool> fileExistsTask = picking.Api.FileExists(path);
             Task<bool> folderExistsTask = picking.Api.FolderExists(path);
             bool fileExists = await fileExistsTask;

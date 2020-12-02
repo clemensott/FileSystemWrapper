@@ -1,4 +1,4 @@
-﻿using FileSystemCommon.Models.FileSystem;
+﻿using FileSystemCommon.Models.FileSystem.Files;
 using System;
 using System.Threading.Tasks;
 using Windows.Storage;

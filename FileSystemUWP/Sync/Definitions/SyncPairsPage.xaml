@@ -19,6 +19,7 @@
         <con:FalsyConverter x:Key="falsyCon" />
         <con:VisibleCollapsedConverter x:Key="visCon" />
         <con:CollapsedVisibleConverter x:Key="colCon" />
+        <con:ValueConverter x:Key="serverPathCon" ConvertEvent="ServerPathConverter_ConvertEvent"/>
     </Page.Resources>
 
     <ListView SelectionMode="None" Background="Transparent" ItemsSource="{Binding Syncs}">
@@ -29,7 +30,7 @@
         </ListView.ItemContainerStyle>
         <ListView.ItemTemplate>
             <DataTemplate>
-                <Grid Margin="5" Holding="GidSyncPair_Holding">
+                <Grid Margin="5" RightTapped="GidSyncPair_Holding" Holding="GidSyncPair_Holding">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -42,7 +43,7 @@
                                               Convert="SicPlayCancelSymbel_Convert" />
 
                     <TextBlock Grid.Row="0" FontWeight="SemiBold" FontSize="25" Text="{Binding Name}"/>
-                    <TextBlock Grid.Row="1" Text="{Binding ServerPath}"/>
+                    <TextBlock Grid.Row="1" Text="{Binding ServerPath,Converter={StaticResource serverPathCon}}"/>
                     <TextBlock Grid.Row="2" Text="{Binding LocalFolder.Path}"/>
 
                     <con:SingleInputConverter x:Name="sinHandler" Input="{Binding Token}"

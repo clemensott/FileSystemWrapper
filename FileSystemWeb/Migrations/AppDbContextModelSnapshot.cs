@@ -80,6 +80,105 @@ namespace FileSystemWeb.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
+            modelBuilder.Entity("FileSystemWeb.Models.FileItemPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Hash")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Info")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Read")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Write")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FileItemPermissions");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("FileItemPermission");
+                });
+
+            modelBuilder.Entity("FileSystemWeb.Models.ShareFile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsListed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("Uuid")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ShareFiles");
+                });
+
+            modelBuilder.Entity("FileSystemWeb.Models.ShareFolder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsListed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("Uuid")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ShareFolders");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -206,6 +305,42 @@ namespace FileSystemWeb.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens");
+                });
+
+            modelBuilder.Entity("FileSystemWeb.Models.FolderItemPermission", b =>
+                {
+                    b.HasBaseType("FileSystemWeb.Models.FileItemPermission");
+
+                    b.Property<bool>("List")
+                        .HasColumnType("INTEGER");
+
+                    b.HasDiscriminator().HasValue("FolderItemPermission");
+                });
+
+            modelBuilder.Entity("FileSystemWeb.Models.ShareFile", b =>
+                {
+                    b.HasOne("FileSystemWeb.Models.FileItemPermission", "Permission")
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FileSystemWeb.Models.AppUser", "User")
+                        .WithMany("SharedFiles")
+                        .HasForeignKey("UserId");
+                });
+
+            modelBuilder.Entity("FileSystemWeb.Models.ShareFolder", b =>
+                {
+                    b.HasOne("FileSystemWeb.Models.FolderItemPermission", "Permission")
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FileSystemWeb.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

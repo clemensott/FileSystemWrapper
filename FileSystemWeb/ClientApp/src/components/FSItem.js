@@ -2,10 +2,10 @@
 import { getFileType } from '../Helpers/Path';
 import './FSItem.css';
 
-function getImagePath(props) {
-    if (!props.isFile) return 'fas fa-folder fs-item-folder';
+function getImagePath(item) {
+    if (!item.isFile) return 'fas fa-folder fs-item-folder';
 
-    switch (getFileType(props.path)) {
+    switch (getFileType(item.extension)) {
         case 'image':
             return 'fas fa-file-image fs-item-image';
         case 'audio':
@@ -22,13 +22,13 @@ function getImagePath(props) {
 }
 
 export default function (props) {
-    const icon = getImagePath(props);
+    const icon = getImagePath(props.item);
 
     return (
         <div className="fs-item-container">
             <i className={`${icon} fa-2x`} />
             <div className="pl-2">
-                {props.name}
+                {props.item.name}
             </div>
         </div>
     );

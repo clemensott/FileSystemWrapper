@@ -41,7 +41,19 @@
 .folder-viewer-file-item-container {
     display: flex;
     align-items: center;
+}
+
+.folder-viewer-item-container-link {
+    color: black;
     cursor: pointer;
+}
+
+.folder-viewer-item-container-link > a {
+    color: black;
+}
+
+.folder-viewer-item-container-link > a:hover {
+    color: #009c9f;
 }
 
 .folder-viewer-file-item-content {

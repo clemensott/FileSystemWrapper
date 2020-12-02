@@ -1,4 +1,8 @@
-﻿using System;
+﻿using FileSystemCommon;
+using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Folders;
+using StdOttStandard.Linq;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -19,10 +23,16 @@ namespace FileSystemUWP.Sync.Definitions
     public sealed partial class SyncEditPage : Page
     {
         private SyncPairEdit edit;
+        private readonly IDictionary<string, string> folderPaths;
 
         public SyncEditPage()
         {
             this.InitializeComponent();
+
+            folderPaths = new Dictionary<string, string>()
+            {
+                { "", "" },
+            };
 
             ecbMode.Names = new Dictionary<object, string>()
             {
@@ -51,7 +61,18 @@ namespace FileSystemUWP.Sync.Definitions
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             edit = (SyncPairEdit)e.Parameter;
+
+            PathPart[] serverPath = edit.Sync.ServerPath;
+            if (serverPath != null)
+            {
+                for (int i = 0; i < serverPath.Length; i++)
+                {
+                    folderPaths[serverPath.Take(i + 1).GetNamePath().TrimEnd('\\')] = serverPath[i].Path;
+                }
+            }
+
             DataContext = edit.Sync;
+            asbServerPath.Text = edit.Sync.ServerPath.GetNamePath();
 
             base.OnNavigatedTo(e);
         }
@@ -81,22 +102,39 @@ namespace FileSystemUWP.Sync.Definitions
         {
             sinServerPathValid.Symbol = Symbol.Help;
 
-            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput ||
+                args.Reason == AutoSuggestionBoxTextChangeReason.ProgrammaticChange)
             {
-                string searchKey = string.IsNullOrWhiteSpace(sender.Text) ?
-                    null : Path.GetFileName(sender.Text).ToLower();
+                string folderName = string.IsNullOrWhiteSpace(sender.Text) ?
+                    null : Path.GetFileName(sender.Text);
+                string searchKey = folderName.ToLower();
                 string parentPath = string.IsNullOrWhiteSpace(sender.Text) ?
-                    null : Path.GetDirectoryName(sender.Text);
-                IEnumerable<string> dirs = await edit.Api.ListFolders(parentPath);
+                    null : Utils.GetParentPath(sender.Text).TrimEnd('\\');
+                FolderContent content = await edit.Api.FolderContent(folderPaths[parentPath]);
 
-                if (dirs != null)
+                if (content?.Folders != null)
                 {
-                    dirs = dirs.Select(d => Path.GetFileName(d));
+                    foreach (FolderItem folder in content.Folders)
+                    {
+                        folderPaths[content.Path.GetChildPathParts(folder).GetNamePath().TrimEnd('\\')] = folder.Path;
+                    }
+
+                    FolderItem currentFolder;
+                    if (folderName.Length == 0) edit.Sync.ServerPath = content.Path;
+                    else if (content.Folders.TryFirst(f => f.Name == folderName, out currentFolder) ||
+                        content.Folders.TrySingle(f => f.Name.ToLower() == searchKey, out currentFolder))
+                    {
+                        edit.Sync.ServerPath = content.Path.GetChildPathParts(currentFolder).ToArray();
+                    }
 
                     sender.ItemsSource = string.IsNullOrWhiteSpace(searchKey) ?
-                        dirs : dirs.Where(d => d.ToLower().Contains(searchKey));
+                        content.Folders : content.Folders.Where(f => f.Name.ToLower().Contains(searchKey));
                 }
-                else sender.ItemsSource = null;
+                else
+                {
+                    sender.ItemsSource = null;
+                    edit.Sync.ServerPath = content?.Path;
+                }
             }
 
             bool exists = await edit.Api.FolderExists(sender.Text);
@@ -105,10 +143,10 @@ namespace FileSystemUWP.Sync.Definitions
 
         private void AsbServerPath_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
-            string suggestion = args.ChosenSuggestion as string ?? (string)sender.Items[0];
-            string parentPath = Path.GetDirectoryName(sender.Text);
+            FolderItem suggestion = args.ChosenSuggestion is FolderItem ? (FolderItem)args.ChosenSuggestion : (FolderItem)sender.Items[0];
+            string parentPath = Utils.GetParentPath(sender.Text);
 
-            sender.Text = Path.Combine(parentPath, suggestion.TrimEnd('\\') + '\\');
+            sender.Text = Utils.JoinPaths(parentPath, suggestion.Name) + '\\';
             sender.Focus(FocusState.Keyboard);
         }
 
@@ -125,6 +163,7 @@ namespace FileSystemUWP.Sync.Definitions
         private async void IbnSelectLocalFolder_Click(object sender, RoutedEventArgs e)
         {
             FolderPicker picker = new FolderPicker();
+            picker.FileTypeFilter.Add("*");
             StorageFolder localFolder = await picker.PickSingleFolderAsync();
 
             try

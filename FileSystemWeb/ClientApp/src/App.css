@@ -9,3 +9,21 @@ a:visited, a:hover, a:active, a:focus {
     text-decoration: none !important;
     outline: none !important;
 }
+
+body {
+    height: 100vh;
+}
+
+#root {
+    height: 100%;
+}
+
+#root > div {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.container {
+    flex-grow: 1;
+}

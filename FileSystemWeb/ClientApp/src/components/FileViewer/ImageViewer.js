@@ -1,6 +1,6 @@
 ﻿import React, {Component} from 'react';
-import {formatUrl} from '../../Helpers/Fetch';
 import Loading from "../Loading/Loading";
+import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
 import './ImageViewer.css'
 
 export default class ImageViewer extends Component {
@@ -16,10 +16,7 @@ export default class ImageViewer extends Component {
     }
 
     render() {
-        const imageUrl = formatUrl({
-            resource: '/api/files',
-            path: this.props.path,
-        });
+        const imageUrl = `/api/files/${encodeBase64UnicodeCustom(this.props.path)}`;
 
         return (
             <div className="image-container">

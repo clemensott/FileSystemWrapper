@@ -1,5 +1,6 @@
 ﻿.media-viewer-error {
     color: red;
+    text-shadow: 2px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
 }
 
 audio.media-viewer-content {

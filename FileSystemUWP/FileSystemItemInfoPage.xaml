@@ -11,60 +11,61 @@
     Loaded="Page_Loaded">
 
     <Page.Resources>
-        <con:ValueConverter x:Key="visFolderCon" ConvertEvent="VisFolderCon_ConvertEvent"/>
-        <con:ValueConverter x:Key="visItemCon" ConvertEvent="VisItemCon_ConvertEvent"/>
+        <con:VisibleCollapsedConverter x:Key="visCon"/>
+        <con:FalsyConverter x:Key="invertCon"/>
+        <con:ValueConverter x:Key="pathCon" ConvertEvent="PathConverter_ConvertEvent"/>
         <con:ValueConverter x:Key="sizCon" ConvertEvent="SizeCon_ConvertEvent"/>
     </Page.Resources>
-    
+
     <ScrollViewer>
-        <Grid>
+        <Grid Margin="3">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.ColumnSpan="2" Grid.Row="0" FontSize="20" 
-                       FontWeight="Bold" Margin="3" Text="{Binding Name}"/>
-            <TextBlock Grid.ColumnSpan="2" Grid.Row="1" TextWrapping="Wrap"
-                       Margin="3" Text="{Binding FullPath}"/>
+                       FontWeight="Bold" Margin="3" Text="{Binding Item.Name}"/>
+            <TextBlock Grid.ColumnSpan="2" Grid.Row="1" TextWrapping="Wrap" Margin="3"
+                       Text="{Binding Item.PathParts,Converter={StaticResource pathCon}}"/>
 
-            <Grid Grid.Row="3" Margin="0,10,0,0">
+            <Grid Grid.Row="3" Margin="5,10,5,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="3" Visibility="{Binding Converter={StaticResource visFolderCon}}">
-                    <TextBlock HorizontalAlignment="Left" Text="Files:" FontWeight="SemiBold"/>
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding FileCount}"/>
-                </Grid>
+                <TextBlock Text="Files:" FontWeight="SemiBold" HorizontalAlignment="Left" Margin="5"
+                           Visibility="{Binding Item.IsFolder,Converter={StaticResource visCon}}"/>
+                <TextBlock Grid.Column="1" Margin="5" Text="{Binding Info.FileCount}"
+                           Visibility="{Binding Item.IsFolder,Converter={StaticResource visCon}}"/>
 
-                <Grid Grid.Row="1" Margin="3" DataContext="{Binding Size}">
-                    <TextBlock HorizontalAlignment="Left" Text="Size:" FontWeight="SemiBold"/>
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding Converter={StaticResource sizCon}}"/>
-                </Grid>
+                <TextBlock Grid.Row="1" Text="Size:" FontWeight="SemiBold" Margin="5"/>
+                <TextBlock Grid.Column="1" Grid.Row="1" Margin="5"
+                           Text="{Binding Info.Size,Converter={StaticResource sizCon}}"/>
 
-                <Grid Grid.Row="2" Margin="3" DataContext="{Binding LastWriteTime}">
-                    <TextBlock HorizontalAlignment="Left" Text="Last write:" FontWeight="SemiBold"/>
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding}"/>
-                </Grid>
+                <TextBlock Grid.Row="2" Text="Last write:" FontWeight="SemiBold" Margin="5"/>
+                <TextBlock Grid.Column="2" Grid.Row="2" Margin="5" Text="{Binding Info.LastWriteTime}"/>
 
-                <Grid Grid.Row="3" Margin="3" DataContext="{Binding LastAccessTime}">
-                    <TextBlock HorizontalAlignment="Left" Text="Last access:" FontWeight="SemiBold"/>
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding}"/>
-                </Grid>
+                <TextBlock Grid.Row="3" Text="Last access:" FontWeight="SemiBold" Margin="5"/>
+                <TextBlock Grid.Column="1" Grid.Row="3" Margin="5" Text="{Binding Info.LastAccessTime}"/>
 
-                <Grid Grid.Row="4" Margin="3" DataContext="{Binding CreationTime}">
-                    <TextBlock HorizontalAlignment="Left" Text="Creation:" FontWeight="SemiBold"/>
-                    <TextBlock HorizontalAlignment="Right" Text="{Binding}"/>
-                </Grid>
+                <TextBlock Grid.Row="4" Text="Creation:" FontWeight="SemiBold" Margin="5"/>
+                <TextBlock Grid.Column="1" Grid.Row="4" Margin="5" Text="{Binding Info.LastAccessTime}"/>
 
-                <Grid Grid.RowSpan="5" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-                      Visibility="{Binding Converter={StaticResource visItemCon}}">
+                <Grid Grid.ColumnSpan="2" Grid.RowSpan="6" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                      Visibility="{Binding IsReloading,Converter={StaticResource visCon}}">
                     <ProgressRing Width="100" Height="100" IsActive="True"/>
                 </Grid>
             </Grid>
@@ -75,7 +76,8 @@
         <CommandBar Name="cbrBottom">
             <CommandBar.PrimaryCommands>
                 <AppBarButton Icon="Back" Label="Back" Click="AbbBack_Click"/>
-                <AppBarButton Icon="Refresh" Label="Refresh" Click="AbbRefresh_Click"/>
+                <AppBarButton Icon="Refresh" Label="Refresh" Click="AbbRefresh_Click"
+                              IsEnabled="{Binding IsReloading,Converter={StaticResource invertCon}}"/>
             </CommandBar.PrimaryCommands>
         </CommandBar>
     </Page.BottomAppBar>

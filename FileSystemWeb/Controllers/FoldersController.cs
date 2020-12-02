@@ -1,108 +1,188 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem;
-using Microsoft.AspNetCore.Authorization;
+using FileSystemCommon.Models.FileSystem.Files;
+using FileSystemCommon.Models.FileSystem.Folders;
+using FileSystemWeb.Data;
+using FileSystemWeb.Helpers;
+using FileSystemWeb.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FileSystemWeb.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
     public class FoldersController : ControllerBase
     {
-        [HttpGet("exists")]
-        public bool Exists([FromQuery] string path)
+        private readonly AppDbContext dbContext;
+
+        public FoldersController(AppDbContext dbContext)
         {
-            path = Utils.DecodePath(path).TrimEnd('\\') + "\\";
-            return Directory.Exists(path);
+            this.dbContext = dbContext;
         }
 
-        [HttpGet("listfiles")]
-        public ActionResult<IEnumerable<string>> ListFiles([FromQuery] string path)
+        [HttpGet("{encodedVirtualPath}/exists")]
+        public async Task<ActionResult<bool>> Exists(string encodedVirtualPath)
         {
-            path = Utils.DecodePath(path ?? string.Empty);
-            if (string.IsNullOrWhiteSpace(path))
+            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            if (virtualPath == null) return BadRequest("Encoding error");
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
+
+            return folder != null && folder.Permission.Read &&
+                   (string.IsNullOrWhiteSpace(folder.PhysicalPath) || Directory.Exists(folder.PhysicalPath));
+        }
+
+        [HttpGet("content")]
+        [HttpGet("content/{encodedVirtualPath}")]
+        public async Task<ActionResult<FolderContent>> ListFolders(string encodedVirtualPath)
+        {
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? string.Empty);
+            if (virtualPath == null) return BadRequest("Encoding error");
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(virtualPath))
             {
-                return new string[0];
+                return new FolderContent()
+                {
+                    Path = new PathPart[0],
+                    Permission = new FileSystemCommon.Models.FileSystem.Folders.FolderItemPermission()
+                    {
+                        Read = false,
+                        List = true,
+                        Info = false,
+                        Hash = false,
+                        Write = false,
+                    },
+                    Folders = (await dbContext.ShareFolders
+                            .Where(f => f.IsListed && (f.UserId == null || f.UserId == userId))
+                            .Include(f => f.Permission)
+                            .ToArrayAsync())
+                        .Where(f => string.IsNullOrWhiteSpace(f.Path) || Directory.Exists(f.Path))
+                        .Select(f => f.ToFolderItem()).ToArray(),
+                    Files = (await dbContext.ShareFiles
+                            .Where(f => f.IsListed && (f.UserId == null || f.UserId == userId))
+                            .Include(f => f.Permission)
+                            .ToArrayAsync())
+                        .Where(f => System.IO.File.Exists(f.Path))
+                        .Select(f => f.ToFileItem()).ToArray(),
+                };
             }
+
+            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
+            if (folder == null) return NotFound("Base not found");
+            if (!folder.Permission.List) return Forbid();
 
             try
             {
-                return Directory.GetFiles(path.TrimEnd('\\') + "\\");
+                return new FolderContent()
+                {
+                    Path = FileHelper.GetPathParts(folder),
+                    Permission = folder.Permission.ToFolderItemPermission(),
+                    Folders = GetFolders(folder).OrderBy(f => f.Name).ToArray(),
+                    Files = GetFiles(folder).OrderBy(f => f.Name).ToArray(),
+                };
             }
             catch (DirectoryNotFoundException)
             {
-                return NotFound();
+                return NotFound("Directory not found");
             }
         }
 
-        [HttpGet("listfolders")]
-        public ActionResult<IEnumerable<string>> ListFolders([FromQuery] string path)
+        private static IEnumerable<FolderItem> GetFolders(InternalFolder folder)
         {
-            path = Utils.DecodePath(path ?? string.Empty);
-            if (string.IsNullOrWhiteSpace(path))
+            if (string.IsNullOrWhiteSpace(folder.PhysicalPath))
             {
-                return DriveInfo.GetDrives().Select(d => d.Name).ToArray();
+                return DriveInfo.GetDrives().Where(d => d.IsReady).Select(d => new FolderItem()
+                {
+                    Name = d.Name,
+                    Path = Path.Join(folder.VirtualPath, d.Name),
+                    Permission = folder.Permission.ToFolderItemPermission(),
+                });
             }
+
+            return Directory.EnumerateDirectories(folder.PhysicalPath).Select(p => new FolderItem()
+            {
+                Name = Path.GetFileName(p),
+                Path = Path.Join(folder.VirtualPath, Path.GetFileName(p)),
+                Permission = folder.Permission.ToFolderItemPermission(),
+            });
+        }
+
+        private static IEnumerable<FileItem> GetFiles(InternalFolder folder)
+        {
+            if (string.IsNullOrWhiteSpace(folder.PhysicalPath)) return new FileItem[0];
+            return Directory.EnumerateFiles(folder.PhysicalPath).Select(GetFileItem);
+
+            FileItem GetFileItem(string path)
+            {
+                string name = Path.GetFileName(path);
+                return new FileItem()
+                {
+                    Name = name,
+                    Extension = Path.GetExtension(path),
+                    Path = Path.Join(folder.VirtualPath, name),
+                    Permission = folder.Permission.ToFileItemPermission(),
+                };
+            }
+        }
+
+        [HttpGet("{encodedVirtualPath}/info")]
+        public async Task<ActionResult<FolderItemInfo>> GetInfo(string encodedVirtualPath)
+        {
+            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            if (virtualPath == null) return BadRequest("Encoding error");
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
+
+            if (folder == null) return NotFound("Base not found");
+            if (!folder.Permission.Info) return Forbid();
 
             try
             {
-                return Directory.GetDirectories(path.TrimEnd('\\') + "\\");
+                DirectoryInfo info = new DirectoryInfo(folder.PhysicalPath);
+                if (!info.Exists) return NotFound();
+                return FileHelper.GetInfo(folder, info);
             }
             catch (DirectoryNotFoundException)
             {
-                return NotFound();
+                return NotFound("Directory not found");
             }
         }
 
-        [HttpGet("info")]
-        public ActionResult<FolderItemInfo> GetInfo([FromQuery] string path)
+        [HttpPost("{encodedVirtualPath}")]
+        public async Task<ActionResult<FolderItemInfo>> Create(string encodedVirtualPath)
         {
-            path = Utils.DecodePath(path ?? string.Empty);
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return BadRequest("Path is missing");
-            }
+            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            if (virtualPath == null) return BadRequest("Encoding error");
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
+
+            if (folder == null) return NotFound("Base not found");
+            if (!folder.Permission.Write) return Forbid();
+
+            DirectoryInfo info = Directory.CreateDirectory(folder.PhysicalPath);
+            return FileHelper.GetInfo(folder, info);
+        }
+
+        [HttpDelete("{encodedVirtualPath}")]
+        public async Task<ActionResult> Delete(string encodedVirtualPath, [FromQuery] bool recursive)
+        {
+            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            if (virtualPath == null) return BadRequest("Encoding error");
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
+
+            if (folder == null) return NotFound("Base not found");
+            if (!folder.Permission.Write) return Forbid();
 
             try
             {
-                DirectoryInfo info = new DirectoryInfo(path.TrimEnd('\\') + "\\");
-                return Utils.GetInfo(info);
-            }
-            catch (DirectoryNotFoundException)
-            {
-                return NotFound();
-            }
-        }
-
-        [HttpPost]
-        public ActionResult<FolderItemInfo> Create([FromQuery] string path)
-        {
-            path = Utils.DecodePath(path ?? string.Empty);
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return BadRequest("Path is missing");
-            }
-
-            DirectoryInfo info = Directory.CreateDirectory(path.TrimEnd('\\') + "\\");
-            return Utils.GetInfo(info);
-        }
-
-        [HttpDelete]
-        public async Task<ActionResult> Delete([FromQuery] string path, [FromQuery] bool recursive)
-        {
-            path = Utils.DecodePath(path ?? string.Empty);
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return BadRequest("Path is missing");
-            }
-
-            try
-            {
-                await Task.Run(() => Directory.Delete(path.TrimEnd('\\') + "\\", recursive));
+                await Task.Run(() => Directory.Delete(folder.PhysicalPath, recursive));
             }
             catch (DirectoryNotFoundException)
             {

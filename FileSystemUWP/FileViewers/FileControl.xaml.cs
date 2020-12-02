@@ -26,7 +26,7 @@ namespace FileSystemUWP.FileViewers
 
         private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            PrepareForActivation();
+            if (!Source.Equals(args.NewValue)) PrepareForActivation();
         }
 
         private async void BtnSelectContentType_Click(object sender, RoutedEventArgs e)

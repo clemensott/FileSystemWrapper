@@ -1,6 +1,8 @@
 ﻿using FileSystemCommon.Models.FileSystem;
+using StdOttStandard.Linq;
 using StdOttUwp;
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.UI.Xaml;
@@ -16,35 +18,41 @@ namespace FileSystemUWP
     /// </summary>
     public sealed partial class FileSystemItemInfoPage : Page
     {
-        private FileSystemItem item;
+        private static FileSystemItemInfoPageViewModel viewModel;
+        private bool leftPage;
         private Api api;
 
         public FileSystemItemInfoPage()
         {
             this.InitializeComponent();
+
+            DataContext = viewModel = new FileSystemItemInfoPageViewModel();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            (item, api) = ((FileSystemItem, Api))e.Parameter;
-            DataContext = item;
+            (FileSystemItem item, Api api) = ((FileSystemItem, Api))e.Parameter;
+
+            this.api = api;
+            viewModel.Item = item;
 
             base.OnNavigatedTo(e);
         }
 
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            leftPage = true;
+            base.OnNavigatedFrom(e);
+        }
+
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            await RefreshInfos();
+            await ReloadInfos();
         }
 
-        private object VisFolderCon_ConvertEvent(object value, Type targetType, object parameter, string language)
+        private object PathConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
         {
-            return value is FolderItemInfo ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private object VisItemCon_ConvertEvent(object value, Type targetType, object parameter, string language)
-        {
-            return value is FileSystemItem ? Visibility.Visible : Visibility.Collapsed;
+            return ((PathPart[])value).Select(p => p.Name).Join("\\");
         }
 
         private object SizeCon_ConvertEvent(object value, Type targetType, object parameter, string language)
@@ -77,18 +85,22 @@ namespace FileSystemUWP
 
         private async void AbbRefresh_Click(object sender, RoutedEventArgs e)
         {
-            await RefreshInfos();
+            await ReloadInfos();
         }
 
-        private async Task RefreshInfos()
+        private async Task ReloadInfos()
         {
             try
             {
-                object info = item.IsFile ? (object)await api.GetFileInfo(item.FullPath) :
-                    await api.GetFolderInfo(item.FullPath);
+                viewModel.IsReloading = true;
 
-                if (info != null) DataContext = info;
-                else
+                object info = viewModel.Item.IsFile ?
+                    (object)await api.GetFileInfo(viewModel.Item.FullPath) :
+                    await api.GetFolderInfo(viewModel.Item.FullPath);
+
+
+                if (info != null) viewModel.Info = info;
+                else if (!leftPage)
                 {
                     await DialogUtils.ShowSafeAsync("Loading infos failed");
                     Frame.GoBack();
@@ -97,8 +109,64 @@ namespace FileSystemUWP
             }
             catch (Exception exc)
             {
+                if (leftPage) return;
+
                 await DialogUtils.ShowSafeAsync(exc.Message, "Load infos error");
                 Frame.GoBack();
+            }
+            finally
+            {
+                viewModel.IsReloading = false;
+            }
+        }
+
+        class FileSystemItemInfoPageViewModel : INotifyPropertyChanged
+        {
+            private bool isReloading;
+            private FileSystemItem item;
+            private object info;
+
+            public bool IsReloading
+            {
+                get => isReloading;
+                set
+                {
+                    if (value == isReloading) return;
+
+                    isReloading = value;
+                    OnPropertyChanged(nameof(IsReloading));
+                }
+            }
+
+            public FileSystemItem Item
+            {
+                get => item;
+                set
+                {
+                    if (value.Equals(item)) return;
+
+                    item = value;
+                    OnPropertyChanged(nameof(Item));
+                }
+            }
+
+            public object Info
+            {
+                get => info;
+                set
+                {
+                    if (value == info) return;
+
+                    info = value;
+                    OnPropertyChanged(nameof(Info));
+                }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            private void OnPropertyChanged(string name)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
             }
         }
     }

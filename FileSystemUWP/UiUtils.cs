@@ -1,4 +1,8 @@
 ﻿using FileSystemCommon;
+using FileSystemCommon.Models.FileSystem;
+using StdOttStandard.Linq;
+using System.Collections.Generic;
+using System.Linq;
 using Windows.UI.Xaml.Controls;
 
 namespace FileSystemUWP
@@ -27,6 +31,11 @@ namespace FileSystemUWP
                 default:
                     return Symbol.Page;
             }
+        }
+
+        public static string GetNamePath(this IEnumerable<PathPart> parts)
+        {
+            return parts?.Select(p => p.Name).Join("\\") ?? string.Empty;
         }
     }
 }
