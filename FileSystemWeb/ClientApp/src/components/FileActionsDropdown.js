@@ -3,6 +3,7 @@ import {Link} from "react-router-dom";
 import {Dropdown, DropdownToggle, DropdownMenu, DropdownItem} from 'reactstrap';
 import {encodeBase64UnicodeCustom, getFileType} from "../Helpers/Path";
 import {getCookieValue} from "../Helpers/cookies";
+import './FileActionsDropdown.css'
 
 function formatFileSize(size) {
     const endings = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
@@ -16,6 +17,11 @@ function formatFileSize(size) {
     }
 
     return `${parseFloat(size.toPrecision(3))} ${ending}`;
+}
+
+function clickLink(e) {
+    const linkElement = e.target.querySelector('a');
+    if (linkElement) linkElement.click();
 }
 
 export default function (props) {
@@ -39,32 +45,32 @@ export default function (props) {
             </DropdownToggle>
             <DropdownMenu right>
                 {!props.hideOpenFileLink ? (
-                    <DropdownItem disabled={!file.permission.info}>
-                        <a href={fileOpenFileLink} target="_blank"
-                           className={!file.permission.info ? 'text-secondary' : 'text-dark'}>
+                    <DropdownItem disabled={!file.permission.info} onClick={clickLink}>
+                        <a href={fileOpenFileLink} target="_blank" rel="noopener noreferrer"
+                           className={!file.permission.info ? 'text-secondary' : 'text-dark file-action-dropdown-link'}>
                             <i className="mr-2 fas fa-external-link-square-alt"/>
                             Open file in new tab
                         </a>
                     </DropdownItem>
                 ) : null}
-                <DropdownItem disabled={!file.permission.read || !isSupportedFile}>
-                    <a href={fileOpenContentLink} target="_blank"
-                       className={!file.permission.read || !isSupportedFile ? 'text-secondary' : 'text-dark'}>
+                <DropdownItem disabled={!file.permission.read || !isSupportedFile} onClick={clickLink}>
+                    <a href={fileOpenContentLink} target="_blank" rel="noopener noreferrer"
+                       className={!file.permission.read || !isSupportedFile ? 'text-secondary' : 'text-dark file-action-dropdown-link'}>
                         <i className="mr-2 fas fa-external-link-square-alt"/>
                         Open content in new tab
                     </a>
                 </DropdownItem>
-                <DropdownItem disabled={!file.permission.read}>
+                <DropdownItem disabled={!file.permission.read} onClick={clickLink}>
                     <a href={fileDownloadLink} download={file.name}
-                       className={!file.permission.read ? 'text-secondary' : 'text-dark'}>
+                       className={!file.permission.read ? 'text-secondary' : 'text-dark file-action-dropdown-link'}>
                         <i className="mr-2 fas fa-download"/>
                         Download {file.size ? `(${formatFileSize(file.size)})` : ''}
                     </a>
                 </DropdownItem>
                 {isLoggedIn ? (
-                    <DropdownItem disabled={!file.permission.info}>
+                    <DropdownItem disabled={!file.permission.info} onClick={clickLink}>
                         <Link to={fileShareFileLink}
-                              className={!file.permission.info ? 'text-secondary' : 'text-dark'}>
+                              className={!file.permission.info ? 'text-secondary' : 'text-dark file-action-dropdown-link'}>
                             <i className="mr-2 fas fa-share"/>
                             Share
                         </Link>
