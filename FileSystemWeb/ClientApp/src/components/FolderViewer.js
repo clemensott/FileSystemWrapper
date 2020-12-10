@@ -82,9 +82,9 @@ export class FolderViewer extends Component {
             const fileLink = `/?folder=${encodeURIComponent(this.props.path)}&file=${encodeURIComponent(getName(item.path))}`;
 
             return (
-                <div key={item.path} className="folder-viewer-file-item-container">
+                <div key={item.path} className="p-2 folder-viewer-item-container folder-viewer-file-item-container">
                     <div
-                        className={`m-2 folder-viewer-file-item-content ${item.permission.info ? 'folder-viewer-item-container-link' : ''}`}>
+                        className={`folder-viewer-file-item-content ${item.permission.info ? 'folder-viewer-item-container-link' : ''}`}>
                         {item.permission.info ? (
                             <Link to={fileLink}>
                                 <FSItem item={item}/>
@@ -103,7 +103,7 @@ export class FolderViewer extends Component {
         const folderLink = `/?folder=${encodeURIComponent(item.path)}`;
         return (
             <div key={item.path}
-                 className={`m-2 ${item.permission.list ? 'folder-viewer-item-container-link' : ''}`}>
+                 className={`p-2 folder-viewer-item-container ${item.permission.list ? 'folder-viewer-item-container-link' : ''}`}>
                 {item.permission.list ? (
                     <Link to={folderLink}>
                         <FSItem item={item}/>
