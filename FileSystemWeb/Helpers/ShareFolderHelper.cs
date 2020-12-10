@@ -25,7 +25,11 @@ namespace FileSystemWeb.Helpers
 
             IEnumerable<string> allPhysicalPathParts = new string[] {folder.Path}.Concat(parts[1..]);
             string physicalPath = FileHelper.ToFilePath(allPhysicalPathParts.ToArray());
-            if (!Path.IsPathFullyQualified(physicalPath)) return null;
+            if (physicalPath.Length > 0)
+            {
+                physicalPath = physicalPath.TrimEnd('\\') + "\\";
+                if (!Path.IsPathFullyQualified(physicalPath)) return null;
+            }
 
             return new InternalFolder()
             {
