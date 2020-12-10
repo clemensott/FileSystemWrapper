@@ -1,6 +1,5 @@
-﻿using FileSystemUWP.Sync.Definitions;
-using FileSystemUWP.Sync.Handling;
-using FileSystemUWP.Sync.Result;
+﻿using FileSystemUWP.Controls;
+using FileSystemUWP.Sync.Definitions;
 using System.Collections.Generic;
 using System.ComponentModel;
 
@@ -37,10 +36,13 @@ namespace FileSystemUWP
 
         public Api Api { get; }
 
+        public BackgroundOperations BackgroundOperations { get; }
+
         public ViewModel(IEnumerable<SyncPair> syncPairs)
         {
             Api = new Api();
             Syncs = new SyncPairs();
+            BackgroundOperations = new BackgroundOperations();
 
             foreach (SyncPair sync in syncPairs)
             {

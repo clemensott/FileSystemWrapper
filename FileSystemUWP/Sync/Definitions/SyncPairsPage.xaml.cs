@@ -143,6 +143,33 @@ namespace FileSystemUWP.Sync.Definitions
             else BackgroundTaskHelper.Current.Start(sync, viewModel.Api, true);
         }
 
+        private void MenuFlyoutSubItem_Loaded(object sender, RoutedEventArgs e)
+        {
+            MenuFlyoutSubItem container = (MenuFlyoutSubItem)sender;
+            CreateSubItem(SyncMode.TwoWay, "Two way");
+            CreateSubItem(SyncMode.ServerToLocal, "Server to local");
+            CreateSubItem(SyncMode.ServerToLocalCreateOnly, "Server to local (create and override only)");
+            CreateSubItem(SyncMode.LocalToServer, "Local to server");
+            CreateSubItem(SyncMode.LocalToServerCreateOnly, "Local to server (create and override only)");
+
+            void CreateSubItem(SyncMode mode, string text)
+            {
+                MenuFlyoutItem item = new MenuFlyoutItem()
+                {
+                    Text = text,
+                };
+                item.Click += (clickSender, clickArgs) => MfiRunWIthModeItem_Click(clickSender, clickArgs, mode);
+                container.Items.Add(item);
+            }
+        }
+
+        private async void MfiRunWIthModeItem_Click(object sender, RoutedEventArgs e, SyncMode mode)
+        {
+            SyncPair sync = UwpUtils.GetDataContext<SyncPair>(sender);
+
+            await BackgroundTaskHelper.Current.Start(sync, viewModel.Api, mode: mode);
+        }
+
         private void IbnRunSync_Click(object sender, RoutedEventArgs e)
         {
             SyncPairHandler handler;

@@ -31,12 +31,7 @@ namespace FileSystemUWP.Sync.Handling.Mode
             }
             else if (lastResult.TryGetValue(pair.RelativePath, out last))
             {
-                if (fileComparer.Equals(last.ServerCompareValue, pair.ServerCompareValue) &&
-                    fileComparer.Equals(last.LocalCompareValue, pair.LocalCompareValue))
-                {
-                    return SyncActionType.Equal;
-                }
-                else if (fileComparer.Equals(last.ServerCompareValue, pair.ServerCompareValue))
+                if (fileComparer.Equals(last.ServerCompareValue, pair.ServerCompareValue))
                 {
                     return SyncActionType.CopyToServer;
                 }

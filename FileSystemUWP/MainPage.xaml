@@ -5,6 +5,7 @@
     xmlns:local="using:FileSystemUWP"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ctl="using:FileSystemUWP.Controls"
     xmlns:pick="using:FileSystemUWP.Picker"
     xmlns:con="using:StdOttUwp.Converters"
     mc:Ignorable="d"
@@ -18,10 +19,17 @@
     </Page.Resources>
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
         <Grid DataContext="{Binding ElementName=pcView,Path=CurrentFolder}"
               Visibility="Collapsed" DataContextChanged="GidThrough_DataContextChanged"/>
 
-        <pick:PickerControl x:Name="pcView" Api="{Binding Api}"
+        <ctl:BackgroundOperationsControl Margin="5,2" Operations="{Binding BackgroundOperations}"/>
+
+        <pick:PickerControl Grid.Row="1" x:Name="pcView" Api="{Binding Api}"
                             Loaded="PcView_Loaded" FileSelected="PcView_FileSelected"/>
     </Grid>
 
@@ -35,9 +43,16 @@
                               Loaded="AbbDetails_Loaded" Click="AbbDetails_Click" />
             </CommandBar.PrimaryCommands>
             <CommandBar.SecondaryCommands>
+                <AppBarButton Icon="Delete" Label="Delete" Click="AbbDeleteFolder_Click"
+                                  IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
+                <AppBarButton Icon="NewFolder" Label="New folder" Click="AbbNewFolder_Click"
+                                  IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
+                <AppBarButton Icon="Upload" Label="Upload file" Click="AbbUploadFile_Click"
+                                  IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
+                <AppBarSeparator />
                 <AppBarButton Icon="Sync" Label="Open syncs" Click="AbbOpenSyncs_Click"/>
                 <AppBarButton Icon="Setting" Label="Settings" Click="AbbSettings_Click"/>
-                <AppBarButton Icon="Read" Label="Test" Click="AbbTest_Click"/>
+                <AppBarButton Icon="Read" Label="Unhandled exception" Click="AbbTest_Click"/>
             </CommandBar.SecondaryCommands>
         </CommandBar>
     </Page.BottomAppBar>

@@ -326,10 +326,10 @@ namespace FileSystemUWP.Sync.Handling
             Task = runSem.WaitAsync();
         }
 
-        public static SyncPairHandler FromSyncPair(SyncPair sync, Api api, bool isTestRun = false)
+        public static SyncPairHandler FromSyncPair(SyncPair sync, Api api, bool isTestRun = false, SyncMode? mode = null)
         {
             return new SyncPairHandler(sync.Token, sync.WithSubfolders, sync.Name, sync.ServerPath,
-                sync.LocalFolder, sync.Mode, GetFileComparer(sync.CompareType),
+                sync.LocalFolder, mode ?? sync.Mode, GetFileComparer(sync.CompareType),
                 sync.ConflictHandlingType, sync.Whitelist, sync.Blacklist, sync.Result, api, isTestRun);
         }
 
@@ -392,7 +392,7 @@ namespace FileSystemUWP.Sync.Handling
 
             await bothFiles.End();
             await singleFiles.End();
-            System.Diagnostics.Debug.WriteLine($"Query endded!!!!!!!");
+            System.Diagnostics.Debug.WriteLine($"Query ended!!!!!!!");
 
             async Task Query(string relPath, StorageFolder localFolder)
             {
@@ -507,16 +507,6 @@ namespace FileSystemUWP.Sync.Handling
                     await ErrorFile(pair, "Compare both file error", e);
                 }
             }
-
-            System.Diagnostics.Debug.WriteLine($"Compare both endded: {singleFiles.IsEnd} | {singleFiles.Count}");
-            if (singleFiles.IsEnd && singleFiles.Count == 0)
-            {
-                await copyToLocalFiles.End();
-                await copyToServerFiles.End();
-
-                await deleteLocalFiles.End();
-                await deleteSeverFiles.End();
-            }
         }
 
         private async Task CompareSingleFiles()
@@ -536,16 +526,6 @@ namespace FileSystemUWP.Sync.Handling
                 {
                     await ErrorFile(pair, "Compare single file error", e);
                 }
-            }
-
-            System.Diagnostics.Debug.WriteLine($"Compare single endded: {bothFiles.IsEnd} | {bothFiles.Count}");
-            if (bothFiles.IsEnd && bothFiles.Count == 0)
-            {
-                await copyToLocalFiles.End();
-                await copyToServerFiles.End();
-
-                await deleteLocalFiles.End();
-                await deleteSeverFiles.End();
             }
         }
 
@@ -633,14 +613,18 @@ namespace FileSystemUWP.Sync.Handling
 
                 try
                 {
-                    await Api.DownlaodFile(pair.ServerFullPath, tmpFile);
+                    await Api.DownloadFile(pair.ServerFullPath, tmpFile);
+                    object localCompareValue = await FileComparer.GetLocalCompareValue(tmpFile);
 
                     if (fileName != tmpFile.Name)
                     {
+                        System.Diagnostics.Debug.WriteLine("Download file1");
                         await tmpFile.RenameAsync(fileName, NameCollisionOption.ReplaceExisting);
                     }
 
-                    pair.LocalCompareValue = await FileComparer.GetLocalCompareValue(tmpFile);
+                    System.Diagnostics.Debug.WriteLine("Download file2: " + tmpFile.Path);
+                    pair.LocalCompareValue = localCompareValue;
+                    System.Diagnostics.Debug.WriteLine("Download file3");
                     if (pair.ServerCompareValue == null) pair.ServerCompareValue = await FileComparer.GetServerCompareValue(pair.ServerFullPath, Api);
 
                     await CopiedLocalFile(pair);
@@ -699,9 +683,7 @@ namespace FileSystemUWP.Sync.Handling
 
                 try
                 {
-                    IInputStream readStream = await pair.LocalFile.OpenReadAsync();
-
-                    if (await Api.WriteFile(pair.ServerFullPath, readStream))
+                    if (await Api.UploadFile(pair.ServerFullPath, pair.LocalFile))
                     {
                         if (pair.LocalCompareValue == null) pair.LocalCompareValue = await FileComparer.GetLocalCompareValue(pair.LocalFile);
                         pair.ServerCompareValue = await FileComparer.GetServerCompareValue(pair.ServerFullPath, Api);
@@ -869,17 +851,38 @@ namespace FileSystemUWP.Sync.Handling
 
             State = SyncPairHandlerState.Running;
 
-            await Task.WhenAll(QueryFiles(),
-                Task.Run(() => CompareBothFiles()),
-                Task.Run(() => CompareSingleFiles()),
-                CopyFilesToLocal(),
-                CopyFilesToServer(),
-                DeleteLocalFiles(),
-                DeleteServerFiles());
+            await Task.WhenAll
+            (
+                QueryFiles(),
+                CompareFiles(),
+                ProcessFiles()
+            );
 
             if (State == SyncPairHandlerState.Running) State = SyncPairHandlerState.Finished;
 
             runSem.Release();
+
+            async Task CompareFiles()
+            {
+                await Task.WhenAll(Task.Run(CompareBothFiles), Task.Run(CompareSingleFiles));
+
+                await copyToLocalFiles.End();
+                await copyToServerFiles.End();
+
+                await deleteLocalFiles.End();
+                await deleteSeverFiles.End();
+            }
+
+            Task ProcessFiles()
+            {
+                return Task.WhenAll
+                (
+                    CopyFilesToLocal(),
+                    CopyFilesToServer(),
+                    DeleteLocalFiles(),
+                    DeleteServerFiles()
+                );
+            }
         }
 
         public Task Cancel()

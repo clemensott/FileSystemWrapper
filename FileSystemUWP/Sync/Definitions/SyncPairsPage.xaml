@@ -140,10 +140,15 @@
                     <FlyoutBase.AttachedFlyout>
                         <MenuFlyout>
                             <MenuFlyoutItem Text="Edit" Icon="Edit" Click="MfiEdit_Click" 
-                                            IsEnabled="{Binding ElementName=sinIsRunning,Path=Output,Converter={StaticResource falsyCon}}" />
+                                            IsEnabled="{Binding ElementName=sinIsRunning,Path=Output,
+                                              Converter={StaticResource falsyCon}}" />
                             <MenuFlyoutItem Text="Delete" Icon="Clear" Click="MfiRemove_Click" />
                             <MenuFlyoutItem Text="Test Run" Icon="Play" Click="MfiTestRun_Click" 
-                                            IsEnabled="{Binding ElementName=sinIsRunning,Path=Output,Converter={StaticResource falsyCon}}"/>
+                                            IsEnabled="{Binding ElementName=sinIsRunning,Path=Output,
+                                              Converter={StaticResource falsyCon}}"/>
+                            <MenuFlyoutSubItem Text="Run with Mode" Icon="Play" Loaded="MenuFlyoutSubItem_Loaded"
+                                               IsEnabled="{Binding ElementName=sinIsRunning,Path=Output,
+                                                 Converter={StaticResource falsyCon}}"/>
                         </MenuFlyout>
                     </FlyoutBase.AttachedFlyout>
                 </Grid>

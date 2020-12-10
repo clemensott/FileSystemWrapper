@@ -2,11 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using Windows.Storage.Streams;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -123,7 +121,7 @@ namespace FileSystemUWP.FileViewers
             picker.FileTypeChoices.Add(item.Extension, new string[] { item.Extension });
 
             StorageFile file = await picker.PickSaveFileAsync();
-            await viewing.Api.DownlaodFile(item.FullPath, file);
+            await viewing.Api.DownloadFile(item.FullPath, file);
         }
 
         private void AbbDetails_Click(object sender, RoutedEventArgs e)

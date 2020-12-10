@@ -117,11 +117,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Api.cs" />
+    <Compile Include="ApiExtensions.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="AuthPage.xaml.cs">
       <DependentUpon>AuthPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\BackgroundOperations.cs" />
+    <Compile Include="Controls\BackgroundOperationsControl.xaml.cs">
+      <DependentUpon>BackgroundOperationsControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="FileSystemItem.cs" />
     <Compile Include="FileSystemItemInfoPage.xaml.cs">
@@ -265,6 +270,10 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Page Include="AuthPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\BackgroundOperationsControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

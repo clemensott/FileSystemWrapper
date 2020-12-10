@@ -1,8 +1,10 @@
-﻿using FileSystemUWP.FileViewers;
+﻿using FileSystemCommon;
+using FileSystemUWP.FileViewers;
 using FileSystemUWP.Picker;
 using FileSystemUWP.Sync.Definitions;
 using StdOttUwp;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
@@ -134,7 +136,17 @@ namespace FileSystemUWP
             picker.FileTypeChoices.Add(e.Item.Extension, new string[] { e.Item.Extension });
 
             StorageFile file = await picker.PickSaveFileAsync();
-            await viewModel.Api.DownlaodFile(e.Item.FullPath, file);
+
+            await UiUtils.TryAgain("Try again?", "Download file error", async () =>
+            {
+                try
+                {
+                    await viewModel.Api.DownloadFile(e.Item.FullPath, file);
+                    return true;
+                }
+                catch { }
+                return false;
+            }, viewModel.BackgroundOperations, "Download file...");
         }
 
         private async void FmiDelete_Click(object sender, FlyoutMenuItemClickEventArgs e)
@@ -145,13 +157,19 @@ namespace FileSystemUWP
                 if (!delete) return;
 
                 await viewModel.Api.DeleteFile(e.Item.FullPath);
+
+                await UiUtils.TryAgain("Try again?", "Delete file error",
+                    () => viewModel.Api.DeleteFile(e.Item.FullPath),
+                    viewModel.BackgroundOperations, "Delete file...");
             }
             else
             {
                 bool delete = await DialogUtils.ShowTwoOptionsAsync(e.Item.Name, "Delete Folder?", "Yes", "No");
                 if (!delete) return;
 
-                await viewModel.Api.DeleteFolder(e.Item.FullPath, true);
+                await UiUtils.TryAgain("Try again?", "Delete folder error",
+                    () => viewModel.Api.DeleteFolder(e.Item.FullPath, true),
+                    viewModel.BackgroundOperations, "Delete folder...");
             }
 
             await pcView.UpdateContent();
@@ -216,6 +234,67 @@ namespace FileSystemUWP
 
             string formatedTimerSyncTime = Settings.Current.SyncTimerTime.ToString();
             await DialogUtils.ShowSafeAsync(formatedTimerSyncTime, "Timer synced");
+        }
+
+        private async void AbbDeleteFolder_Click(object sender, RoutedEventArgs e)
+        {
+            if (!await DialogUtils.ShowTwoOptionsAsync("Are you sure?", "Delete current folder", "Yes", "No")) return;
+
+            if (await UiUtils.TryAgain("Try again?", "Delete folder error",
+                () => viewModel.Api.DeleteFolder(pcView.CurrentFolder.Value.FullPath, true),
+                viewModel.BackgroundOperations, "Delete folder..."))
+            {
+                await pcView.SetParent();
+            }
+            else await pcView.UpdateCurrentFolderItems();
+        }
+
+        private async void AbbNewFolder_Click(object sender, RoutedEventArgs e)
+        {
+            string name = "New Folder";
+            while (true)
+            {
+                TextBox tbx = new TextBox()
+                {
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Text = name,
+                };
+                tbx.SelectAll();
+                ContentDialogResult result = await DialogUtils.ShowContentAsync(tbx, "Name:", "Cancel", "Create");
+
+                if (result != ContentDialogResult.Primary) break;
+                name = tbx.Text.Trim();
+                if (name.Length == 0 || name.Any(c => Path.GetInvalidFileNameChars().Contains(c))) continue;
+
+                string path = Utils.JoinPaths(pcView.CurrentFolder.Value.FullPath, name);
+
+                await UiUtils.TryAgain("Try again?", "Create folder error",
+                    () => viewModel.Api.CreateFolder(path),
+                    viewModel.BackgroundOperations, "Create folder...");
+
+                await pcView.UpdateCurrentFolderItems();
+                break;
+            }
+        }
+
+        private async void AbbUploadFile_Click(object sender, RoutedEventArgs e)
+        {
+            FileOpenPicker picker = new FileOpenPicker()
+            {
+                SuggestedStartLocation = PickerLocationId.ComputerFolder,
+                ViewMode = PickerViewMode.List,
+            };
+
+            picker.FileTypeFilter.Add("*");
+
+            StorageFile srcFile = await picker.PickSingleFileAsync();
+            string path = Utils.JoinPaths(pcView.CurrentFolder.Value.FullPath, srcFile.Name);
+
+            await UiUtils.TryAgain("Try again?", "Uplaod file error",
+                () => viewModel.Api.UploadFile(path, srcFile),
+                viewModel.BackgroundOperations, "Uploading file...");
+            await pcView.UpdateCurrentFolderItems();
         }
     }
 }

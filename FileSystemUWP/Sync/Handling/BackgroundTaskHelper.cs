@@ -45,12 +45,12 @@ namespace FileSystemUWP.Sync.Handling
             return handlers.TryGetValue(token, out handler);
         }
 
-        public Task Start(SyncPair sync, Api api, bool isTestRun = false)
+        public Task Start(SyncPair sync, Api api, bool isTestRun = false, SyncMode? mode = null)
         {
-            return Start(new SyncPair[] { sync }, api, isTestRun);
+            return Start(new SyncPair[] { sync }, api, isTestRun, mode);
         }
 
-        public async Task Start(IEnumerable<SyncPair> syncs, Api api, bool isTestRun = false)
+        public async Task Start(IEnumerable<SyncPair> syncs, Api api, bool isTestRun = false, SyncMode? mode = null)
         {
             bool addedHandler = false;
 
@@ -59,7 +59,7 @@ namespace FileSystemUWP.Sync.Handling
                 SyncPairHandler handler;
                 if (handlers.TryGetValue(pair.Token, out handler) && !handler.IsEnded) continue;
 
-                handler = SyncPairHandler.FromSyncPair(pair, api, isTestRun);
+                handler = SyncPairHandler.FromSyncPair(pair, api, isTestRun, mode);
 
                 Queue.Enqueue(handler);
                 handlers[handler.Token] = handler;

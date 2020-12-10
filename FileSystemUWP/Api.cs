@@ -7,7 +7,6 @@ using Newtonsoft.Json;
 using StdOttStandard.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -121,7 +120,7 @@ namespace FileSystemUWP
             return Request(GetUri($"/api/files/{Utils.EncodePath(srcPath)}/{Utils.EncodePath(destPath)}/move"), HttpMethod.Post);
         }
 
-        public Task<bool> WriteFile(string path, IInputStream stream)
+        public Task<bool> UploadFile(string path, IInputStream stream)
         {
             return Request(GetUri($"/api/files/{Utils.EncodePath(path)}"), HttpMethod.Post, stream);
         }
@@ -136,7 +135,7 @@ namespace FileSystemUWP
             return RequestRandmomAccessStream(GetUri($"/api/files/{Utils.EncodePath(path)}"), HttpMethod.Get);
         }
 
-        public async Task DownlaodFile(string path, StorageFile destFile)
+        public async Task DownloadFile(string path, StorageFile destFile)
         {
             Uri uri = GetUri($"/api/files/{Utils.EncodePath(path)}/download");
             if (uri == null) return;
@@ -147,7 +146,14 @@ namespace FileSystemUWP
                 {
                     using (IInputStream downloadStream = await client.GetInputStreamAsync(uri))
                     {
-                        await downloadStream.AsStreamForRead().CopyToAsync(fileStream.AsStream());
+                        const uint capacity = 1_000_000;
+                        Windows.Storage.Streams.Buffer buffer = new Windows.Storage.Streams.Buffer(capacity);
+                        while (true)
+                        {
+                            await downloadStream.ReadAsync(buffer, capacity, InputStreamOptions.None);
+                            if (buffer.Length == 0) break;
+                            await fileStream.WriteAsync(buffer);
+                        }
                     }
                 }
             }
