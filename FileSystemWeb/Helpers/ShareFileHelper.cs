@@ -35,16 +35,18 @@ namespace FileSystemWeb.Helpers
             ShareFolder folder = await dbContext.ShareFolders
                 .Include(f => f.Permission)
                 .FirstOrDefaultAsync(f => f.Uuid == folderUuid);
+            if (folder == null) return null;
 
             IEnumerable<string> allPhysicalPathParts = new string[] {folder?.Path}.Concat(parts[1..]);
-            return folder != null
-                ? new InternalFile()
-                {
-                    PhysicalPath = FileHelper.ToFilePath(allPhysicalPathParts.ToArray()),
-                    VirtualPath = virtualPath,
-                    Permission = folder.Permission,
-                }
-                : null;
+            string physicalPath = FileHelper.ToFilePath(allPhysicalPathParts.ToArray());
+            if (!Path.IsPathFullyQualified(physicalPath)) return null;
+
+            return new InternalFile()
+            {
+                PhysicalPath = physicalPath,
+                VirtualPath = virtualPath,
+                Permission = folder.Permission,
+            };
         }
     }
 }

@@ -24,10 +24,13 @@ namespace FileSystemWeb.Helpers
             if (folder == null || (folder.UserId != null && folder.UserId != userId)) return null;
 
             IEnumerable<string> allPhysicalPathParts = new string[] {folder.Path}.Concat(parts[1..]);
+            string physicalPath = FileHelper.ToFilePath(allPhysicalPathParts.ToArray());
+            if (!Path.IsPathFullyQualified(physicalPath)) return null;
+
             return new InternalFolder()
             {
                 BaseName = folder.Name,
-                PhysicalPath = FileHelper.ToFolderPath(allPhysicalPathParts.ToArray()),
+                PhysicalPath = physicalPath,
                 VirtualPath = virtualPath,
                 Permission = folder.Permission,
             };
