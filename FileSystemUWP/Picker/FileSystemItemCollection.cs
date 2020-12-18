@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StdOttStandard.Linq;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -18,18 +19,20 @@ namespace FileSystemUWP.Picker
                 {
                     int compare = index < filesBeginIndex ? folder.FullPath.CompareTo(this[index].FullPath) : -1;
 
+                    if (compare == 0)
+                    {
+                        if (!Equals(folder, this[index])) base.SetItem(index, folder);
+                        index++;
+                        break;
+                    }
                     if (compare < 0)
                     {
                         base.InsertItem(index++, folder);
                         filesBeginIndex++;
                         break;
                     }
-                    else if (compare > 0) base.RemoveItem(index);
-                    else
-                    {
-                        base.SetItem(index++, folder);
-                        break;
-                    }
+
+                    base.RemoveItem(index);
                 }
             }
         }
@@ -43,19 +46,31 @@ namespace FileSystemUWP.Picker
                 {
                     int compare = index < Count ? file.FullPath.CompareTo(this[index].FullPath) : -1;
 
+                    if (compare == 0)
+                    {
+                        if (!Equals(file, this[index])) base.SetItem(index, file);
+                        index++;
+                        break;
+                    }
                     if (compare < 0)
                     {
                         base.InsertItem(index++, file);
                         break;
                     }
-                    else if (compare > 0) base.RemoveItem(index);
-                    else
-                    {
-                        base.SetItem(index++, file);
-                        break;
-                    }
+
+                    base.RemoveItem(index);
                 }
             }
+        }
+
+        private static bool Equals(FileSystemItem a, FileSystemItem b)
+        {
+            return
+                a.IsFile == b.IsFile &&
+                a.IsFolder == b.IsFolder &&
+                a.Name == b.Name &&
+                a.PathParts.BothNullOrSequenceEqual(b.PathParts) &&
+                Equals(a.Permission, b.Permission);
         }
 
         protected override void ClearItems()
