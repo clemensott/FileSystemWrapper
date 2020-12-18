@@ -6,6 +6,8 @@ using StdOttUwp;
 using StdOttUwp.Converters;
 using System;
 using System.Collections.Generic;
+using Windows.Devices.Input;
+using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -58,9 +60,24 @@ namespace FileSystemUWP.Sync.Definitions
             return ((PathPart[])value).GetNamePath();
         }
 
-        private void GidSyncPair_Holding(object sender, object e)
+        private void GidSyncPair_Holding(object sender, HoldingRoutedEventArgs e)
         {
-            FlyoutBase.ShowAttachedFlyout(sender as FrameworkElement);
+            if (e.HoldingState == HoldingState.Started)
+            {
+                FrameworkElement element = (FrameworkElement)sender;
+                MenuFlyout flyout = (MenuFlyout)FlyoutBase.GetAttachedFlyout(element);
+                flyout.ShowAt(element, e.GetPosition(element));
+            }
+        }
+
+        private void GidSyncPair_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            if (e.PointerDeviceType == PointerDeviceType.Mouse)
+            {
+                FrameworkElement element = (FrameworkElement)sender;
+                MenuFlyout flyout = (MenuFlyout)FlyoutBase.GetAttachedFlyout(element);
+                flyout.ShowAt(element, e.GetPosition(element));
+            }
         }
 
         private object SicHandler_ConvertRef(object sender, SingleInputsConvertEventArgs e)

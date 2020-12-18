@@ -37,18 +37,6 @@ namespace FileSystemUWP
             base.OnNavigatedTo(e);
         }
 
-        private object Path_ConvertEvent(object value, Type targetType, object parameter, string language)
-        {
-            string path = (string)value;
-
-            return string.IsNullOrWhiteSpace(path) ? "Root" : path;
-        }
-
-        private object SymConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
-        {
-            return UiUtils.GetSymbol((FileSystemItem)value);
-        }
-
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             bool ping = await Ping(viewModel.Api);
@@ -91,38 +79,23 @@ namespace FileSystemUWP
         private async void PcView_Loaded(object sender, RoutedEventArgs e)
         {
             pcView.Type = FileSystemItemViewType.Files | FileSystemItemViewType.Folders;
-            pcView.FlyoutMenuItems = new FlyoutMenuItem[] {
-                CreateFlyoutMenuItem(Symbol.List, "Details", FmiDetails_Click),
-                CreateFlyoutMenuItem(Symbol.Download, "Download", FmiDownload_Click),
-                CreateFlyoutMenuItem(Symbol.Cancel, "Delete", FmiDelete_Click),
-            };
 
             await pcView.SetCurrentFolder(viewModel.CurrentFolderPath);
         }
 
-        private static FlyoutMenuItem CreateFlyoutMenuItem(Symbol? symbol, string text,
-            EventHandler<FlyoutMenuItemClickEventArgs> clickHandler)
-        {
-            FlyoutMenuItem item = new FlyoutMenuItem()
-            {
-                Symbol = symbol,
-                Text = text,
-            };
-            item.Click += clickHandler;
-
-            return item;
-        }
-
-        private void FmiDetails_Click(object sender, FlyoutMenuItemClickEventArgs e)
+        private void MfiDetails_Click(object sender, RoutedEventArgs e)
         {
             viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
 
-            Frame.Navigate(typeof(FileSystemItemInfoPage), (e.Item, viewModel.Api));
+            FileSystemItem item = UwpUtils.GetDataContext<FileSystemItem>(sender);
+            Frame.Navigate(typeof(FileSystemItemInfoPage), (item, viewModel.Api));
         }
 
-        private async void FmiDownload_Click(object sender, FlyoutMenuItemClickEventArgs e)
+        private async void MfiDownload_Click(object sender, RoutedEventArgs e)
         {
-            if (e.Item.IsFolder)
+            FileSystemItem item = UwpUtils.GetDataContext<FileSystemItem>(sender);
+
+            if (item.IsFolder)
             {
                 await DialogUtils.ShowSafeAsync("Downloading a folder is not implemented");
                 return;
@@ -130,18 +103,19 @@ namespace FileSystemUWP
 
             FileSavePicker picker = new FileSavePicker()
             {
-                SuggestedFileName = e.Item.Name,
-                DefaultFileExtension = e.Item.Extension,
+                SuggestedFileName = item.Name,
+                DefaultFileExtension = item.Extension,
             };
-            picker.FileTypeChoices.Add(e.Item.Extension, new string[] { e.Item.Extension });
+            picker.FileTypeChoices.Add(item.Extension, new string[] { item.Extension });
 
             StorageFile file = await picker.PickSaveFileAsync();
+            if (file == null) return;
 
             await UiUtils.TryAgain("Try again?", "Download file error", async () =>
             {
                 try
                 {
-                    await viewModel.Api.DownloadFile(e.Item.FullPath, file);
+                    await viewModel.Api.DownloadFile(item.FullPath, file);
                     return true;
                 }
                 catch { }
@@ -149,26 +123,28 @@ namespace FileSystemUWP
             }, viewModel.BackgroundOperations, "Download file...");
         }
 
-        private async void FmiDelete_Click(object sender, FlyoutMenuItemClickEventArgs e)
+        private async void MfiDelete_Click(object sender, RoutedEventArgs e)
         {
-            if (e.Item.IsFile)
+            FileSystemItem item = UwpUtils.GetDataContext<FileSystemItem>(sender);
+
+            if (item.IsFile)
             {
-                bool delete = await DialogUtils.ShowTwoOptionsAsync(e.Item.Name, "Delete File?", "Yes", "No");
+                bool delete = await DialogUtils.ShowTwoOptionsAsync(item.Name, "Delete File?", "Yes", "No");
                 if (!delete) return;
 
-                await viewModel.Api.DeleteFile(e.Item.FullPath);
+                await viewModel.Api.DeleteFile(item.FullPath);
 
                 await UiUtils.TryAgain("Try again?", "Delete file error",
-                    () => viewModel.Api.DeleteFile(e.Item.FullPath),
+                    () => viewModel.Api.DeleteFile(item.FullPath),
                     viewModel.BackgroundOperations, "Delete file...");
             }
             else
             {
-                bool delete = await DialogUtils.ShowTwoOptionsAsync(e.Item.Name, "Delete Folder?", "Yes", "No");
+                bool delete = await DialogUtils.ShowTwoOptionsAsync(item.Name, "Delete Folder?", "Yes", "No");
                 if (!delete) return;
 
                 await UiUtils.TryAgain("Try again?", "Delete folder error",
-                    () => viewModel.Api.DeleteFolder(e.Item.FullPath, true),
+                    () => viewModel.Api.DeleteFolder(item.FullPath, true),
                     viewModel.BackgroundOperations, "Delete folder...");
             }
 

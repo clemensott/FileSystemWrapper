@@ -158,8 +158,6 @@
     <Compile Include="Picker\FileSystemItemCollection.cs" />
     <Compile Include="Picker\FileSystemItemViewType.cs" />
     <Compile Include="Picker\FileSystemPickType.cs" />
-    <Compile Include="Picker\FlyoutMenuItem.cs" />
-    <Compile Include="Picker\FlyoutMenuItemClickEventArgs.cs" />
     <Compile Include="Picker\FolderPicker.cs" />
     <Compile Include="Picker\FolderPicking.cs" />
     <Compile Include="Picker\NamePickerPage.xaml.cs">

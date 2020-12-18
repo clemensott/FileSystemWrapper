@@ -30,7 +30,7 @@
         </ListView.ItemContainerStyle>
         <ListView.ItemTemplate>
             <DataTemplate>
-                <Grid Margin="5" RightTapped="GidSyncPair_Holding" Holding="GidSyncPair_Holding">
+                <Grid Margin="5" RightTapped="GidSyncPair_RightTapped" Holding="GidSyncPair_Holding">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />

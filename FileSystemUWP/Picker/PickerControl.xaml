@@ -30,10 +30,15 @@
 
         <ListView Grid.Row="1" Name="lvwItems" SelectionMode="Single"
                   SelectionChanged="LvwItems_SelectionChanged">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Orientation="Horizontal" Holding="SplItem_Holding"
-                                RightTapped="SplItem_RightTapped">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Background="Transparent"
+                                Holding="SplItem_Holding" RightTapped="SplItem_RightTapped">
                         <SymbolIcon Margin="5" Symbol="{Binding Converter={StaticResource symCon}}"/>
                         <TextBlock VerticalAlignment="Center" Text="{Binding Name}"/>
                     </StackPanel>

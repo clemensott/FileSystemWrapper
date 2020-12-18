@@ -30,7 +30,22 @@
         <ctl:BackgroundOperationsControl Margin="5,2" Operations="{Binding BackgroundOperations}"/>
 
         <pick:PickerControl Grid.Row="1" x:Name="pcView" Api="{Binding Api}"
-                            Loaded="PcView_Loaded" FileSelected="PcView_FileSelected"/>
+                            Loaded="PcView_Loaded" FileSelected="PcView_FileSelected">
+            <pick:PickerControl.FolderMenuFlyout>
+                <MenuFlyout>
+                    <MenuFlyoutItem Text="Details" Icon="List" Click="MfiDetails_Click" />
+                    <MenuFlyoutItem Text="Delete" Icon="Delete" Click="MfiDelete_Click" />
+                </MenuFlyout>
+            </pick:PickerControl.FolderMenuFlyout>
+            
+            <pick:PickerControl.FileMenuFlyout>
+                <MenuFlyout>
+                    <MenuFlyoutItem Text="Details" Icon="List" Click="MfiDetails_Click" />
+                    <MenuFlyoutItem Text="Download" Icon="Download" Click="MfiDownload_Click" />
+                    <MenuFlyoutItem Text="Delete" Icon="Delete" Click="MfiDelete_Click" />
+                </MenuFlyout>
+            </pick:PickerControl.FileMenuFlyout>
+        </pick:PickerControl>
     </Grid>
 
     <Page.BottomAppBar>

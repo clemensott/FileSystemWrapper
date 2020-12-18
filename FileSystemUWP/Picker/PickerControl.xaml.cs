@@ -1,10 +1,14 @@
 ﻿using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem;
 using StdOttStandard.Linq;
+using StdOttUwp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.Devices.Input;
+using Windows.Foundation;
+using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -31,7 +35,7 @@ namespace FileSystemUWP.Picker
         }
 
         public static readonly DependencyProperty CurrentFolderNamePathProperty = DependencyProperty.Register("CurrentFolderNamePath",
-            typeof(string), typeof(PickerControl), new PropertyMetadata(string.Empty));
+            typeof(string), typeof(PickerControl), new PropertyMetadata(null));
 
         public static readonly DependencyProperty ApiProperty = DependencyProperty.Register("Api",
             typeof(Api), typeof(PickerControl), new PropertyMetadata(null, OnApiPropertyChanged));
@@ -52,8 +56,11 @@ namespace FileSystemUWP.Picker
             await s.UpdateCurrentFolderItems(true);
         }
 
-        public static readonly DependencyProperty FlyoutMenuItemsProperty = DependencyProperty.Register("FlyoutMenuItems",
-            typeof(IEnumerable<FlyoutMenuItem>), typeof(PickerControl), new PropertyMetadata(null));
+        public static readonly DependencyProperty FileMenuFlyoutProperty = DependencyProperty
+            .Register(nameof(FileMenuFlyout), typeof(MenuFlyout), typeof(PickerControl), new PropertyMetadata(null));
+
+        public static readonly DependencyProperty FolderMenuFlyoutProperty = DependencyProperty
+            .Register(nameof(FolderMenuFlyout), typeof(MenuFlyout), typeof(PickerControl), new PropertyMetadata(null));
 
         private long updateCount = 0;
         private string currentUpdatePath;
@@ -91,10 +98,16 @@ namespace FileSystemUWP.Picker
             set => SetValue(TypeProperty, value);
         }
 
-        public IEnumerable<FlyoutMenuItem> FlyoutMenuItems
+        public MenuFlyout FileMenuFlyout
         {
-            get => (IEnumerable<FlyoutMenuItem>)GetValue(FlyoutMenuItemsProperty);
-            set => SetValue(FlyoutMenuItemsProperty, value);
+            get => (MenuFlyout)GetValue(FileMenuFlyoutProperty);
+            set => SetValue(FileMenuFlyoutProperty, value);
+        }
+
+        public MenuFlyout FolderMenuFlyout
+        {
+            get => (MenuFlyout)GetValue(FolderMenuFlyoutProperty);
+            set => SetValue(FolderMenuFlyoutProperty, value);
         }
 
         public PickerControl()
@@ -108,6 +121,7 @@ namespace FileSystemUWP.Picker
         {
             string path = (string)value;
 
+            if (path == null) return string.Empty;
             return string.IsNullOrWhiteSpace(path) ? "Root" : path;
         }
 
@@ -188,42 +202,28 @@ namespace FileSystemUWP.Picker
 
         private void SplItem_Holding(object sender, HoldingRoutedEventArgs e)
         {
-            OpenFlyout((FrameworkElement)sender);
+            if (e.HoldingState == HoldingState.Started)
+            {
+                OpenFlyout((FrameworkElement)sender, e.GetPosition((FrameworkElement)sender));
+            }
         }
 
         private void SplItem_RightTapped(object sender, RightTappedRoutedEventArgs e)
         {
-            OpenFlyout((FrameworkElement)sender);
-        }
-
-        private void OpenFlyout(FrameworkElement element)
-        {
-            if (FlyoutMenuItems == null) return;
-
-            FlyoutBase flyout = FlyoutBase.GetAttachedFlyout(element);
-            if (flyout == null) FlyoutBase.SetAttachedFlyout(element, CreateFlyout(FlyoutMenuItems));
-
-            FlyoutBase.ShowAttachedFlyout(element);
-        }
-
-        private static MenuFlyout CreateFlyout(IEnumerable<FlyoutMenuItem> items)
-        {
-            MenuFlyout flyout = new MenuFlyout();
-
-            foreach (FlyoutMenuItem srcItem in items)
+            if (e.PointerDeviceType == PointerDeviceType.Mouse)
             {
-                MenuFlyoutItem destItem = new MenuFlyoutItem()
-                {
-                    Icon = srcItem.Symbol.HasValue ? new SymbolIcon(srcItem.Symbol.Value) : null,
-                    Text = srcItem.Text ?? string.Empty,
-                };
-
-                destItem.Click += (sender, e) => srcItem.Raise((FileSystemItem)((FrameworkElement)sender).DataContext);
-
-                flyout.Items.Add(destItem);
+                OpenFlyout((FrameworkElement)sender, e.GetPosition((FrameworkElement)sender));
             }
+        }
 
-            return flyout;
+        private void OpenFlyout(FrameworkElement element, Point position)
+        {
+            FileSystemItem item = UwpUtils.GetDataContext<FileSystemItem>(element);
+            MenuFlyout flyout = item.IsFile ? FileMenuFlyout : FolderMenuFlyout;
+            if (FileMenuFlyout == null) return;
+
+            FlyoutBase.SetAttachedFlyout(element, flyout);
+            flyout.ShowAt(element, position);
         }
 
         public IEnumerable<FileSystemItem> GetCurrentItems()
