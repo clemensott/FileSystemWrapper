@@ -238,7 +238,7 @@ namespace FileSystemWeb.Controllers
 
             try
             {
-                System.IO.File.Delete(virtualPath);
+                System.IO.File.Delete(file.PhysicalPath);
             }
             catch (FileNotFoundException)
             {
