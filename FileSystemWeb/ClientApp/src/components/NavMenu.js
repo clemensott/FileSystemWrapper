@@ -1,65 +1,43 @@
-import React, {Component} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink} from 'reactstrap';
 import {NavLink as RRNavLink} from 'react-router-dom';
 import store from '../Helpers/store'
 import './NavMenu.css';
 
-export class NavMenu extends Component {
-    static displayName = NavMenu.name;
+export default function () {
+    const [collapsed, setCollapsed] = useState(false);
+    const toggleCollapsed = () => setCollapsed(!collapsed);
 
-    constructor(props) {
-        super(props);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isLoggedInCallbackId, setIsLoggedInCallbackId] = useState(null);
 
-        this.toggleNavbar = this.toggleNavbar.bind(this);
-        this.onUpdateIsLoggedIn = this.onUpdateIsLoggedIn.bind(this);
+    useEffect(() => {
+        setIsLoggedInCallbackId(store.addCallback('isLoggedIn', value => setIsLoggedIn(value)));
+        setIsLoggedIn(store.get('isLoggedIn'));
+    }, []);
+    useEffect(() => {
+        return () => isLoggedInCallbackId && store.removeCallback('isLoggedIn', isLoggedInCallbackId)
+    }, [isLoggedInCallbackId]);
 
-        this.state = {
-            isLoggedIn: null,
-            collapsed: true
-        };
-    }
+    const authUrl = isLoggedIn ? '/logout' : '/login';
+    const authTitle = isLoggedIn ? 'Logout' : 'Login';
 
-    toggleNavbar() {
-        this.setState({
-            collapsed: !this.state.collapsed
-        });
-    }
-
-    render() {
-        const authUrl = this.state.isLoggedIn ? '/logout' : '/login';
-        const authTitle = this.state.isLoggedIn ? 'Logout' : 'Login';
-
-        return (
-            <header>
-                <Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3" light>
-                    <Container>
-                        <NavbarBrand tag={RRNavLink} to="/">Root</NavbarBrand>
-                        <NavbarToggler onClick={this.toggleNavbar} className="mr-2"/>
-                        <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!this.state.collapsed}
-                                  navbar>
-                            <ul className="navbar-nav flex-grow">
-                                <NavItem>
-                                    <NavLink tag={RRNavLink} className="text-dark" to={authUrl}>{authTitle}</NavLink>
-                                </NavItem>
-                            </ul>
-                        </Collapse>
-                    </Container>
-                </Navbar>
-            </header>
-        );
-    }
-
-    componentDidMount() {
-        this.isLoggedInCallbackId = store.addCallback('isLoggedIn', this.onUpdateIsLoggedIn)
-    }
-
-    componentWillUnmount() {
-        store.removeCallback('isLoggedIn', this.isLoggedInCallbackId);
-    }
-
-    onUpdateIsLoggedIn(value) {
-        this.setState({
-            isLoggedIn: value,
-        });
-    }
+    return (
+        <header>
+            <Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3" light>
+                <Container>
+                    <NavbarBrand tag={RRNavLink} to="/">Root</NavbarBrand>
+                    <NavbarToggler onClick={toggleCollapsed} className="mr-2"/>
+                    <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!collapsed}
+                              navbar>
+                        <ul className="navbar-nav flex-grow">
+                            <NavItem>
+                                <NavLink tag={RRNavLink} className="text-dark" to={authUrl}>{authTitle}</NavLink>
+                            </NavItem>
+                        </ul>
+                    </Collapse>
+                </Container>
+            </Navbar>
+        </header>
+    );
 }

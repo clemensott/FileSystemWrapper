@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import {Route, Switch} from 'react-router-dom';
 import Login from './components/Login';
-import {NavMenu} from './components/NavMenu';
+import NavMenu from './components/NavMenu';
 import {Container} from 'reactstrap';
 import Logout from './components/Logout';
 import FilePage from './components/FilePage';
