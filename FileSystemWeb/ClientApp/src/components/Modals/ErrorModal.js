@@ -2,19 +2,28 @@
 import {Button, Modal, ModalHeader, ModalFooter, ModalBody} from 'reactstrap';
 
 const modal = forwardRef((props, ref) => {
-    const [modalOpen, setModalOpen] = useState(false);
-    const closeDeleteModal = () => setModalOpen(false);
+    const [promise, setPromise] = useState(null);
+    const closeDeleteModal = () => {
+        promise.resolve();
+        setPromise(null);
+    };
 
     useImperativeHandle(ref, () => ({
-        show: (error) => setModalOpen(error),
+        show: (error) => {
+            promise && promise.resolve(false);
+            return new Promise(resolve => setPromise({
+                resolve,
+                error
+            }));
+        },
         close: closeDeleteModal,
     }));
 
     return (
-        <Modal isOpen={!!modalOpen} toggle={closeDeleteModal}>
+        <Modal isOpen={!!promise} toggle={closeDeleteModal}>
             <ModalHeader toggle={closeDeleteModal}>An error occoured</ModalHeader>
             <ModalBody>
-                {modalOpen}
+                {promise ? promise.error : null}
             </ModalBody>
             <ModalFooter>
                 <Button color="primary" onClick={closeDeleteModal}>Cancel</Button>

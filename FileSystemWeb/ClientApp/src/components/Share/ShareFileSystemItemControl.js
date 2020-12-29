@@ -36,7 +36,7 @@ async function updateItem(path, isFile, force = false) {
         infoError = 'No path of given';
     }
 
-    if (infoError) store.get('refs').errorModal.current.show(infoError);
+    if (infoError) await store.get('refs').errorModal.current.show(infoError);
     return item;
 }
 
@@ -112,7 +112,7 @@ export default function ({path, isFile, onItemInfoLoaded}) {
                 allRefs.loadingModal.current && allRefs.loadingModal.current.close();
             }
 
-            if (submitError) allRefs.errorModal.current.show(submitError);
+            if (submitError) await allRefs.errorModal.current.show(submitError);
             if (redirect) history.push(redirect);
         }}/>
     ) : (

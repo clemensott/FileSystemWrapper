@@ -2,26 +2,36 @@
 import {Button, Modal, ModalHeader, ModalFooter, ModalBody} from 'reactstrap';
 
 const modal = forwardRef((props, ref) => {
-    const [obj, setObj] = useState(null);
-    const closeDeleteModal = () => setObj(null);
+    const [promise, setPromise] = useState(null);
+    const closeDeleteModal = () => {
+        promise.resolve(false);
+        setPromise(null);
+    };
 
     useImperativeHandle(ref, () => ({
-        show: (obj) => setObj(obj),
+        show: (params) => {
+            promise && promise.resolve(false);
+            return new Promise(resolve => setPromise({
+                resolve,
+                params
+            }));
+        },
         close: closeDeleteModal,
     }));
 
     return (
-        <Modal isOpen={!!obj} toggle={closeDeleteModal}>
+        <Modal isOpen={!!promise} toggle={closeDeleteModal}>
             <ModalHeader toggle={closeDeleteModal}>Delete file</ModalHeader>
             <ModalBody>
                 Are you sure you want to delete the file?
                 <br/>
-                <b>{obj ? obj.item.name : null}</b>
+                <b>{promise ? promise.params.name : null}</b>
             </ModalBody>
             <ModalFooter>
                 <Button color="danger" onClick={() => {
-                    closeDeleteModal();
-                    props.onDelete && props.onDelete(obj);
+                    promise.resolve(true);
+                    setPromise(null);
+                    props.onDelete && props.onDelete(promise.params);
                 }}>Delete</Button>{' '}
                 <Button color="secondary" onClick={closeDeleteModal}>Cancel</Button>
             </ModalFooter>

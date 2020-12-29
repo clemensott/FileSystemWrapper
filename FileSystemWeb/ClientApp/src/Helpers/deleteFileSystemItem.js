@@ -1,17 +1,17 @@
 ﻿import React from 'react';
 import store from './store'
+import {encodeBase64UnicodeCustom} from './Path';
 
 export default async function (item, callback = null) {
     const allRefs = store.get('refs');
-    const deleteItem = await allRefs.deleteShareItem.current.show(item);
+    const deleteItem = await allRefs.deleteFSItemModal.current.show(item);
     if (!deleteItem) return;
 
     try {
         allRefs.loadingModal.current.show();
-
         const url = item.isFile ?
-            `/api/share/file/${encodeURIComponent(item.id)}` :
-            `/api/share/folder/${encodeURIComponent(item.id)}`;
+            `/api/files/${encodeBase64UnicodeCustom(item.path)}` :
+            `/api/folders/${encodeBase64UnicodeCustom(item.path)}`;
         const response = await fetch(url, {
             method: 'DELETE'
         });

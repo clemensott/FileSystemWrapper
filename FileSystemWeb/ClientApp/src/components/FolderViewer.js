@@ -4,7 +4,7 @@ import {getParent, encodeBase64UnicodeCustom, getName} from '../Helpers/Path'
 import {Link} from 'react-router-dom';
 import Loading from './Loading/Loading';
 import FileActionsDropdown from './FileActionsDropdown';
-import store from '../Helpers/store'
+import deleteFileSystemItem from "../Helpers/deleteFileSystemItem";
 import './FolderViewer.css';
 
 export class FolderViewer extends Component {
@@ -88,10 +88,10 @@ export class FolderViewer extends Component {
                         )}
                     </div>
                     <FileActionsDropdown file={item}
-                                         onDelete={() => store.get('refs').deleteFSItemModal.current.show({
+                                         onDelete={() => deleteFileSystemItem(
                                              item,
-                                             callback: () => this.updateContent(true),
-                                         })}/>
+                                             () => this.updateContent(true),
+                                         )}/>
                 </div>
             )
         }

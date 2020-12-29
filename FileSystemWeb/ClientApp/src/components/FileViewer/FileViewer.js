@@ -5,7 +5,7 @@ import TextViewer from './TextViewer';
 import MediaViewer from './MediaViewer';
 import PdfViewer from './PdfViewer';
 import FileActionsDropdown from '../FileActionsDropdown';
-import store from "../../Helpers/store";
+import deleteFileSystemItem from "../../Helpers/deleteFileSystemItem";
 import './FileViewer.css';
 
 export class FileViewer extends Component {
@@ -127,10 +127,10 @@ export class FileViewer extends Component {
                         <FileActionsDropdown file={file}
                                              title="Options"
                                              hideOpenFileLink={this.props.hideOpenFileLinkAction}
-                                             onDelete={() => store.get('refs').deleteFSItemModal.current.show({
-                                                 item: file,
-                                                 callback: () => this.props.onClose && this.props.onClose(),
-                                             })}/>
+                                             onDelete={() => deleteFileSystemItem(
+                                                 file,
+                                                 () => this.props.onClose && this.props.onClose(),
+                                             )}/>
                     </div>
                 </div>
                 <div className="file-viewer-content-remaining">

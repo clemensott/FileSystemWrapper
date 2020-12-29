@@ -45,7 +45,7 @@ async function loadShareItem(id, isFile) {
         infoError = 'No id of share item given';
     }
 
-    if (infoError) store.get('refs').errorModal.current.show(infoError);
+    if (infoError) await store.get('refs').errorModal.current.show(infoError);
     return item;
 }
 

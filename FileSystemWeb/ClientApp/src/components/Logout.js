@@ -41,10 +41,10 @@ export class Logout extends Component {
 
             if (response.ok) store.set('isLoggedIn', false);
             else {
-                store.get('refs').errorModal.current.show(await response.text());
+                await store.get('refs').errorModal.current.show(await response.text());
             }
         } catch (e) {
-            alert(e.message);
+            await store.get('refs').errorModal.current.show(e.message);
         } finally {
             this.setState({
                 finished: true,

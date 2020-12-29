@@ -48,33 +48,7 @@ export default function () {
                 </Switch>
             </Container>
             <DeleteShareItemModal ref={allRefs.deleteShareItem}/>
-            <DeleteFileSystemItemModal ref={allRefs.deleteFSItemModal} onDelete={async ({item, callback}) => {
-                allRefs.loadingModal.current.show();
-
-                try {
-                    const url = item.isFile ? `/api/files/${encodeBase64UnicodeCustom(item.path)}` :
-                        `/api/folders/${encodeBase64UnicodeCustom(item.path)}`;
-                    const response = await fetch(url, {
-                        method: 'DELETE'
-                    });
-
-                    if (response.ok) await callback && callback();
-                    else {
-                        const text = await response.text();
-                        allRefs.errorModal.current.show(
-                            <div>
-                                Status: {response.status}
-                                <br/>
-                                {text}
-                            </div>
-                        );
-                    }
-                } catch (e) {
-                    allRefs.errorModal.current.show(e.message);
-                } finally {
-                    allRefs.loadingModal.current && allRefs.loadingModal.current.close();
-                }
-            }}/>
+            <DeleteFileSystemItemModal ref={allRefs.deleteFSItemModal}/>
             <LoadingModal ref={allRefs.loadingModal}/>
             <ErrorModal ref={allRefs.errorModal}/>
         </div>
