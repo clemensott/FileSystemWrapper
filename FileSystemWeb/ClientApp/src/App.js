@@ -1,6 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import {Route, Switch} from 'react-router-dom';
-import {Login} from './components/Login';
+import Login from './components/Login';
 import {NavMenu} from './components/NavMenu';
 import {Container} from 'reactstrap';
 import Logout from './components/Logout';
@@ -14,7 +14,6 @@ import LoadingModal from './components/Modals/LoadingModal';
 import ErrorModal from './components/Modals/ErrorModal';
 import store from './Helpers/store'
 import {getCookieValue} from './Helpers/cookies';
-import {encodeBase64UnicodeCustom} from './Helpers/Path';
 import './App.css';
 
 export default function () {

@@ -1,47 +1,35 @@
-﻿import React, {Component} from 'react';
-import {Redirect} from 'react-router-dom';
-import Loading from './Loading/Loading';
+﻿import React, {useEffect, useRef, useState} from 'react';
+import {useHistory} from 'react-router-dom';
 import store from '../Helpers/store';
 
-export class Login extends Component {
-    static displayName = Login.name;
+export default function () {
+    const history = useHistory();
 
-    constructor(props) {
-        super(props);
+    const [isUsernameInvalid, setIsUsernameInvalid] = useState(false);
+    const [isPasswordInvalid, setIsPasswordInvalid] = useState(false);
+    const [error, setError] = useState(null);
 
-        this.usernameInput = React.createRef();
-        this.passwordInput = React.createRef();
-        this.state = {
-            isUsernameInvalid: false,
-            isPasswordInvalid: false,
-            successful: false,
-            loading: false,
-            error: null,
-        }
-    }
+    const usernameInputRef = useRef();
+    const passwordInputRef = useRef();
 
-    async submit() {
-        const username = this.usernameInput.current.value;
-        const password = this.passwordInput.current.value;
+    useEffect(() => {
+        document.title = 'Login - File System';
+        usernameInputRef.current.focus();
+    }, []);
 
-        if (!username) {
-            this.setState({
-                isUsernameInvalid: true,
-            });
-        }
-        if (!password) {
-            this.setState({
-                isPasswordInvalid: true,
-            });
-        }
+    async function submit() {
+        const allRefs = store.get('refs');
+        const username = usernameInputRef.current.value;
+        const password = passwordInputRef.current.value;
+
+        if (!username) setIsUsernameInvalid(true);
+        if (!password) setIsPasswordInvalid(true);
         if (!username || !password) {
             return;
         }
 
         try {
-            this.setState({
-                loading: true,
-            });
+            allRefs.loadingModal.current.show();
 
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
@@ -57,80 +45,57 @@ export class Login extends Component {
             });
 
             if (response.ok) {
-                this.setState({
-                    loading: false,
-                    successful: true,
-                });
+                history.push('/');
                 store.set('isLoggedIn', true);
             } else if (response.status === 400) {
-                this.setState({
-                    loading: false,
-                    error: 'Please enter a correct Username and password',
-                });
+                setError('Please enter a correct Username and password');
+            } else {
+                const text = await response.text();
+                await allRefs.errorModal.current.show(
+                    <div>
+                        Status: {response.status}
+                        <br/>
+                        {text}
+                    </div>
+                );
             }
         } catch (e) {
-            this.setState({
-                loading: false,
-                error: e.message,
-            });
+            await allRefs.errorModal.current.show(e.message);
+        } finally {
+            allRefs.loadingModal.current && allRefs.loadingModal.current.close();
         }
     }
 
-    render() {
-        if (this.state.successful) {
-            return (
-                <Redirect to="/"/>
-            );
-        }
-
-        document.title = 'Login - File System';
-
-        return (
-            <div>
-                <form className={this.state.loading ? 'd-none' : ''} onSubmit={e => {
-                    e.preventDefault();
-                    return this.submit();
-                }}>
-                    <div className="form-group">
-                        <label>Username</label>
-                        <input ref={this.usernameInput} type="text"
-                               className={`form-control ${this.state.isUsernameInvalid ? 'is-invalid' : ''}`}
-                               onChange={e => {
-                                   this.setState({
-                                       isUsernameInvalid: !e.target.value,
-                                   });
-                               }}/>
-                    </div>
-                    <div className="form-group">
-                        <label>Password</label>
-                        <input ref={this.passwordInput} type="password"
-                               className={`form-control ${this.state.isPasswordInvalid ? 'is-invalid' : ''}`}
-                               onChange={e => {
-                                   this.setState({
-                                       isPasswordInvalid: !e.target.value,
-                                   });
-                               }}/>
-                    </div>
-
-                    <div className={`form-group form-check  ${this.state.error ? '' : 'd-none'}`}>
-                        <label className="form-check-label">
-                            <input className="is-invalid d-none"/>
-                            <div className="invalid-feedback">{this.state.error}</div>
-                        </label>
-                    </div>
-
-                    <div>
-                        <button className="btn btn-primary" type="submit">Login</button>
-                    </div>
-                </form>
-                <div className={this.state.loading ? 'center' : 'd-none'}>
-                    <Loading/>
+    return (
+        <div>
+            <form onSubmit={e => {
+                e.preventDefault();
+                return submit();
+            }}>
+                <div className="form-group">
+                    <label>Username</label>
+                    <input ref={usernameInputRef} type="text"
+                           className={`form-control ${isUsernameInvalid ? 'is-invalid' : ''}`}
+                           onChange={e => setIsUsernameInvalid(!e.target.value)}/>
                 </div>
-            </div>
-        );
-    }
+                <div className="form-group">
+                    <label>Password</label>
+                    <input ref={passwordInputRef} type="password"
+                           className={`form-control ${isPasswordInvalid ? 'is-invalid' : ''}`}
+                           onChange={e => setIsPasswordInvalid(!e.target.value)}/>
+                </div>
 
-    componentDidMount() {
-        this.usernameInput.current.focus();
-    }
-}
+                <div className={`form-group form-check  ${error ? '' : 'd-none'}`}>
+                    <label className="form-check-label">
+                        <input className="is-invalid d-none"/>
+                        <div className="invalid-feedback">{error}</div>
+                    </label>
+                </div>
+
+                <div>
+                    <button className="btn btn-primary" type="submit">Login</button>
+                </div>
+            </form>
+        </div>
+    );
+} 
