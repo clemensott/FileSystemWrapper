@@ -1,9 +1,9 @@
 ﻿import React, {useState, useEffect} from 'react';
 import {useParams, useHistory} from 'react-router-dom';
 import {Button} from 'reactstrap';
-import Loading from "../Loading/Loading";
-import store from "../../Helpers/store";
+import Loading from '../Loading/Loading';
 import deleteShareItem from '../../Helpers/deleteShareItem'
+import {showErrorModal} from '../../Helpers/storeExtensions';
 
 function setDocumentTitle(shareItem) {
     let name = null;
@@ -45,7 +45,7 @@ async function loadShareItem(id, isFile) {
         infoError = 'No id of share item given';
     }
 
-    if (infoError) await store.get('refs').errorModal.current.show(infoError);
+    if (infoError) await showErrorModal(infoError);
     return item;
 }
 

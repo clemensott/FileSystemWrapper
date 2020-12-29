@@ -1,6 +1,7 @@
 ﻿import React, {useEffect, useRef, useState} from 'react';
 import {useHistory} from 'react-router-dom';
 import store from '../Helpers/store';
+import {closeLoadingModal, showErrorModal, showLoadingModal} from '../Helpers/storeExtensions';
 
 export default function () {
     const history = useHistory();
@@ -18,7 +19,6 @@ export default function () {
     }, []);
 
     async function submit() {
-        const allRefs = store.get('refs');
         const username = usernameInputRef.current.value;
         const password = passwordInputRef.current.value;
 
@@ -29,7 +29,7 @@ export default function () {
         }
 
         try {
-            allRefs.loadingModal.current.show();
+            showLoadingModal();
 
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
@@ -51,7 +51,7 @@ export default function () {
                 setError('Please enter a correct Username and password');
             } else {
                 const text = await response.text();
-                await allRefs.errorModal.current.show(
+                await showErrorModal(
                     <div>
                         Status: {response.status}
                         <br/>
@@ -60,9 +60,9 @@ export default function () {
                 );
             }
         } catch (e) {
-            await allRefs.errorModal.current.show(e.message);
+            await showErrorModal(e.message);
         } finally {
-            allRefs.loadingModal.current && allRefs.loadingModal.current.close();
+            closeLoadingModal();
         }
     }
 

@@ -1,9 +1,9 @@
 ﻿import React, {useState, useEffect} from 'react';
 import {useHistory} from 'react-router-dom';
-import store from "../../Helpers/store";
-import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
-import ShareFileSystemItemForm from "./ShareFileSystemItemForm";
-import Loading from "../Loading/Loading";
+import {encodeBase64UnicodeCustom} from '../../Helpers/Path';
+import ShareFileSystemItemForm from './ShareFileSystemItemForm';
+import Loading from '../Loading/Loading';
+import {closeLoadingModal, showErrorModal, showLoadingModal} from '../../Helpers/storeExtensions';
 
 async function updateItem(path, isFile, force = false) {
     let item = null;
@@ -36,7 +36,7 @@ async function updateItem(path, isFile, force = false) {
         infoError = 'No path of given';
     }
 
-    if (infoError) await store.get('refs').errorModal.current.show(infoError);
+    if (infoError) await showErrorModal(infoError);
     return item;
 }
 
@@ -75,11 +75,10 @@ export default function ({path, isFile, onItemInfoLoaded}) {
 
     return item ? (
         <ShareFileSystemItemForm item={item} isFile={isFile} users={users} onSubmit={async body => {
-            const allRefs = store.get('refs');
             let redirect = null;
             let submitError = null;
             try {
-                allRefs.loadingModal.current.show();
+                showLoadingModal();
 
                 const url = isFile ? '/api/share/file' : '/api/share/folders';
                 const response = await fetch(url, {
@@ -109,10 +108,10 @@ export default function ({path, isFile, onItemInfoLoaded}) {
                 console.log(e);
                 submitError = e.message;
             } finally {
-                allRefs.loadingModal.current && allRefs.loadingModal.current.close();
+                closeLoadingModal();
             }
 
-            if (submitError) await allRefs.errorModal.current.show(submitError);
+            if (submitError) await showErrorModal(submitError);
             if (redirect) history.push(redirect);
         }}/>
     ) : (

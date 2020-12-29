@@ -1,14 +1,14 @@
 ﻿import React from 'react';
-import store from './store'
 import {encodeBase64UnicodeCustom} from './Path';
+import {closeLoadingModal, getAllRefs, showErrorModal, showLoadingModal} from './storeExtensions';
 
 export default async function (item, callback = null) {
-    const allRefs = store.get('refs');
+    const allRefs = getAllRefs();
     const deleteItem = await allRefs.deleteFSItemModal.current.show(item);
     if (!deleteItem) return;
 
     try {
-        allRefs.loadingModal.current.show();
+        showLoadingModal();
         const url = item.isFile ?
             `/api/files/${encodeBase64UnicodeCustom(item.path)}` :
             `/api/folders/${encodeBase64UnicodeCustom(item.path)}`;
@@ -19,7 +19,7 @@ export default async function (item, callback = null) {
         if (response.ok) await callback && callback();
         else {
             const text = await response.text();
-            await allRefs.errorModal.current.show(
+            await showErrorModal(
                 <div>
                     Status: {response.status}
                     <br/>
@@ -28,8 +28,8 @@ export default async function (item, callback = null) {
             );
         }
     } catch (e) {
-        await allRefs.errorModal.current.show(e.message);
+        await showErrorModal(e.message);
     } finally {
-        allRefs.loadingModal.current && allRefs.loadingModal.current.close();
+        closeLoadingModal();
     }
 }

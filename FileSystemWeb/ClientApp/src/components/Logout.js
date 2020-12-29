@@ -2,6 +2,7 @@
 import {useHistory} from 'react-router-dom';
 import Loading from './Loading/Loading';
 import store from '../Helpers/store';
+import {showErrorModal} from '../Helpers/storeExtensions';
 
 async function logout() {
     try {
@@ -12,10 +13,10 @@ async function logout() {
 
         if (response.ok) store.set('isLoggedIn', false);
         else {
-            await store.get('refs').errorModal.current.show(await response.text());
+            await showErrorModal(await response.text());
         }
     } catch (e) {
-        await store.get('refs').errorModal.current.show(e.message);
+        await showErrorModal(e.message);
     }
 }
 

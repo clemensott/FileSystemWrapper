@@ -4,15 +4,16 @@ import Login from './components/Login';
 import {NavMenu} from './components/NavMenu';
 import {Container} from 'reactstrap';
 import Logout from './components/Logout';
-import FilePage from "./components/FilePage";
+import FilePage from './components/FilePage';
 import AddShareFileSystemItemPage from './components/Share/AddShareFileSystemItemPage';
 import EditShareFileSystemItemPage from './components/Share/EditShareFileSystemItemPage';
 import Home from './components/Home';
-import DeleteShareItemModal from "./components/Modals/DeleteShareItemModal";
+import DeleteShareItemModal from './components/Modals/DeleteShareItemModal';
 import DeleteFileSystemItemModal from './components/Modals/DeleteFileSystemItemModal';
 import LoadingModal from './components/Modals/LoadingModal';
 import ErrorModal from './components/Modals/ErrorModal';
 import store from './Helpers/store'
+import {getAllRefs} from './Helpers/storeExtensions';
 import {getCookieValue} from './Helpers/cookies';
 import './App.css';
 
@@ -23,9 +24,7 @@ export default function () {
         [isLoggedIn]
     );
 
-    let allRefs = store.get('refs');
-    if (!store.get('refs')) store.set('refs', allRefs = {});
-
+    const allRefs = getAllRefs();
     allRefs.deleteShareItem = useRef();
     allRefs.deleteFSItemModal = useRef();
     allRefs.loadingModal = useRef();
