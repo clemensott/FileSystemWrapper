@@ -3,7 +3,7 @@ import {Route, Switch} from 'react-router-dom';
 import {Login} from './components/Login';
 import {NavMenu} from './components/NavMenu';
 import {Container} from 'reactstrap';
-import {Logout} from './components/Logout';
+import Logout from './components/Logout';
 import FilePage from "./components/FilePage";
 import AddShareFileSystemItemPage from './components/Share/AddShareFileSystemItemPage';
 import EditShareFileSystemItemPage from './components/Share/EditShareFileSystemItemPage';

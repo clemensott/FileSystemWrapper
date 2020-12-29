@@ -1,54 +1,33 @@
-﻿import React, {Component} from 'react';
-import {Redirect} from 'react-router-dom';
+﻿import React, {useEffect} from 'react';
+import {useHistory} from 'react-router-dom';
 import Loading from './Loading/Loading';
 import store from '../Helpers/store';
 
-export class Logout extends Component {
-    static displayName = Logout.name;
+async function logout() {
+    try {
+        const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
 
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            finished: false,
+        if (response.ok) store.set('isLoggedIn', false);
+        else {
+            await store.get('refs').errorModal.current.show(await response.text());
         }
+    } catch (e) {
+        await store.get('refs').errorModal.current.show(e.message);
     }
+}
 
-    render() {
-        if (this.state.finished) {
-            return (
-                <Redirect to="/login"/>
-            );
-        }
+export default function () {
+    const history = useHistory();
+    useEffect(() => {
+        logout().then(() => history.push('/login'));
+    }, []);
 
-        return (
-            <div className="center">
-                <Loading/>
-            </div>
-        );
-    }
-
-    async componentDidMount() {
-        try {
-            this.setState({
-                loading: true,
-            });
-
-            const response = await fetch('/api/auth/logout', {
-                method: 'POST',
-                credentials: 'include'
-            });
-
-            if (response.ok) store.set('isLoggedIn', false);
-            else {
-                await store.get('refs').errorModal.current.show(await response.text());
-            }
-        } catch (e) {
-            await store.get('refs').errorModal.current.show(e.message);
-        } finally {
-            this.setState({
-                finished: true,
-            });
-        }
-    }
+    return (
+        <div className="center">
+            <Loading/>
+        </div>
+    );
 }
