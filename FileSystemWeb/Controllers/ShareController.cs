@@ -5,6 +5,7 @@ using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemCommon.Models.Share;
 using FileSystemWeb.Data;
+using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -27,18 +28,14 @@ namespace FileSystemWeb.Controllers
         [HttpPost("file")]
         public async Task<ActionResult<FileItem>> AddShareFile([FromBody] AddFileShareBody body)
         {
-            if (string.IsNullOrWhiteSpace(body.Name)) return BadRequest("Name missing");
-
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFile file = await ShareFileHelper.GetFileItem(body.Path, dbContext, userId);
-
-            if (file == null) return NotFound("Base not found");
-            if (!HasPermission(file.Permission, body.Permission)) return Forbid();
-            if (!System.IO.File.Exists(file.PhysicalPath)) return NotFound("File not found");
-
-            if (!string.IsNullOrWhiteSpace(body.UserId) && !await dbContext.Users.AnyAsync(u => u.Id == body.UserId))
+            InternalFile file;
+            try
             {
-                return BadRequest("User not found");
+                file = await ValidateAddFileShare(body);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
             }
 
             if (await dbContext.ShareFiles.AnyAsync(f => f.Name == body.Name && f.UserId == body.UserId))
@@ -61,6 +58,36 @@ namespace FileSystemWeb.Controllers
             return shareFile.ToFileItem();
         }
 
+        [HttpGet("file/{uuid}")]
+        public async Task<ActionResult<ShareItem>> GetShareFile(Guid uuid)
+        {
+            ShareFile shareFile = await dbContext.ShareFiles
+                .Include(f => f.Permission)
+                .FirstOrDefaultAsync(f => f.Uuid == uuid);
+            if (shareFile == null) return NotFound("Share file not found");
+
+            return shareFile.ToShareItem();
+        }
+
+        private async Task<InternalFile> ValidateAddFileShare(AddFileShareBody body)
+        {
+            if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException) BadRequest("Name missing");
+
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFile file = await ShareFileHelper.GetFileItem(body.Path, dbContext, userId);
+
+            if (file == null) throw (HttpResultException) NotFound("Base not found");
+            if (!HasPermission(file.Permission, body.Permission)) throw (HttpResultException) Forbid();
+            if (!System.IO.File.Exists(file.PhysicalPath)) throw (HttpResultException) NotFound("File not found");
+
+            if (!string.IsNullOrWhiteSpace(body.UserId) && !await dbContext.Users.AnyAsync(u => u.Id == body.UserId))
+            {
+                throw (HttpResultException) BadRequest("User not found");
+            }
+
+            return file;
+        }
+
         private static bool HasPermission(Models.FileItemPermission hasPermission,
             FileSystemCommon.Models.FileSystem.Files.FileItemPermission givePermission)
         {
@@ -69,6 +96,20 @@ namespace FileSystemWeb.Controllers
                 (hasPermission.Hash || !givePermission.Hash) &&
                 (hasPermission.Read || !givePermission.Read) &&
                 (hasPermission.Write || !givePermission.Write);
+        }
+
+        [HttpDelete("file/{uuid}")]
+        public async Task<ActionResult> DeleteShareFile(Guid uuid)
+        {
+            ShareFile shareFile = await dbContext.ShareFiles
+                .Include(f => f.Permission)
+                .FirstOrDefaultAsync(f => f.Uuid == uuid);
+            if (shareFile == null) return NotFound("Share file not found");
+
+            dbContext.ShareFiles.Remove(shareFile);
+            await dbContext.SaveChangesAsync();
+
+            return Ok();
         }
 
         [HttpPost("folder")]
@@ -91,9 +132,9 @@ namespace FileSystemWeb.Controllers
                 return BadRequest("User not found");
             }
 
-            if (await dbContext.ShareFiles.AnyAsync(f => f.Name == body.Name && f.UserId == body.UserId))
+            if (await dbContext.ShareFolders.AnyAsync(f => f.Name == body.Name && f.UserId == body.UserId))
             {
-                return BadRequest("File with this name is already shared");
+                return BadRequest("Folder with this name is already shared");
             }
 
             ShareFolder shareFolder = new ShareFolder()
@@ -106,7 +147,42 @@ namespace FileSystemWeb.Controllers
             };
 
             await dbContext.ShareFolders.AddAsync(shareFolder);
+            await dbContext.SaveChangesAsync();
+
             return shareFolder.ToFolderItem();
+        }
+
+        [HttpGet("folder/{uuid}")]
+        public async Task<ActionResult<ShareItem>> GetShareFolder(Guid uuid)
+        {
+            ShareFolder shareFolder = await dbContext.ShareFolders
+                .Include(f => f.Permission)
+                .FirstOrDefaultAsync(f => f.Uuid == uuid);
+            if (shareFolder == null) return NotFound("Share folder not found");
+
+            return shareFolder.ToShareItem();
+        }
+
+        private async Task<InternalFolder> ValidateAddFolderShare(AddFolderShareBody body)
+        {
+            if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException) BadRequest("Name missing");
+
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFolder folder = await ShareFolderHelper.GetFolderItem(body.Path, dbContext, userId);
+
+            if (folder == null) throw (HttpResultException) NotFound("Base not found");
+            if (!HasPermission(folder.Permission, body.Permission)) throw (HttpResultException) Forbid();
+            if (!string.IsNullOrWhiteSpace(folder.PhysicalPath) && !System.IO.Directory.Exists(folder.PhysicalPath))
+            {
+                throw (HttpResultException) NotFound("Folder not found");
+            }
+
+            if (body.UserId != null && !await dbContext.Users.AnyAsync(u => u.Id == body.UserId))
+            {
+                throw (HttpResultException) BadRequest("User not found");
+            }
+
+            return folder;
         }
 
         private static bool HasPermission(Models.FolderItemPermission hasPermission,
@@ -120,33 +196,18 @@ namespace FileSystemWeb.Controllers
                 (hasPermission.Write || !givePermission.Write);
         }
 
-        [HttpPost("firstFolder")]
-        public async Task<ActionResult<FolderItem>> AddFirstFolderShare([FromBody] AddFolderShareBody body)
+        [HttpDelete("folder/{uuid}")]
+        public async Task<ActionResult> DeleteShareFolder(Guid uuid)
         {
-            if (string.IsNullOrWhiteSpace(body.Name)) return BadRequest("Name missing");
+            ShareFolder shareFolder = await dbContext.ShareFolders
+                .Include(f => f.Permission)
+                .FirstOrDefaultAsync(f => f.Uuid == uuid);
+            if (shareFolder == null) return NotFound("Share folder not found");
 
-            if (body.UserId != null && !await dbContext.Users.AnyAsync(u => u.Id == body.UserId))
-            {
-                return BadRequest("User not found");
-            }
-
-            if (await dbContext.ShareFiles.AnyAsync(f => f.Name == body.Name && f.UserId == body.UserId))
-            {
-                return BadRequest("File with this name is already shared");
-            }
-
-            ShareFolder shareFolder = new ShareFolder()
-            {
-                Name = body.Name,
-                Path = body.Path,
-                IsListed = body.IsListed,
-                UserId = body.UserId,
-                Permission = Models.FolderItemPermission.New(body.Permission),
-            };
-
-            await dbContext.ShareFolders.AddAsync(shareFolder);
+            dbContext.ShareFolders.Remove(shareFolder);
             await dbContext.SaveChangesAsync();
-            return shareFolder.ToFolderItem();
+
+            return Ok();
         }
     }
 }

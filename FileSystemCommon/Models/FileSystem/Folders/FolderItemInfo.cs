@@ -8,7 +8,9 @@ namespace FileSystemCommon.Models.FileSystem.Folders
         public string Name { get; set; }
 
         public string Path { get; set; }
-        
+
+        public Guid? SharedId { get; set; }
+
         public FolderItemPermission Permission { get; set; }
 
         public int FileCount { get; set; }

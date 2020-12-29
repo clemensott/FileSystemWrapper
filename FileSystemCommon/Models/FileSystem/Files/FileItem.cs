@@ -1,4 +1,4 @@
-﻿using FileSystemCommon.Models.FileSystem.Folders;
+﻿using System;
 
 namespace FileSystemCommon.Models.FileSystem.Files
 {
@@ -9,6 +9,8 @@ namespace FileSystemCommon.Models.FileSystem.Files
         public string Extension { get; set; }
 
         public string Path { get; set; }
+        
+        public Guid? SharedId { get; set; }
 
         public FileItemPermission Permission { get; set; }
     }

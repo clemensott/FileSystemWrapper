@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FileSystemCommon.Models.FileSystem;
@@ -69,6 +68,7 @@ namespace FileSystemWeb.Helpers
             {
                 Name = info.Name,
                 Extension = info.Extension,
+                SharedId = file.SharedId,
                 Permission = file.Permission.ToFileItemPermission(),
                 Size = info.Length,
                 Path = file.VirtualPath,
@@ -89,6 +89,7 @@ namespace FileSystemWeb.Helpers
             {
                 Name = info.Name,
                 Path = folder.VirtualPath,
+                SharedId = folder.SharedId,
                 Permission = folder.Permission.ToFolderItemPermission(),
                 FileCount = count,
                 Size = size,

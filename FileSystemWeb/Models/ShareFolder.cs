@@ -1,6 +1,6 @@
 ﻿using System;
 using FileSystemCommon.Models.FileSystem.Folders;
-using FileSystemWeb.Helpers;
+using FileSystemCommon.Models.Share;
 
 namespace FileSystemWeb.Models
 {
@@ -32,7 +32,21 @@ namespace FileSystemWeb.Models
             {
                 Name = Name,
                 Path = Uuid.ToString(),
+                SharedId = Uuid,
                 Permission = Permission.ToFolderItemPermission(),
+            };
+        }
+
+        public ShareItem ToShareItem()
+        {
+            return new ShareItem()
+            {
+                Id = Uuid,
+                Name = Name,
+                IsListed = IsListed,
+                UserId = UserId,
+                IsFile = false,
+                Permission = Permission.ToFileItemPermission(),
             };
         }
     }

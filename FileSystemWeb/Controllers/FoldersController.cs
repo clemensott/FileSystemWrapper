@@ -101,6 +101,7 @@ namespace FileSystemWeb.Controllers
                 {
                     Name = d.Name,
                     Path = Path.Join(folder.VirtualPath, d.Name),
+                    SharedId = null,
                     Permission = folder.Permission.ToFolderItemPermission(),
                 });
             }
@@ -109,6 +110,7 @@ namespace FileSystemWeb.Controllers
             {
                 Name = Path.GetFileName(p),
                 Path = Path.Join(folder.VirtualPath, Path.GetFileName(p)),
+                SharedId = null,
                 Permission = folder.Permission.ToFolderItemPermission(),
             });
         }
@@ -126,6 +128,7 @@ namespace FileSystemWeb.Controllers
                     Name = name,
                     Extension = Path.GetExtension(path),
                     Path = Path.Join(folder.VirtualPath, name),
+                    SharedId = null,
                     Permission = folder.Permission.ToFileItemPermission(),
                 };
             }

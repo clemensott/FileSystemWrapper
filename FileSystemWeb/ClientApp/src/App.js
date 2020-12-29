@@ -5,8 +5,10 @@ import {NavMenu} from './components/NavMenu';
 import {Container} from 'reactstrap';
 import {Logout} from './components/Logout';
 import FilePage from "./components/FilePage";
-import ShareFileSystemItemPage from './components/ShareFileSystemItemPage';
+import AddShareFileSystemItemPage from './components/Share/AddShareFileSystemItemPage';
+import EditShareFileSystemItemPage from './components/Share/EditShareFileSystemItemPage';
 import Home from './components/Home';
+import DeleteShareItemModal from "./components/Modals/DeleteShareItemModal";
 import DeleteFileSystemItemModal from './components/Modals/DeleteFileSystemItemModal';
 import LoadingModal from './components/Modals/LoadingModal';
 import ErrorModal from './components/Modals/ErrorModal';
@@ -25,6 +27,7 @@ export default function () {
     let allRefs = store.get('refs');
     if (!store.get('refs')) store.set('refs', allRefs = {});
 
+    allRefs.deleteShareItem = useRef();
     allRefs.deleteFSItemModal = useRef();
     allRefs.loadingModal = useRef();
     allRefs.errorModal = useRef();
@@ -36,12 +39,15 @@ export default function () {
                 <Switch>
                     <Route path='/login' component={Login}/>
                     <Route path='/logout' component={Logout}/>
-                    <Route exact path='/file/view/:path' component={FilePage}/>
-                    <Route exact path='/share/file/:path' component={ShareFileSystemItemPage}/>
-                    <Route exact path='/share/folder/:path' component={ShareFileSystemItemPage}/>
+                    <Route exact path='/file/view' component={FilePage}/>
+                    <Route path='/share/file/add' component={AddShareFileSystemItemPage}/>
+                    <Route path='/share/folder/add' component={AddShareFileSystemItemPage}/>
+                    <Route path='/share/file/edit/:id' component={EditShareFileSystemItemPage}/>
+                    <Route path='/share/folder/edit/:id' component={EditShareFileSystemItemPage}/>
                     <Route exact path='/' exec component={Home}/>
                 </Switch>
             </Container>
+            <DeleteShareItemModal ref={allRefs.deleteShareItem}/>
             <DeleteFileSystemItemModal ref={allRefs.deleteFSItemModal} onDelete={async ({item, callback}) => {
                 allRefs.loadingModal.current.show();
 
@@ -64,7 +70,7 @@ export default function () {
                         );
                     }
                 } catch (e) {
-                    allRefs.errorModalRef.current.show(e.message);
+                    allRefs.errorModal.current.show(e.message);
                 } finally {
                     allRefs.loadingModal.current && allRefs.loadingModal.current.close();
                 }

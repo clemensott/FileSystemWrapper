@@ -26,10 +26,12 @@ function clickLink(e) {
 
 export default function (props) {
     const file = props.file;
-    const fileOpenFileLink = `/file/view/${encodeURIComponent(file.path)}`;
+    const fileOpenFileLink = `/file/view?path=${encodeURIComponent(file.path)}`;
     const fileOpenContentLink = `/api/files/${encodeBase64UnicodeCustom(file.path)}`;
     const fileDownloadLink = `/api/files/${encodeBase64UnicodeCustom(file.path)}/download`;
-    const fileShareFileLink = `/share/file/${encodeURIComponent(file.path)}`;
+    const fileShareFileLink = file.sharedId ?
+        `/share/file/edit/${encodeURIComponent(file.path)}` :
+        `/share/file/add?path=${encodeURIComponent(file.path)}`;
     const isSupportedFile = ['image', 'audio', 'video', 'text', 'pdf'].includes(getFileType(file.extension));
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);

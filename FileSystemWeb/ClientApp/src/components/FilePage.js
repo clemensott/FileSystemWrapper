@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import {useParams} from 'react-router-dom';
+import {useHistory} from 'react-router-dom';
 import {normalizeFile} from '../Helpers/Path';
 import {FileViewer} from './FileViewer/FileViewer';
 import './FilePage.css'
@@ -14,14 +14,15 @@ function setDocumentTitle(file) {
 }
 
 export default function () {
-    const {path} = useParams();
-    const pathDecoded = path && normalizeFile(decodeURIComponent(path));
+    const query = new URLSearchParams(window.location.search);
+    const path = normalizeFile(query.get('path'));
+    const history = useHistory();
 
     return (
         <div className="file-page-container">
-            <FileViewer theme="light" path={pathDecoded} hideOpenFileLinkAction={true}
+            <FileViewer theme="light" path={path} hideOpenFileLinkAction={true}
                         onFileInfoLoaded={setDocumentTitle}
-                        onClose={() => document.getElementById('root-link').click()}/>
+                        onClose={() => history.push('/')}/>
         </div>
     );
 }

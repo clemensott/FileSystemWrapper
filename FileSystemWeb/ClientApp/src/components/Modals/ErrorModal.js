@@ -11,7 +11,7 @@ const modal = forwardRef((props, ref) => {
     }));
 
     return (
-        <Modal isOpen={modalOpen} toggle={closeDeleteModal}>
+        <Modal isOpen={!!modalOpen} toggle={closeDeleteModal}>
             <ModalHeader toggle={closeDeleteModal}>An error occoured</ModalHeader>
             <ModalBody>
                 {modalOpen}
