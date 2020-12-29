@@ -1,6 +1,6 @@
 ﻿import React, {Component} from 'react';
-import {Link} from "react-router-dom";
-import {FileViewer} from "./FileViewer/FileViewer";
+import {Link} from 'react-router-dom';
+import {FileViewer} from './FileViewer/FileViewer';
 import './FileViewerOverlay.css';
 
 export class FileViewerOverlay extends Component {
@@ -23,7 +23,7 @@ export class FileViewerOverlay extends Component {
                 }
             }}>
                 <div className="file-viewer-overlay-container">
-                    <FileViewer theme="dark" {...this.props} />
+                    <FileViewer theme="dark" onClose={() => this.closeRef.current.click()} {...this.props} />
                 </div>
                 <Link to={this.props.closeUrl} innerRef={this.closeRef}>
                     <i className="fas fa-times fa-3x file-viewer-overlay-close"/>

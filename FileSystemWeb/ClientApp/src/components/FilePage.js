@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import {useParams} from 'react-router-dom';
-import {normalizeFile, decodeBase64Custom} from '../Helpers/Path';
+import {normalizeFile} from '../Helpers/Path';
 import {FileViewer} from './FileViewer/FileViewer';
 import './FilePage.css'
 
@@ -20,7 +20,8 @@ export default function () {
     return (
         <div className="file-page-container">
             <FileViewer theme="light" path={pathDecoded} hideOpenFileLinkAction={true}
-                        onFileInfoLoaded={setDocumentTitle}/>
+                        onFileInfoLoaded={setDocumentTitle}
+                        onClose={() => document.getElementById('root-link').click()}/>
         </div>
     );
 }

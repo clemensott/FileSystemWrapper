@@ -4,7 +4,8 @@ import ImageViewer from './ImageViewer';
 import TextViewer from './TextViewer';
 import MediaViewer from './MediaViewer';
 import PdfViewer from './PdfViewer';
-import FileActionsDropdown from "../FileActionsDropdown";
+import FileActionsDropdown from '../FileActionsDropdown';
+import store from "../../Helpers/store";
 import './FileViewer.css';
 
 export class FileViewer extends Component {
@@ -36,6 +37,7 @@ export class FileViewer extends Component {
 
                 if (response.ok) {
                     file = await response.json();
+                    file.isFile = true;
                 } else if (response.status === 403) {
                     error = 'Forbidden to access file';
                 } else if (response.status === 404) {
@@ -124,7 +126,11 @@ export class FileViewer extends Component {
                     <div className="m-1">
                         <FileActionsDropdown file={file}
                                              title="Options"
-                                             hideOpenFileLink={this.props.hideOpenFileLinkAction}/>
+                                             hideOpenFileLink={this.props.hideOpenFileLinkAction}
+                                             onDelete={() => store.get('refs').deleteFSItemModal.current.show({
+                                                 item: file,
+                                                 callback: () => this.props.onClose && this.props.onClose(),
+                                             })}/>
                     </div>
                 </div>
                 <div className="file-viewer-content-remaining">
@@ -139,10 +145,10 @@ export class FileViewer extends Component {
     }
 
     componentDidMount() {
-        return this.updateFile(this.props.path);
+        this.updateFile(this.props.path);
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        return this.updateFile(this.props.path);
+        this.updateFile(this.props.path);
     }
 }

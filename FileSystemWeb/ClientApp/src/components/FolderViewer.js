@@ -3,8 +3,9 @@ import FSItem from './FSItem'
 import {getParent, encodeBase64UnicodeCustom, getName} from '../Helpers/Path'
 import {Link} from 'react-router-dom';
 import Loading from './Loading/Loading';
+import FileActionsDropdown from './FileActionsDropdown';
+import store from '../Helpers/store'
 import './FolderViewer.css';
-import FileActionsDropdown from "./FileActionsDropdown";
 
 export class FolderViewer extends Component {
     static displayName = FolderViewer.name;
@@ -25,7 +26,8 @@ export class FolderViewer extends Component {
         this.onScroll = this.onScroll.bind(this);
     }
 
-    async updateContent(path, force = false) {
+    async updateContent(force = false) {
+        const path = this.props.path;
         if (!force && this.contentFetchPath === path) return;
         this.contentFetchPath = path;
 
@@ -69,16 +71,6 @@ export class FolderViewer extends Component {
 
     renderItem(item) {
         if (item.isFile) {
-            try{
-                encodeURIComponent(this.props.path)
-            }catch (e) {
-                console.log('error encode:',this.props.path);
-            }
-            try{
-                encodeURIComponent(getName(item.path))
-            }catch (e) {
-                console.log('error encode:',getName(item.path));
-            }
             const fileLink = `/?folder=${encodeURIComponent(this.props.path)}&file=${encodeURIComponent(getName(item.path))}`;
 
             return (
@@ -95,7 +87,11 @@ export class FolderViewer extends Component {
                             </div>
                         )}
                     </div>
-                    <FileActionsDropdown file={item}/>
+                    <FileActionsDropdown file={item}
+                                         onDelete={() => store.get('refs').deleteFSItemModal.current.show({
+                                             item,
+                                             callback: () => this.updateContent(true),
+                                         })}/>
                 </div>
             )
         }
@@ -132,7 +128,7 @@ export class FolderViewer extends Component {
             <div>
                 <div ref={this.headContainerRef}
                      className={`folder-viewer-head-container ${this.state.isOnTop ? '' : 'folder-viewer-head-sticky'}`}>
-                    <div onClick={() => this.updateContent(this.props.path, true)}>
+                    <div onClick={() => this.updateContent(true)}>
                         <i className="folder-viewer-head-update-icon fa fa-retweet fa-2x"/>
                     </div>
                     <Link to={parentUrl}>
@@ -169,11 +165,11 @@ export class FolderViewer extends Component {
     componentDidMount() {
         window.onscroll = this.onScroll;
         this.headOffsetTop = this.headContainerRef.current.offsetTop;
-        return this.updateContent(this.props.path);
+        this.updateContent();
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        return this.updateContent(this.props.path);
+        this.updateContent();
     }
 
     componentWillUnmount() {

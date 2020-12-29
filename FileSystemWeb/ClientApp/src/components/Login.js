@@ -1,6 +1,7 @@
 ﻿import React, {Component} from 'react';
 import {Redirect} from 'react-router-dom';
-import Loading from "./Loading/Loading";
+import Loading from './Loading/Loading';
+import store from '../Helpers/store';
 
 export class Login extends Component {
     static displayName = Login.name;
@@ -60,6 +61,7 @@ export class Login extends Component {
                     loading: false,
                     successful: true,
                 });
+                store.set('isLoggedIn', true);
             } else if (response.status === 400) {
                 this.setState({
                     loading: false,

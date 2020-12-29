@@ -1,31 +1,76 @@
-import React from 'react';
-import { Route, Switch } from 'react-router-dom';
-import { Login } from './components/Login';
-import { NavMenu } from './components/NavMenu';
-import { Container } from 'reactstrap';
-import { Logout } from './components/Logout';
+import React, {useEffect, useRef} from 'react';
+import {Route, Switch} from 'react-router-dom';
+import {Login} from './components/Login';
+import {NavMenu} from './components/NavMenu';
+import {Container} from 'reactstrap';
+import {Logout} from './components/Logout';
 import FilePage from "./components/FilePage";
-import ShareFileSystemItemPage from "./components/ShareFileSystemItemPage";
+import ShareFileSystemItemPage from './components/ShareFileSystemItemPage';
 import Home from './components/Home';
-import {getCookieValue} from "./Helpers/cookies";
+import DeleteFileSystemItemModal from './components/Modals/DeleteFileSystemItemModal';
+import LoadingModal from './components/Modals/LoadingModal';
+import ErrorModal from './components/Modals/ErrorModal';
+import store from './Helpers/store'
+import {getCookieValue} from './Helpers/cookies';
+import {encodeBase64UnicodeCustom} from './Helpers/Path';
 import './App.css';
 
 export default function () {
     const isLoggedIn = !!getCookieValue('fs_login');
-    
+    useEffect(
+        () => store.set('isLoggedIn', isLoggedIn),
+        [isLoggedIn]
+    );
+
+    let allRefs = store.get('refs');
+    if (!store.get('refs')) store.set('refs', allRefs = {});
+
+    allRefs.deleteFSItemModal = useRef();
+    allRefs.loadingModal = useRef();
+    allRefs.errorModal = useRef();
+
     return (
         <div>
-            <NavMenu isLoggedIn={isLoggedIn}/>
+            <NavMenu/>
             <Container>
                 <Switch>
-                    <Route path='/login' component={Login} />
-                    <Route path='/logout' component={Logout} />
-                    <Route exact path='/file/view/:path' component={FilePage} />
-                    <Route exact path='/share/file/:path' component={ShareFileSystemItemPage} />
-                    <Route exact path='/share/folder/:path' component={ShareFileSystemItemPage} />
-                    <Route exact path='/' exec component={Home} />
+                    <Route path='/login' component={Login}/>
+                    <Route path='/logout' component={Logout}/>
+                    <Route exact path='/file/view/:path' component={FilePage}/>
+                    <Route exact path='/share/file/:path' component={ShareFileSystemItemPage}/>
+                    <Route exact path='/share/folder/:path' component={ShareFileSystemItemPage}/>
+                    <Route exact path='/' exec component={Home}/>
                 </Switch>
             </Container>
+            <DeleteFileSystemItemModal ref={allRefs.deleteFSItemModal} onDelete={async ({item, callback}) => {
+                allRefs.loadingModal.current.show();
+
+                try {
+                    const url = item.isFile ? `/api/files/${encodeBase64UnicodeCustom(item.path)}` :
+                        `/api/folders/${encodeBase64UnicodeCustom(item.path)}`;
+                    const response = await fetch(url, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) await callback && callback();
+                    else {
+                        const text = await response.text();
+                        allRefs.errorModal.current.show(
+                            <div>
+                                Status: {response.status}
+                                <br/>
+                                {text}
+                            </div>
+                        );
+                    }
+                } catch (e) {
+                    allRefs.errorModalRef.current.show(e.message);
+                } finally {
+                    allRefs.loadingModal.current && allRefs.loadingModal.current.close();
+                }
+            }}/>
+            <LoadingModal ref={allRefs.loadingModal}/>
+            <ErrorModal ref={allRefs.errorModal}/>
         </div>
     );
 }

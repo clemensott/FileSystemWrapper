@@ -1,8 +1,8 @@
-﻿import React, {useState} from 'react';
-import {Link} from "react-router-dom";
-import {Dropdown, DropdownToggle, DropdownMenu, DropdownItem} from 'reactstrap';
-import {encodeBase64UnicodeCustom, getFileType} from "../Helpers/Path";
-import {getCookieValue} from "../Helpers/cookies";
+﻿import React, {useState, useEffect} from 'react';
+import {Link} from 'react-router-dom';
+import {Dropdown, DropdownToggle, DropdownMenu, DropdownItem,} from 'reactstrap';
+import {encodeBase64UnicodeCustom, getFileType} from '../Helpers/Path';
+import store from '../Helpers/store'
 import './FileActionsDropdown.css'
 
 function formatFileSize(size) {
@@ -32,14 +32,22 @@ export default function (props) {
     const fileShareFileLink = `/share/file/${encodeURIComponent(file.path)}`;
     const isSupportedFile = ['image', 'audio', 'video', 'text', 'pdf'].includes(getFileType(file.extension));
 
-    const isLoggedIn = !!getCookieValue('fs_login');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isLoggedInCallbackId, setIsLoggedInCallbackId] = useState(null);
+
+    useEffect(() => {
+        setIsLoggedInCallbackId(store.addCallback('isLoggedIn', value => setIsLoggedIn(value)));
+        setIsLoggedIn(store.get('isLoggedIn'));
+    }, []);
+    useEffect(() => {
+        return () => isLoggedInCallbackId && store.removeCallback('isLoggedIn', isLoggedInCallbackId)
+    }, [isLoggedInCallbackId]);
 
     const [dropdownOpen, setDropdownOpen] = useState(false);
-
-    const toggle = () => setDropdownOpen(prevState => !prevState);
+    const toggleDropdown = () => setDropdownOpen(prevState => !prevState);
 
     return (
-        <Dropdown isOpen={dropdownOpen} toggle={toggle}>
+        <Dropdown isOpen={dropdownOpen} toggle={toggleDropdown}>
             <DropdownToggle caret>
                 {props.title || ''}
             </DropdownToggle>
@@ -74,6 +82,13 @@ export default function (props) {
                             <i className="mr-2 fas fa-share"/>
                             Share
                         </Link>
+                    </DropdownItem>
+                ) : null}
+                {props.onDelete ? (
+                    <DropdownItem disabled={!file.permission.write}
+                                  onClick={() => props.onDelete(file)}>
+                        <i className="mr-2 fas fa-trash"/>
+                        Delete
                     </DropdownItem>
                 ) : null}
             </DropdownMenu>
