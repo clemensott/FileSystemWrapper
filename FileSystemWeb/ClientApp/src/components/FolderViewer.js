@@ -8,6 +8,10 @@ import FolderActionsDropdown from './FSItem/FolderActionsDropdown';
 import deleteFileSystemItem from "../Helpers/deleteFileSystemItem";
 import './FolderViewer.css';
 
+const startMaxItemCount = 100;
+const maxItemStepSize = 150;
+const bottomAppendDistance = 1000;
+
 export class FolderViewer extends Component {
     static displayName = FolderViewer.name;
 
@@ -15,11 +19,13 @@ export class FolderViewer extends Component {
         super(props);
 
         this.contentFetchPath = null;
+        this.currentItemsRenderedCount = 0;
 
         this.state = {
             contentPath: null,
             content: null,
             isOnTop: true,
+            maxItemsCount: startMaxItemCount,
         }
 
         this.headOffsetTop = null;
@@ -108,16 +114,32 @@ export class FolderViewer extends Component {
         );
     }
 
+    renderItems(content, maxItemsCount) {
+        const items = [];
+        for (let i = 0; i < content.folders.length; i++) {
+            if (items.length >= maxItemsCount) return {items, all: false};
+            items.push(this.renderItem(content.folders[i]));
+        }
+        for (let i = 0; i < content.files.length; i++) {
+            if (items.length >= maxItemsCount) return {items, all: false};
+            items.push(this.renderItem(content.files[i]));
+        }
+        return {items, all: true};
+    }
+
     render() {
         const path = this.props.path;
         const parentPath = getParent(path);
         const parentUrl = `/?folder=${encodeURIComponent(parentPath)}`;
-        const {contentPath, content} = this.state;
-        const pathParts = contentPath === path && content && content.path ? this.renderPathParts(content.path) : [];
-        const folders = contentPath === path && content && content.folders ? content.folders.map(i => this.renderItem(i)) : [];
-        const files = contentPath === path && content && content.files ? content.files.map(i => this.renderItem(i)) : [];
-
+        const {contentPath, content, maxItemsCount} = this.state;
         const isLoading = contentPath !== path;
+        const pathParts = contentPath === path && content && content.path ? this.renderPathParts(content.path) : [];
+        const {items, all} = contentPath === path && content ? this.renderItems(content, maxItemsCount) : {
+            items: [],
+            all: true
+        };
+
+        this.currentItemsRenderedCount = items.length;
 
         return (
             <div>
@@ -136,16 +158,24 @@ export class FolderViewer extends Component {
                 <div className="folder-viewer-list" style={{
                     paddingTop: `${!this.state.isOnTop && this.headContainerRef.current && this.headContainerRef.current.offsetHeight || 0}px`
                 }}>
-                    {folders}
-                    {files}
+                    {items}
+                    {all ? null : (
+                        <div className="text-center m-4">
+                            <Loading/>
+                        </div>
+                    )}
                 </div>
-                <div className={isLoading || folders.length || files.length ? 'd-none' : 'text-center'}>
+                <div className={isLoading || items.length ? 'd-none' : 'text-center'}>
                     <h3 className="font-italic">&lt;Empty&gt;</h3>
                 </div>
                 <div className={`folder-viewer-to-top-container ${this.state.isOnTop ? 'd-none' : ''}`}>
                     <button className="btn btn-info" onClick={() => {
                         document.body.scrollTop = 0; // For Safari
                         document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+
+                        this.setState({
+                            maxItemsCount: startMaxItemCount,
+                        });
                     }}>
                         BACK TO TOP
                     </button>
@@ -172,10 +202,21 @@ export class FolderViewer extends Component {
     }
 
     onScroll() {
-        const newIsOnTop = document.body.scrollTop < this.headOffsetTop && document.documentElement.scrollTop < this.headOffsetTop;
+        const scrollOffset = document.body.scrollTop || document.documentElement.scrollTop;
+        const scrollHeight = document.body.scrollHeight || document.documentElement.scrollHeight;
+        const height = document.body.offsetHeight || document.documentElement.offsetHeight;
+
+        if (this.currentItemsRenderedCount === this.state.maxItemsCount &&
+            (scrollOffset + height + bottomAppendDistance > scrollHeight)) {
+            this.setState({
+                maxItemsCount: this.state.maxItemsCount + maxItemStepSize,
+            });
+        }
+
+        const newIsOnTop = scrollOffset < this.headOffsetTop;
         if (this.state.isOnTop !== newIsOnTop) {
             this.setState({
-                isOnTop: document.body.scrollTop < this.headOffsetTop && document.documentElement.scrollTop < this.headOffsetTop,
+                isOnTop: newIsOnTop,
             });
         }
     }

@@ -5,7 +5,7 @@ import store from '../Helpers/store'
 import './NavMenu.css';
 
 export default function () {
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(true);
     const toggleCollapsed = () => setCollapsed(!collapsed);
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
