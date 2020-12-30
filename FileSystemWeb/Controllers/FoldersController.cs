@@ -151,8 +151,13 @@ namespace FileSystemWeb.Controllers
 
             try
             {
-                DirectoryInfo info = new DirectoryInfo(folder.PhysicalPath);
-                if (!info.Exists) return NotFound();
+                DirectoryInfo info = null;
+                if (!string.IsNullOrWhiteSpace(folder.PhysicalPath))
+                {
+                    info = new DirectoryInfo(folder.PhysicalPath);
+                    if (!info.Exists) return NotFound();
+                }
+
                 return FileHelper.GetInfo(folder, info);
             }
             catch (DirectoryNotFoundException)

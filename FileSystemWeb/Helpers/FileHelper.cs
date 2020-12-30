@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FileSystemCommon.Models.FileSystem;
@@ -83,51 +84,60 @@ namespace FileSystemWeb.Helpers
         {
             int count;
             long size;
-            GetFileCountAndSize(info, out count, out size);
+            if (info == null) GetFileCountAndSize(out count, out size);
+            else GetFileCountAndSize(info, out count, out size);
 
             return new FolderItemInfo()
             {
-                Name = info.Name,
+                Name = info?.Name ?? folder.BaseName,
                 Path = folder.VirtualPath,
                 SharedId = folder.SharedId,
                 Permission = folder.Permission.ToFolderItemPermission(),
-                Deletable = info.FullName != info.Root.FullName,
+                Deletable = info != null && info.FullName != info.Root.FullName,
                 FileCount = count,
                 Size = size,
-                LastAccessTime = info.LastAccessTime,
-                LastWriteTime = info.LastWriteTime,
-                CreationTime = info.CreationTime,
-                Attributes = info.Attributes,
+                LastAccessTime = info?.LastAccessTime ?? DateTime.MinValue,
+                LastWriteTime = info?.LastWriteTime ?? DateTime.MinValue,
+                CreationTime = info?.CreationTime ?? DateTime.MinValue,
+                Attributes = info?.Attributes ?? FileAttributes.Directory,
             };
         }
 
-        public static void GetFileCountAndSize(DirectoryInfo dir, out int count, out long size)
+        private static void GetFileCountAndSize(out int count, out long size)
+        {
+            GetFileCountAndSize(DriveInfo.GetDrives().Select(d => d.RootDirectory), out count, out size);
+        }
+
+        private static void GetFileCountAndSize(DirectoryInfo dir, out int count, out long size)
+        {
+            GetFileCountAndSize(new DirectoryInfo[] {dir}, out count, out size);
+        }
+
+        private static void GetFileCountAndSize(IEnumerable<DirectoryInfo> dirs, out int count, out long size)
         {
             count = 0;
             size = 0;
 
-            try
+            Queue<DirectoryInfo> queue = new Queue<DirectoryInfo>(dirs);
+            while (queue.Count > 0)
             {
-                foreach (FileInfo file in dir.EnumerateFiles())
+                DirectoryInfo dir = queue.Dequeue();
+                try
                 {
-                    count++;
-                    size += file.Length;
-                }
+                    foreach (FileInfo file in dir.EnumerateFiles())
+                    {
+                        count++;
+                        size += file.Length;
+                    }
 
-                foreach (DirectoryInfo subDir in dir.EnumerateDirectories())
+                    foreach (DirectoryInfo subDir in dir.EnumerateDirectories())
+                    {
+                        queue.Enqueue(subDir);
+                    }
+                }
+                catch
                 {
-                    int subCount;
-                    long subSize;
-                    GetFileCountAndSize(subDir, out subCount, out subSize);
-
-                    count += subCount;
-                    size += subSize;
                 }
-            }
-            catch
-            {
-                count = -1;
-                size = 0;
             }
         }
 
