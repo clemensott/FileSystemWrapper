@@ -11,7 +11,8 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "^1.1.5",
     "reactstrap": "^6.3.0",
-    "rimraf": "^2.6.2"
+    "rimraf": "^2.6.2",
+    "url-search-params-polyfill": "^8.1.0"
   },
   "devDependencies": {
     "ajv": "^6.0.0",
