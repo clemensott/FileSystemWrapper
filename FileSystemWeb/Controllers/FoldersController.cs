@@ -63,13 +63,15 @@ namespace FileSystemWeb.Controllers
                             .Include(f => f.Permission)
                             .ToArrayAsync())
                         .Where(f => string.IsNullOrWhiteSpace(f.Path) || Directory.Exists(f.Path))
-                        .Select(f => f.ToFolderItem()).ToArray(),
+                        .Select(f => f.ToFolderItem())
+                        .OrderBy(f => f.Name).ToArray(),
                     Files = (await dbContext.ShareFiles
                             .Where(f => f.IsListed && (f.UserId == null || f.UserId == userId))
                             .Include(f => f.Permission)
                             .ToArrayAsync())
                         .Where(f => System.IO.File.Exists(f.Path))
-                        .Select(f => f.ToFileItem()).ToArray(),
+                        .Select(f => f.ToFileItem())
+                        .OrderBy(f => f.Name).ToArray(),
                 };
             }
 
@@ -103,6 +105,7 @@ namespace FileSystemWeb.Controllers
                     Path = Path.Join(folder.VirtualPath, d.Name),
                     SharedId = null,
                     Permission = folder.Permission.ToFolderItemPermission(),
+                    Deletable = false,
                 });
             }
 
@@ -112,6 +115,7 @@ namespace FileSystemWeb.Controllers
                 Path = Path.Join(folder.VirtualPath, Path.GetFileName(p)),
                 SharedId = null,
                 Permission = folder.Permission.ToFolderItemPermission(),
+                Deletable = true,
             });
         }
 

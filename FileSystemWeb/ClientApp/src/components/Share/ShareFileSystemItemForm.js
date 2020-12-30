@@ -44,7 +44,7 @@ export default function ({users, item, isFile, onSubmit}) {
                 read: !!permissionReadRef.current.checked,
                 write: !!permissionWriteRef.current.checked,
             },
-            isListed: !!isListedRef.checked,
+            isListed: !!isListedRef.current.checked,
         };
 
         let invalid = false;

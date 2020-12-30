@@ -1,9 +1,10 @@
 ﻿import React, {Component} from 'react';
-import FSItem from './FSItem'
+import FSItem from './FSItem/FSItem'
 import {getParent, encodeBase64UnicodeCustom, getName} from '../Helpers/Path'
 import {Link} from 'react-router-dom';
 import Loading from './Loading/Loading';
-import FileActionsDropdown from './FileActionsDropdown';
+import FileActionsDropdown from './FSItem/FileActionsDropdown';
+import FolderActionsDropdown from './FSItem/FolderActionsDropdown';
 import deleteFileSystemItem from "../Helpers/deleteFileSystemItem";
 import './FolderViewer.css';
 
@@ -70,47 +71,41 @@ export class FolderViewer extends Component {
     }
 
     renderItem(item) {
-        if (item.isFile) {
-            const fileLink = `/?folder=${encodeURIComponent(this.props.path)}&file=${encodeURIComponent(getName(item.path))}`;
+        let link = null;
+        if (item.isFile && item.permission.info) {
+            link = `/?folder=${encodeURIComponent(this.props.path)}&file=${encodeURIComponent(getName(item.path))}`;
+        } else if (!item.isFile && item.permission.list) {
+            link = `/?folder=${encodeURIComponent(item.path)}`;
+        }
 
-            return (
-                <div key={item.path} className="p-2 folder-viewer-item-container folder-viewer-file-item-container">
-                    <div
-                        className={`folder-viewer-file-item-content ${item.permission.info ? 'folder-viewer-item-container-link' : ''}`}>
-                        {item.permission.info ? (
-                            <Link to={fileLink}>
-                                <FSItem item={item}/>
-                            </Link>
-                        ) : (
-                            <div>
-                                <FSItem item={item}/>
-                            </div>
-                        )}
-                    </div>
+        return (
+            <div key={item.path} className="p-2 folder-viewer-item-container">
+                <div className={`folder-viewer-file-item-content ${link ? 'folder-viewer-item-container-link' : ''}`}>
+                    {link ? (
+                        <Link to={link}>
+                            <FSItem item={item}/>
+                        </Link>
+                    ) : (
+                        <div>
+                            <FSItem item={item}/>
+                        </div>
+                    )}
+                </div>
+                {item.isFile ? (
                     <FileActionsDropdown file={item}
                                          onDelete={() => deleteFileSystemItem(
                                              item,
                                              () => this.updateContent(true),
                                          )}/>
-                </div>
-            )
-        }
-
-        const folderLink = `/?folder=${encodeURIComponent(item.path)}`;
-        return (
-            <div key={item.path}
-                 className={`p-2 folder-viewer-item-container ${item.permission.list ? 'folder-viewer-item-container-link' : ''}`}>
-                {item.permission.list ? (
-                    <Link to={folderLink}>
-                        <FSItem item={item}/>
-                    </Link>
                 ) : (
-                    <div>
-                        <FSItem item={item}/>
-                    </div>
+                    <FolderActionsDropdown folder={item}
+                                           onDelete={() => deleteFileSystemItem(
+                                               item,
+                                               () => this.updateContent(true),
+                                           )}/>
                 )}
             </div>
-        )
+        );
     }
 
     render() {

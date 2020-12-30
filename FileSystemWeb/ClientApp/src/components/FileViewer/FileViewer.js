@@ -4,7 +4,7 @@ import ImageViewer from './ImageViewer';
 import TextViewer from './TextViewer';
 import MediaViewer from './MediaViewer';
 import PdfViewer from './PdfViewer';
-import FileActionsDropdown from '../FileActionsDropdown';
+import FileActionsDropdown from '../FSItem/FileActionsDropdown';
 import deleteFileSystemItem from "../../Helpers/deleteFileSystemItem";
 import './FileViewer.css';
 

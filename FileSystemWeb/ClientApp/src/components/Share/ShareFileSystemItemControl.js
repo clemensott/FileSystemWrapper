@@ -80,7 +80,7 @@ export default function ({path, isFile, onItemInfoLoaded}) {
             try {
                 showLoadingModal();
 
-                const url = isFile ? '/api/share/file' : '/api/share/folders';
+                const url = isFile ? '/api/share/file' : '/api/share/folder';
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
@@ -91,8 +91,10 @@ export default function ({path, isFile, onItemInfoLoaded}) {
                 });
 
                 if (response.ok) {
-                    const shareFile = await response.json();
-                    redirect = `/file/view?path=${encodeURIComponent(shareFile.path)}`;
+                    const shareItem = await response.json();
+                    redirect = isFile ?
+                        `/file/view?path=${encodeURIComponent(shareItem.path)}` :
+                        `/?folder=${encodeURIComponent(shareItem.path)}`;
                 } else if (response.status === 400) {
                     submitError = (await response.text()) || 'An error occured';
                 } else if (response.status === 404) {

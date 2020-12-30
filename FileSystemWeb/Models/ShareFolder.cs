@@ -34,6 +34,7 @@ namespace FileSystemWeb.Models
                 Path = Uuid.ToString(),
                 SharedId = Uuid,
                 Permission = Permission.ToFolderItemPermission(),
+                Deletable = false,
             };
         }
 

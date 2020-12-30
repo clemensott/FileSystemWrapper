@@ -11,5 +11,7 @@ namespace FileSystemCommon.Models.FileSystem.Folders
         public Guid? SharedId { get; set; }
 
         public FolderItemPermission Permission { get; set; }
+
+        public bool Deletable { get; set; }
     }
 }

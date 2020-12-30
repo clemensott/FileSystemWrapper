@@ -91,6 +91,7 @@ namespace FileSystemWeb.Helpers
                 Path = folder.VirtualPath,
                 SharedId = folder.SharedId,
                 Permission = folder.Permission.ToFolderItemPermission(),
+                Deletable = info.FullName != info.Root.FullName,
                 FileCount = count,
                 Size = size,
                 LastAccessTime = info.LastAccessTime,

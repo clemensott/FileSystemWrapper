@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { getFileType } from '../Helpers/Path';
+import { getFileType } from '../../Helpers/Path';
 import './FSItem.css';
 
 function getImagePath(item) {
