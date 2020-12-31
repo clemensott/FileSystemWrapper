@@ -9,6 +9,7 @@ using FileSystemWeb.Data;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 
 namespace FileSystemWeb.Controllers
 {
@@ -34,7 +35,9 @@ namespace FileSystemWeb.Controllers
             if (!file.Permission.Read) return Forbid();
             if (!System.IO.File.Exists(file.PhysicalPath)) return NotFound();
 
-            return PhysicalFile(file.PhysicalPath, Utils.GetContentType(Path.GetExtension(file.PhysicalPath)), true);
+            Response.Headers.Add(HeaderNames.ContentDisposition, $"inline; filename=\"{file.FileName}\"");
+            string contentType = Utils.GetContentType(Path.GetExtension(file.FileName));
+            return PhysicalFile(file.PhysicalPath, contentType, true);
         }
 
         [HttpGet("{encodedVirtualPath}/download")]
@@ -49,9 +52,8 @@ namespace FileSystemWeb.Controllers
             if (!file.Permission.Read) return Forbid();
             if (!System.IO.File.Exists(file.PhysicalPath)) return NotFound();
 
-            return PhysicalFile(file.PhysicalPath,
-                Utils.GetContentType(Path.GetExtension(file.PhysicalPath)),
-                Path.GetFileName(file.PhysicalPath));
+            string contentType = Utils.GetContentType(Path.GetExtension(file.FileName));
+            return PhysicalFile(file.PhysicalPath, contentType, file.FileName);
         }
 
         [HttpGet("{encodedVirtualPath}/exists")]

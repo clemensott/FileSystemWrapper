@@ -26,6 +26,7 @@ namespace FileSystemWeb.Helpers
                     {
                         PhysicalPath = shareFile.Path,
                         VirtualPath = virtualPath,
+                        FileName = shareFile.Name,
                         SharedId = shareFile.Uuid,
                         Permission = shareFile.Permission,
                     }
@@ -46,6 +47,7 @@ namespace FileSystemWeb.Helpers
             {
                 PhysicalPath = physicalPath,
                 VirtualPath = virtualPath,
+                FileName = Path.GetFileName(physicalPath),
                 SharedId = null,
                 Permission = folder.Permission,
             };

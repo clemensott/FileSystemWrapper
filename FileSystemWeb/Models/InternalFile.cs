@@ -8,6 +8,8 @@ namespace FileSystemWeb.Models
 
         public string VirtualPath { get; set; }
         
+        public string FileName { get; set; }
+        
         public Guid? SharedId { get; set; }
 
         public FileItemPermission Permission { get; set; }
