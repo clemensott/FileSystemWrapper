@@ -4,50 +4,66 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FileSystemWeb.Data;
+using FileSystemWeb.Exceptions;
 using FileSystemWeb.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FileSystemWeb.Helpers
 {
     public static class ShareFileHelper
     {
-        public static async Task<InternalFile> GetFileItem(string virtualPath, AppDbContext dbContext, string userId)
+        public static async Task<InternalFile> GetFileItem(string virtualPath, AppDbContext dbContext, string userId,
+            ControllerBase controller)
         {
             string[] parts = virtualPath.Split('\\');
-            if (parts.Length == 1)
+            if (!Guid.TryParse(parts[0], out Guid uuid))
             {
-                if (!Guid.TryParse(parts[0], out Guid fileUuid)) return null;
-                ShareFile shareFile = await dbContext.ShareFiles
-                    .Include(f => f.Permission)
-                    .FirstOrDefaultAsync(f => f.Uuid == fileUuid);
-
-                return shareFile != null
-                    ? new InternalFile()
-                    {
-                        PhysicalPath = shareFile.Path,
-                        VirtualPath = virtualPath,
-                        Name = shareFile.Name,
-                        SharedId = shareFile.Uuid,
-                        Permission = shareFile.Permission,
-                    }
-                    : null;
+                throw (HttpResultException) controller.BadRequest("Can't parse uuid");
             }
 
-            if (!Guid.TryParse(parts[0], out Guid folderUuid)) return null;
+            if (parts.Length == 1)
+            {
+                ShareFile shareFile = await dbContext.ShareFiles
+                    .Include(f => f.Permission)
+                    .FirstOrDefaultAsync(f => f.Uuid == uuid);
+
+                if (shareFile == null || (shareFile.UserId != null && shareFile.UserId != userId))
+                {
+                    throw (HttpResultException) controller.NotFound("Share file not found.");
+                }
+
+                return new InternalFile()
+                {
+                    PhysicalPath = shareFile.Path,
+                    VirtualPath = virtualPath,
+                    Name = shareFile.Name,
+                    SharedId = shareFile.Uuid,
+                    Permission = shareFile.Permission,
+                };
+            }
+
             ShareFolder folder = await dbContext.ShareFolders
                 .Include(f => f.Permission)
-                .FirstOrDefaultAsync(f => f.Uuid == folderUuid);
-            if (folder == null || (folder.UserId != null && folder.UserId != userId)) return null;
+                .FirstOrDefaultAsync(f => f.Uuid == uuid);
+
+            if (folder == null || (folder.UserId != null && folder.UserId != userId))
+            {
+                throw (HttpResultException) controller.NotFound("Share folder not found.");
+            }
 
             IEnumerable<string> allPhysicalPathParts = new string[] {folder?.Path}.Concat(parts[1..]);
             string physicalPath = FileHelper.ToFilePath(allPhysicalPathParts.ToArray());
-            if (!Path.IsPathFullyQualified(physicalPath)) return null;
+            if (!Path.IsPathFullyQualified(physicalPath))
+            {
+                throw (HttpResultException) controller.BadRequest("Path is not fully qualified");
+            }
 
             return new InternalFile()
             {
                 PhysicalPath = physicalPath,
                 VirtualPath = virtualPath,
-                FileName = Path.GetFileName(physicalPath),
+                Name = Path.GetFileName(physicalPath),
                 SharedId = null,
                 Permission = folder.Permission,
             };

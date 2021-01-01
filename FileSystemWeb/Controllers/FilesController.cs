@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemWeb.Data;
+using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -28,10 +29,18 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (file == null) return NotFound("Base not found");
+            InternalFile file;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
             if (!file.Permission.Read) return Forbid();
             if (!System.IO.File.Exists(file.PhysicalPath)) return NotFound();
 
@@ -45,10 +54,18 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (file == null) return NotFound("Base not found");
+            InternalFile file;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
             if (!file.Permission.Read) return Forbid();
             if (!System.IO.File.Exists(file.PhysicalPath)) return NotFound();
 
@@ -61,10 +78,18 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (file == null) return NotFound("Base not found");
+            InternalFile file;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return false;
+            }
+
             if (!file.Permission.Info) return Forbid();
 
             return System.IO.File.Exists(file.PhysicalPath);
@@ -75,10 +100,18 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (file == null) return NotFound("Base not found");
+            InternalFile file;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
             if (!file.Permission.Info) return Forbid();
 
             try
@@ -98,10 +131,18 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (file == null) return NotFound("Base not found");
+            InternalFile file;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
             if (!file.Permission.Hash) return Forbid();
 
             try
@@ -125,12 +166,18 @@ namespace FileSystemWeb.Controllers
             if (virtualDestPath == null) return BadRequest("Dest encoding error");
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            InternalFile srcFile = await ShareFileHelper.GetFileItem(virtualSrcPath, dbContext, userId);
-            if (srcFile == null) return NotFound("Base of src not found");
-            if (!srcFile.Permission.Read) return Forbid();
+            InternalFile srcFile, destFile;
+            try
+            {
+                srcFile = await ShareFileHelper.GetFileItem(virtualSrcPath, dbContext, userId, this);
+                destFile = await ShareFileHelper.GetFileItem(virtualDestPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
 
-            InternalFile destFile = await ShareFileHelper.GetFileItem(virtualDestPath, dbContext, userId);
-            if (destFile == null) return NotFound("Base of dest not found");
+            if (!srcFile.Permission.Write) return Forbid();
             if (!destFile.Permission.Write) return Forbid();
 
             try
@@ -156,12 +203,18 @@ namespace FileSystemWeb.Controllers
             if (virtualDestPath == null) return BadRequest("Dest encoding error");
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            InternalFile srcFile = await ShareFileHelper.GetFileItem(virtualSrcPath, dbContext, userId);
-            if (srcFile == null) return NotFound("Base of src not found");
-            if (!srcFile.Permission.Write) return Forbid();
+            InternalFile srcFile, destFile;
+            try
+            {
+                srcFile = await ShareFileHelper.GetFileItem(virtualSrcPath, dbContext, userId, this);
+                destFile = await ShareFileHelper.GetFileItem(virtualDestPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
 
-            InternalFile destFile = await ShareFileHelper.GetFileItem(virtualDestPath, dbContext, userId);
-            if (destFile == null) return NotFound("Base of dest not found");
+            if (!srcFile.Permission.Write) return Forbid();
             if (!destFile.Permission.Write) return Forbid();
 
             try
@@ -182,10 +235,18 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (file == null) return NotFound("Base not found");
+            InternalFile file;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
             if (!file.Permission.Write) return Forbid();
 
             string path = file.PhysicalPath;
@@ -232,10 +293,18 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (file == null) return NotFound("Base not found");
+            InternalFile file;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
             if (!file.Permission.Write) return Forbid();
 
             try

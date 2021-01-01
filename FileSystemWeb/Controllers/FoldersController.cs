@@ -8,6 +8,7 @@ using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemWeb.Data;
+using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -30,10 +31,19 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
 
-            return folder != null && folder.Permission.Read &&
+            InternalFolder folder;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException)
+            {
+                return false;
+            }
+
+            return folder.Permission.Read &&
                    (string.IsNullOrWhiteSpace(folder.PhysicalPath) || Directory.Exists(folder.PhysicalPath));
         }
 
@@ -75,8 +85,16 @@ namespace FileSystemWeb.Controllers
                 };
             }
 
-            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
-            if (folder == null) return NotFound("Base not found");
+            InternalFolder folder;
+            try
+            {
+                folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
             if (!folder.Permission.List) return Forbid();
 
             try
@@ -143,10 +161,18 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
 
-            if (folder == null) return NotFound("Base not found");
+            InternalFolder folder;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
             if (!folder.Permission.Info) return Forbid();
 
             try
@@ -171,10 +197,18 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
 
-            if (folder == null) return NotFound("Base not found");
+            InternalFolder folder;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
             if (!folder.Permission.Write) return Forbid();
 
             DirectoryInfo info = Directory.CreateDirectory(folder.PhysicalPath);
@@ -186,10 +220,18 @@ namespace FileSystemWeb.Controllers
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
             if (virtualPath == null) return BadRequest("Encoding error");
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
 
-            if (folder == null) return NotFound("Base not found");
+            InternalFolder folder;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
             if (!folder.Permission.Write) return Forbid();
 
             try

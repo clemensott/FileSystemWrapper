@@ -118,9 +118,8 @@ namespace FileSystemWeb.Controllers
             await ValidateFileSystemItemShare(body);
 
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFile file = await ShareFileHelper.GetFileItem(body.Path, dbContext, userId);
+            InternalFile file = await ShareFileHelper.GetFileItem(body.Path, dbContext, userId, this);
 
-            if (file == null) throw (HttpResultException) NotFound("Base not found");
             if (!HasPermission(file.Permission, body.Permission)) throw (HttpResultException) Forbid();
             if (!System.IO.File.Exists(file.PhysicalPath)) throw (HttpResultException) NotFound("File not found");
 
@@ -164,12 +163,16 @@ namespace FileSystemWeb.Controllers
         [HttpPost("folder")]
         public async Task<ActionResult<FolderItem>> AddFolderShare([FromBody] AddFolderShareBody body)
         {
-            if (string.IsNullOrWhiteSpace(body.Name)) return BadRequest("Name missing");
+            InternalFolder folder;
+            try
+            {
+                folder = await ValidateAddFolderShare(body);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
 
-            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFolder folder = await ShareFolderHelper.GetFolderItem(body.Path, dbContext, userId);
-
-            if (folder == null) return NotFound("Base not found");
             if (!HasPermission(folder.Permission, body.Permission)) return Forbid();
             if (!string.IsNullOrWhiteSpace(folder.PhysicalPath) && !System.IO.Directory.Exists(folder.PhysicalPath))
             {
@@ -260,7 +263,7 @@ namespace FileSystemWeb.Controllers
             if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException) BadRequest("Name missing");
 
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFolder folder = await ShareFolderHelper.GetFolderItem(body.Path, dbContext, userId);
+            InternalFolder folder = await ShareFolderHelper.GetFolderItem(body.Path, dbContext, userId, this);
 
             if (folder == null) throw (HttpResultException) NotFound("Base not found");
             if (!HasPermission(folder.Permission, body.Permission)) throw (HttpResultException) Forbid();
