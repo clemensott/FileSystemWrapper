@@ -57,7 +57,7 @@ async function loadUsers() {
     return users;
 }
 
-export default function ({path, isFile, onItemInfoLoaded}) {
+export default function ({path, isFile, defaultValues, onItemInfoLoaded}) {
     const [item, setItem] = useState(null);
     const [users, setUsers] = useState(null);
     const history = useHistory();
@@ -74,15 +74,20 @@ export default function ({path, isFile, onItemInfoLoaded}) {
     }, []);
 
     return item ? (
-        <ShareFileSystemItemForm item={item} isFile={isFile} users={users} onSubmit={async body => {
+        <ShareFileSystemItemForm item={item} isFile={isFile} users={users}
+                                 defaultValues={defaultValues} onSubmit={async body => {
             let redirect = null;
             let submitError = null;
             try {
                 showLoadingModal();
 
-                const url = isFile ? '/api/share/file' : '/api/share/folder';
+                const url = item.sharedId ? (
+                    `${isFile ? '/api/share/file/' : '/api/share/folder'}${item.sharedId}`
+                ) : (
+                    isFile ? '/api/share/file' : '/api/share/folder'
+                );
                 const response = await fetch(url, {
-                    method: 'POST',
+                    method: item.sharedId ? 'PUT' : 'POST',
                     headers: {
                         'Content-Type': 'application/json;charset=utf-8'
                     },

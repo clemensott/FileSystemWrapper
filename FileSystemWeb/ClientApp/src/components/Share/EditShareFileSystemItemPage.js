@@ -4,6 +4,7 @@ import {Button} from 'reactstrap';
 import Loading from '../Loading/Loading';
 import deleteShareItem from '../../Helpers/deleteShareItem'
 import {showErrorModal} from '../../Helpers/storeExtensions';
+import ShareFileSystemItemControl from "./ShareFileSystemItemControl";
 
 function setDocumentTitle(shareItem) {
     let name = null;
@@ -68,8 +69,7 @@ export default function () {
 
     return shareItem ? (
         <div>
-            <h2>Edit Share {isFile ? 'File' : 'Folder'}:</h2>
-            <h4>{shareItem.name}</h4>
+            <ShareFileSystemItemControl path={shareItem.id} isFile={shareItem.isFile} defaultValues={shareItem}/>
 
             <Button color="danger" className="float-right"
                     onClick={() => deleteShareItem(shareItem, () => history.push('/'))}>

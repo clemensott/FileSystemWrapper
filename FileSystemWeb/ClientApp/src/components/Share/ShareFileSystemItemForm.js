@@ -1,12 +1,29 @@
-﻿import React, {useRef, useState} from 'react';
+﻿import React, {useRef, useState, useEffect} from 'react';
 import {Button, CustomInput, Form, FormGroup, Input, Label} from 'reactstrap';
 import './ShareFileSystemItemForm.css'
 
 const invalidUserId = 'invalid';
 
-export default function ({users, item, isFile, onSubmit}) {
+export default function ({
+                             users,
+                             item,
+                             isFile,
+                             defaultValues: {
+                                 name: defaultName,
+                                 userId: defaultUserId,
+                                 isListed: defaultIsListed,
+                             } = {},
+                             onSubmit
+                         }) {
     const [isFileNameInvalid, setIsFileNameInvalid] = useState(false);
     const [isUserSelectInvalid, setIsUserSelectInvalid] = useState(false);
+    const [userId, setUserId] = useState(undefined);
+
+    useEffect(() => {
+        if (defaultUserId !== undefined && users && users.some(u => u.id === defaultUserId)) {
+            setUserId(defaultUserId);
+        }
+    }, [defaultUserId, users]);
 
     let userOptions = [];
     const publicUserOption = <option key="public" value="">Public</option>;
@@ -66,19 +83,24 @@ export default function ({users, item, isFile, onSubmit}) {
             <Form>
                 <FormGroup>
                     <Label for="name">File name</Label>
-                    <Input innerRef={nameRef} type="text" name="name" placeholder="File name" defaultValue={item.name}
+                    <Input innerRef={nameRef} type="text" name="name" placeholder="File name"
+                           defaultValue={defaultName || item.name}
                            invalid={isFileNameInvalid} onChange={e => setIsFileNameInvalid(!e.target.value)}/>
                 </FormGroup>
 
                 <FormGroup>
                     <Label for="userId">User</Label>
                     <Input innerRef={userIdRef} type="select" name="select" invalid={isUserSelectInvalid}
-                           onChange={e => setIsUserSelectInvalid(e.target.value === invalidUserId)}>
+                           value={userId}
+                           onChange={e => {
+                               setUserId(e.target.value);
+                               setIsUserSelectInvalid(e.target.value === invalidUserId);
+                           }}>
                         {userOptions}
                     </Input>
                 </FormGroup>
 
-                <FormGroup>
+                <FormGroup className={item.sharedId ? 'd-none' : ''}>
                     <Label for="permission">Permission</Label>
                     <div>
                         <CustomInput innerRef={permissionInfoRef} type="checkbox" id="permission-info"
@@ -97,13 +119,18 @@ export default function ({users, item, isFile, onSubmit}) {
                 <FormGroup>
                     <Label for="permission">Visibility</Label>
                     <div>
-                        <CustomInput type="radio" id="is-link" name="is-listed" label="Link only" defaultChecked inline/>
+                        <CustomInput type="radio" id="is-link" name="is-listed" label="Link only"
+                                     defaultChecked={defaultIsListed !== undefined ? !defaultIsListed : true}
+                                     inline/>
                         <CustomInput innerRef={isListedRef} type="radio" id="is-listed" name="is-listed" label="Listed"
+                                     defaultChecked={defaultIsListed !== undefined ? defaultIsListed : false}
                                      inline/>
                     </div>
                 </FormGroup>
 
-                <Button className="mt-2" type="button" onClick={() => submit()}>Share</Button>
+                <Button className="mt-2" type="button" onClick={() => submit()}>
+                    {item.sharedId ? 'Save' : 'Share'}
+                </Button>
             </Form>
         </div>
     );

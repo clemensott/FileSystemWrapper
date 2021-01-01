@@ -69,9 +69,41 @@ namespace FileSystemWeb.Controllers
             return shareFile.ToShareItem();
         }
 
+        [HttpPut("file/{uuid}")]
+        public async Task<ActionResult<FileItem>> EditShareFile(Guid uuid, [FromBody] EditFileSystemItemShareBody body)
+        {
+            try
+            {
+                await ValidateFileSystemItemShare(body);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
+            if (await dbContext.ShareFiles.AnyAsync(f =>
+                f.Uuid != uuid && f.Name == body.Name && f.UserId == body.UserId))
+            {
+                return BadRequest("File with this name is already shared");
+            }
+
+            ShareFile shareFile = await dbContext.ShareFiles
+                .Include(f => f.Permission)
+                .FirstOrDefaultAsync(f => f.Uuid == uuid);
+            if (shareFile == null) return NotFound("Share file not found");
+
+            shareFile.Name = body.Name;
+            shareFile.IsListed = body.IsListed;
+            shareFile.UserId = string.IsNullOrWhiteSpace(body.UserId) ? null : body.UserId;
+
+            await dbContext.SaveChangesAsync();
+
+            return shareFile.ToFileItem();
+        }
+
         private async Task<InternalFile> ValidateAddFileShare(AddFileShareBody body)
         {
-            if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException) BadRequest("Name missing");
+            await ValidateFileSystemItemShare(body);
 
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             InternalFile file = await ShareFileHelper.GetFileItem(body.Path, dbContext, userId);
@@ -80,12 +112,17 @@ namespace FileSystemWeb.Controllers
             if (!HasPermission(file.Permission, body.Permission)) throw (HttpResultException) Forbid();
             if (!System.IO.File.Exists(file.PhysicalPath)) throw (HttpResultException) NotFound("File not found");
 
+            return file;
+        }
+
+        private async Task ValidateFileSystemItemShare(EditFileSystemItemShareBody body)
+        {
+            if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException) BadRequest("Name missing");
+
             if (!string.IsNullOrWhiteSpace(body.UserId) && !await dbContext.Users.AnyAsync(u => u.Id == body.UserId))
             {
                 throw (HttpResultException) BadRequest("User not found");
             }
-
-            return file;
         }
 
         private static bool HasPermission(Models.FileItemPermission hasPermission,
@@ -161,6 +198,38 @@ namespace FileSystemWeb.Controllers
             if (shareFolder == null) return NotFound("Share folder not found");
 
             return shareFolder.ToShareItem();
+        }
+        
+        [HttpPut("folder/{uuid}")]
+        public async Task<ActionResult<FolderItem>> EditFolderShare(Guid uuid, [FromBody] EditFileSystemItemShareBody body)
+        {
+            try
+            {
+                await ValidateFileSystemItemShare(body);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+        
+            if (await dbContext.ShareFolders.AnyAsync(f =>
+                f.Uuid != uuid && f.Name == body.Name && f.UserId == body.UserId))
+            {
+                return BadRequest("Folder with this name is already shared");
+            }
+        
+            ShareFolder shareFolder = await dbContext.ShareFolders
+                .Include(f => f.Permission)
+                .FirstOrDefaultAsync(f => f.Uuid == uuid);
+            if (shareFolder == null) return NotFound("Share folder not found");
+        
+            shareFolder.Name = body.Name;
+            shareFolder.IsListed = body.IsListed;
+            shareFolder.UserId = body.UserId;
+        
+            await dbContext.SaveChangesAsync();
+        
+            return shareFolder.ToFolderItem();
         }
 
         private async Task<InternalFolder> ValidateAddFolderShare(AddFolderShareBody body)
