@@ -5,6 +5,8 @@ namespace FileSystemWeb.Models
     public class InternalFolder
     {
         public string BaseName { get; set; }
+        
+        public string Name { get; set; }
 
         public string PhysicalPath { get; set; }
 

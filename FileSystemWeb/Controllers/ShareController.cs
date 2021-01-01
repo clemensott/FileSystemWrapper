@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using FileSystemCommon.Models.FileSystem.Files;
@@ -56,6 +58,16 @@ namespace FileSystemWeb.Controllers
             await dbContext.SaveChangesAsync();
 
             return shareFile.ToFileItem();
+        }
+
+        [HttpGet("files")]
+        public async Task<ActionResult<IEnumerable<ShareItem>>> GetShareFiles()
+        {
+            ShareFile[] shareFiles = await dbContext.ShareFiles
+                .Include(f => f.Permission)
+                .ToArrayAsync();
+
+            return shareFiles.Select(f => f.ToShareItem()).ToArray();
         }
 
         [HttpGet("file/{uuid}")]
@@ -189,6 +201,16 @@ namespace FileSystemWeb.Controllers
             return shareFolder.ToFolderItem();
         }
 
+        [HttpGet("folders")]
+        public async Task<ActionResult<IEnumerable<ShareItem>>> GetShareFolders()
+        {
+            ShareFolder[] shareFolders = await dbContext.ShareFolders
+                .Include(f => f.Permission)
+                .ToArrayAsync();
+
+            return shareFolders.Select(f => f.ToShareItem()).ToArray();
+        }
+
         [HttpGet("folder/{uuid}")]
         public async Task<ActionResult<ShareItem>> GetShareFolder(Guid uuid)
         {
@@ -199,9 +221,10 @@ namespace FileSystemWeb.Controllers
 
             return shareFolder.ToShareItem();
         }
-        
+
         [HttpPut("folder/{uuid}")]
-        public async Task<ActionResult<FolderItem>> EditFolderShare(Guid uuid, [FromBody] EditFileSystemItemShareBody body)
+        public async Task<ActionResult<FolderItem>> EditFolderShare(Guid uuid,
+            [FromBody] EditFileSystemItemShareBody body)
         {
             try
             {
@@ -211,24 +234,24 @@ namespace FileSystemWeb.Controllers
             {
                 return exc.Result;
             }
-        
+
             if (await dbContext.ShareFolders.AnyAsync(f =>
                 f.Uuid != uuid && f.Name == body.Name && f.UserId == body.UserId))
             {
                 return BadRequest("Folder with this name is already shared");
             }
-        
+
             ShareFolder shareFolder = await dbContext.ShareFolders
                 .Include(f => f.Permission)
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
             if (shareFolder == null) return NotFound("Share folder not found");
-        
+
             shareFolder.Name = body.Name;
             shareFolder.IsListed = body.IsListed;
             shareFolder.UserId = body.UserId;
-        
+
             await dbContext.SaveChangesAsync();
-        
+
             return shareFolder.ToFolderItem();
         }
 

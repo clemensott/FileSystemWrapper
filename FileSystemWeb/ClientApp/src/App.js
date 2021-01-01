@@ -5,6 +5,7 @@ import NavMenu from './components/NavMenu';
 import {Container} from 'reactstrap';
 import Logout from './components/Logout';
 import FilePage from './components/FilePage';
+import SharesPage from './components/Share/SharesPage';
 import AddShareFileSystemItemPage from './components/Share/AddShareFileSystemItemPage';
 import EditShareFileSystemItemPage from './components/Share/EditShareFileSystemItemPage';
 import Home from './components/Home';
@@ -38,8 +39,9 @@ export default function () {
                     <Route path='/login' component={Login}/>
                     <Route path='/logout' component={Logout}/>
                     <Route exact path='/file/view' component={FilePage}/>
-                    <Route path='/share/file/add' component={AddShareFileSystemItemPage}/>
-                    <Route path='/share/folder/add' component={AddShareFileSystemItemPage}/>
+                    <Route exact path='/share' component={SharesPage}/>
+                    <Route exact path='/share/file/add' component={AddShareFileSystemItemPage}/>
+                    <Route exact path='/share/folder/add' component={AddShareFileSystemItemPage}/>
                     <Route path='/share/file/edit/:id' component={EditShareFileSystemItemPage}/>
                     <Route path='/share/folder/edit/:id' component={EditShareFileSystemItemPage}/>
                     <Route exact path='/' exec component={Home}/>

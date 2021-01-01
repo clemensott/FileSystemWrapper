@@ -1,0 +1,37 @@
+﻿.shares-page-header-exists {
+    width: 70px;
+}
+
+.shares-page-header-is-listed {
+    width: 100px;
+}
+
+.shares-page-header-user {
+    width: 200px;
+}
+
+.shares-page-header-permissions {
+    width: 270px;
+}
+
+.shares-page-header-actions {
+    width: 130px;
+}
+
+.share-page-exists-item {
+    margin-left: -0.5rem;
+}
+
+.share-page-permission-item {
+    width: 60px;
+}
+
+@media (max-width: 700px) {
+    .shares-page-removable-column {
+        display: none;
+    }
+
+    .shares-page-header-user {
+        width: 100px;
+    }
+}

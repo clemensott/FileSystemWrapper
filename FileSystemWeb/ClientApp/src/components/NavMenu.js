@@ -31,6 +31,11 @@ export default function () {
                     <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!collapsed}
                               navbar>
                         <ul className="navbar-nav flex-grow">
+                            {isLoggedIn ? (
+                                <NavItem>
+                                    <NavLink tag={RRNavLink} className="text-dark" to="/share">Shares</NavLink>
+                                </NavItem>
+                            ) : null}
                             <NavItem>
                                 <NavLink tag={RRNavLink} className="text-dark" to={authUrl}>{authTitle}</NavLink>
                             </NavItem>

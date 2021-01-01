@@ -26,7 +26,7 @@ namespace FileSystemWeb.Helpers
                     {
                         PhysicalPath = shareFile.Path,
                         VirtualPath = virtualPath,
-                        FileName = shareFile.Name,
+                        Name = shareFile.Name,
                         SharedId = shareFile.Uuid,
                         Permission = shareFile.Permission,
                     }

@@ -1,5 +1,5 @@
 ﻿using System;
-using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Folders;
 
 namespace FileSystemCommon.Models.Share
 {
@@ -15,6 +15,6 @@ namespace FileSystemCommon.Models.Share
         
         public bool IsFile { get; set; }
 
-        public IFileSystemItemPermission Permission { get; set; }
+        public FolderItemPermission Permission { get; set; }
     }
 }

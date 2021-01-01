@@ -1,10 +1,10 @@
 ﻿import React, {useState, useEffect} from 'react';
 import {useParams, useHistory} from 'react-router-dom';
 import {Button} from 'reactstrap';
+import ShareFileSystemItemForm from './ShareFileSystemItemForm';
 import Loading from '../Loading/Loading';
 import deleteShareItem from '../../Helpers/deleteShareItem'
-import {showErrorModal} from '../../Helpers/storeExtensions';
-import ShareFileSystemItemControl from "./ShareFileSystemItemControl";
+import {closeLoadingModal, showErrorModal, showLoadingModal} from '../../Helpers/storeExtensions';
 
 function setDocumentTitle(shareItem) {
     let name = null;
@@ -50,6 +50,23 @@ async function loadShareItem(id, isFile) {
     return item;
 }
 
+async function loadUsers() {
+    let users = [];
+    try {
+        const response = await fetch('/api/users/all', {
+            credentials: 'include',
+        });
+
+        if (response.ok) {
+            users = await response.json();
+        }
+    } catch (e) {
+        console.log(e);
+    }
+
+    return users;
+}
+
 export default function () {
     const {id} = useParams();
     const decodedId = decodeURIComponent(id);
@@ -57,6 +74,7 @@ export default function () {
 
     const history = useHistory();
     const [shareItem, setShareItem] = useState(null);
+    const [users, setUsers] = useState(null);
 
     useEffect(() => {
         loadShareItem(decodedId, isFile).then(item => {
@@ -67,9 +85,55 @@ export default function () {
         });
     }, [decodedId]);
 
+    useEffect(() => {
+        loadUsers().then(u => setUsers(u));
+    }, []);
+
     return shareItem ? (
         <div>
-            <ShareFileSystemItemControl path={shareItem.id} isFile={shareItem.isFile} defaultValues={shareItem}/>
+            <ShareFileSystemItemForm item={shareItem} isFile={shareItem.isFile} users={users}
+                                     isEdit={true} defaultValues={shareItem} onSubmit={async body => {
+                let redirect = null;
+                let submitError = null;
+                try {
+                    showLoadingModal();
+
+                    const url = `${isFile ? '/api/share/file/' : '/api/share/folder'}${shareItem.id}`;
+                    const response = await fetch(url, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json;charset=utf-8'
+                        },
+                        body: JSON.stringify(body),
+                        credentials: 'include',
+                    });
+
+                    if (response.ok) {
+                        const shareItem = await response.json();
+                        redirect = isFile ?
+                            `/file/view?path=${encodeURIComponent(shareItem.path)}` :
+                            `/?folder=${encodeURIComponent(shareItem.path)}`;
+                    } else if (response.status === 400) {
+                        submitError = (await response.text()) || 'An error occured';
+                    } else if (response.status === 404) {
+                        submitError = `${isFile ? 'File' : 'Folder'} not found`;
+                    } else if (response.status === 403) {
+                        submitError = 'Forbidden. You may have not enough access rights';
+                    } else if (response.status === 401) {
+                        submitError = 'Unauthorized. It seems like your are not logged in';
+                    } else {
+                        submitError = 'An error occured';
+                    }
+                } catch (e) {
+                    console.log(e);
+                    submitError = e.message;
+                } finally {
+                    closeLoadingModal();
+                }
+
+                if (submitError) await showErrorModal(submitError);
+                if (redirect) history.push(redirect);
+            }}/>
 
             <Button color="danger" className="float-right"
                     onClick={() => deleteShareItem(shareItem, () => history.push('/'))}>

@@ -8,7 +8,7 @@ namespace FileSystemWeb.Models
 
         public string VirtualPath { get; set; }
         
-        public string FileName { get; set; }
+        public string Name { get; set; }
         
         public Guid? SharedId { get; set; }
 

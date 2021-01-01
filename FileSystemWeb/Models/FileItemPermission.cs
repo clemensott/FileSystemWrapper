@@ -25,6 +25,18 @@
             };
         }
 
+        public FileSystemCommon.Models.FileSystem.Folders.FolderItemPermission ToFolderItemPermission()
+        {
+            return new FileSystemCommon.Models.FileSystem.Folders.FolderItemPermission()
+            {
+                Read = Read,
+                List = false,
+                Info = Info,
+                Hash = Hash,
+                Write = Write,
+            };
+        }
+
         public static FileItemPermission New(
             FileSystemCommon.Models.FileSystem.Files.FileItemPermission permission)
         {

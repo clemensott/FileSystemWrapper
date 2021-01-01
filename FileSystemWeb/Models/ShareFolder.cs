@@ -47,7 +47,7 @@ namespace FileSystemWeb.Models
                 IsListed = IsListed,
                 UserId = UserId,
                 IsFile = false,
-                Permission = Permission.ToFileItemPermission(),
+                Permission = Permission.ToFolderItemPermission(),
             };
         }
     }

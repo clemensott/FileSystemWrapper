@@ -8,12 +8,13 @@ export default function ({
                              users,
                              item,
                              isFile,
+                             isEdit = false,
                              defaultValues: {
                                  name: defaultName,
                                  userId: defaultUserId,
                                  isListed: defaultIsListed,
                              } = {},
-                             onSubmit
+                             onSubmit = null
                          }) {
     const [isFileNameInvalid, setIsFileNameInvalid] = useState(false);
     const [isUserSelectInvalid, setIsUserSelectInvalid] = useState(false);
@@ -78,7 +79,7 @@ export default function ({
 
     return (
         <div>
-            <h2>{item.sharedId ? 'Edit' : ''} Share {isFile ? 'File' : 'Folder'}:</h2>
+            <h2>{isEdit ? 'Edit' : ''} Share {isFile ? 'File' : 'Folder'}:</h2>
             <h4>{item.name}</h4>
             <Form>
                 <FormGroup>
@@ -100,19 +101,19 @@ export default function ({
                     </Input>
                 </FormGroup>
 
-                <FormGroup className={item.sharedId ? 'd-none' : ''}>
+                <FormGroup>
                     <Label for="permission">Permission</Label>
                     <div>
                         <CustomInput innerRef={permissionInfoRef} type="checkbox" id="permission-info"
                                      label="info" defaultChecked={true} disabled inline/>
-                        <CustomInput innerRef={permissionListRef} type="checkbox" id="permission-list"
-                                     label="list" className={isFile ? 'd-none' : ''} inline/>
+                        <CustomInput innerRef={permissionListRef} type="checkbox" id="permission-list" label="list"
+                                     className={isFile ? 'd-none' : ''} disabled={isEdit} inline/>
                         <CustomInput innerRef={permissionHashRef} type="checkbox"
-                                     id="permission-hash" label="hash" inline/>
+                                     id="permission-hash" label="hash" disabled={isEdit} inline/>
                         <CustomInput innerRef={permissionReadRef} type="checkbox"
-                                     id="permission-read" label="read" inline/>
+                                     id="permission-read" label="read" disabled={isEdit} inline/>
                         <CustomInput innerRef={permissionWriteRef} type="checkbox"
-                                     id="permission-write" label="write" inline/>
+                                     id="permission-write" label="write" disabled={isEdit} inline/>
                     </div>
                 </FormGroup>
 
@@ -129,7 +130,7 @@ export default function ({
                 </FormGroup>
 
                 <Button className="mt-2" type="button" onClick={() => submit()}>
-                    {item.sharedId ? 'Save' : 'Share'}
+                    {isEdit ? 'Save' : 'Share'}
                 </Button>
             </Form>
         </div>

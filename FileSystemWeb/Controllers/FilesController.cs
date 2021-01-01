@@ -35,8 +35,8 @@ namespace FileSystemWeb.Controllers
             if (!file.Permission.Read) return Forbid();
             if (!System.IO.File.Exists(file.PhysicalPath)) return NotFound();
 
-            Response.Headers.Add(HeaderNames.ContentDisposition, $"inline; filename=\"{file.FileName}\"");
-            string contentType = Utils.GetContentType(Path.GetExtension(file.FileName));
+            Response.Headers.Add(HeaderNames.ContentDisposition, $"inline; filename=\"{file.Name}\"");
+            string contentType = Utils.GetContentType(Path.GetExtension(file.Name));
             return PhysicalFile(file.PhysicalPath, contentType, true);
         }
 
@@ -52,8 +52,8 @@ namespace FileSystemWeb.Controllers
             if (!file.Permission.Read) return Forbid();
             if (!System.IO.File.Exists(file.PhysicalPath)) return NotFound();
 
-            string contentType = Utils.GetContentType(Path.GetExtension(file.FileName));
-            return PhysicalFile(file.PhysicalPath, contentType, file.FileName);
+            string contentType = Utils.GetContentType(Path.GetExtension(file.Name));
+            return PhysicalFile(file.PhysicalPath, contentType, file.Name);
         }
 
         [HttpGet("{encodedVirtualPath}/exists")]

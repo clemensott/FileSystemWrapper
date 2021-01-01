@@ -67,7 +67,7 @@ namespace FileSystemWeb.Helpers
         {
             return new FileItemInfo()
             {
-                Name = info.Name,
+                Name = file.Name,
                 Extension = info.Extension,
                 SharedId = file.SharedId,
                 Permission = file.Permission.ToFileItemPermission(),
@@ -89,7 +89,7 @@ namespace FileSystemWeb.Helpers
 
             return new FolderItemInfo()
             {
-                Name = info?.Name ?? folder.BaseName,
+                Name = folder.Name,
                 Path = folder.VirtualPath,
                 SharedId = folder.SharedId,
                 Permission = folder.Permission.ToFolderItemPermission(),

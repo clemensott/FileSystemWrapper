@@ -81,13 +81,9 @@ export default function ({path, isFile, defaultValues, onItemInfoLoaded}) {
             try {
                 showLoadingModal();
 
-                const url = item.sharedId ? (
-                    `${isFile ? '/api/share/file/' : '/api/share/folder'}${item.sharedId}`
-                ) : (
-                    isFile ? '/api/share/file' : '/api/share/folder'
-                );
+                const url = isFile ? '/api/share/file' : '/api/share/folder'
                 const response = await fetch(url, {
-                    method: item.sharedId ? 'PUT' : 'POST',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json;charset=utf-8'
                     },
