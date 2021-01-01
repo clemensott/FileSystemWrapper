@@ -16,6 +16,7 @@ export default async function (item, callback = null) {
             method: 'DELETE'
         });
 
+        closeLoadingModal();
         if (response.ok) await callback && callback();
         else {
             const text = await response.text();
@@ -28,8 +29,7 @@ export default async function (item, callback = null) {
             );
         }
     } catch (e) {
-        await showErrorModal(e.message);
-    } finally {
         closeLoadingModal();
+        await showErrorModal(e.message);
     }
 }

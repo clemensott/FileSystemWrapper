@@ -44,6 +44,7 @@ export default function () {
                 credentials: 'include'
             });
 
+            closeLoadingModal();
             if (response.ok) {
                 history.push('/');
                 store.set('isLoggedIn', true);
@@ -60,9 +61,8 @@ export default function () {
                 );
             }
         } catch (e) {
-            await showErrorModal(e.message);
-        } finally {
             closeLoadingModal();
+            await showErrorModal(e.message);
         }
     }
 
