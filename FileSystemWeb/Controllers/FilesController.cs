@@ -44,7 +44,8 @@ namespace FileSystemWeb.Controllers
             if (!file.Permission.Read) return Forbid();
             if (!System.IO.File.Exists(file.PhysicalPath)) return NotFound();
 
-            Response.Headers.Add(HeaderNames.ContentDisposition, $"inline; filename=\"{file.Name}\"");
+            string fileName = Utils.ReplaceNonAscii(file.Name);
+            Response.Headers.Add(HeaderNames.ContentDisposition, $"inline; filename=\"{fileName}\"");
             string contentType = Utils.GetContentType(Path.GetExtension(file.Name));
             return PhysicalFile(file.PhysicalPath, contentType, true);
         }

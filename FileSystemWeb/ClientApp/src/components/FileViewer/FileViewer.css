@@ -67,3 +67,10 @@
 .file-viewer-info-text.light {
     color: darkgray;
 }
+
+.file-viewer-content-error {
+    padding: 5px 10px;
+    background-color: rgb(220, 220, 220);
+    color: red;
+    border-radius: 10px;
+}

@@ -31,7 +31,6 @@ export default function () {
     let nextFile = null;
     if (fileNameDecoded && folderContent && folderContent.files && folderContent.files.length) {
         const currentFileIndex = folderContent.files.findIndex(file => file.name === fileNameDecoded);
-        console.log('current index:', currentFileIndex);
         if (currentFileIndex !== -1) {
             const size = folderContent.files.length;
             previousFile = folderContent.files[(currentFileIndex - 1 + size) % size];

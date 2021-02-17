@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import {useHistory} from 'react-router-dom';
 import {normalizeFile} from '../Helpers/Path';
-import {FileViewer} from './FileViewer/FileViewer';
+import FileViewer from './FileViewer/FileViewer';
 import './FilePage.css'
 
 function setDocumentTitle(file) {

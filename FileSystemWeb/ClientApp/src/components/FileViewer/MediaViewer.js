@@ -1,58 +1,40 @@
-﻿import React, { Component } from 'react';
-import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
+﻿import React, {useEffect, useState} from 'react';
+import {encodeBase64UnicodeCustom} from '../../Helpers/Path';
 import './MediaViewer.css'
 
-export default class MediaViewer extends Component {
-    static displayName = MediaViewer.name;
+export default function ({path, type, onError}) {
+    const [internalType, setInternalType] = useState(null);
+    const mediaUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
 
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            type: this.props.type || null,
-            error: null,
-        };
+    const onLoaded = (target) => {
+        setInternalType(!!target.videoWidth || !!target.videoHeight ? 'video' : 'audio');
     }
 
-    onLoaded(target) {
-        this.setState({
-            type: !!target.videoWidth || !!target.videoHeight ? 'video' : 'audio'
-        });
-    }
+    useEffect(() => {
+        setInternalType(null);
+    }, [path, type])
 
-    render() {
-        if (this.state.error) {
-            return (
-                <div className="media-viewer-error">
-                    {this.state.error.message}
-                </div>
-            );
-        }
-
-        const mediaUrl = `/api/files/${encodeBase64UnicodeCustom(this.props.path)}`;
-
-        if (this.state.type === 'audio') {
-            return (
-                <audio
-                    className="media-viewer-content"
-                    src={mediaUrl}
-                    autoPlay={true}
-                    controls
-                    onCanPlay={e => this.onLoaded(e.target)}
-                    onError={e => this.setState({ error: e.target.error })}
-                />
-            );
-        }
-
+    if ((internalType || type) === 'audio') {
         return (
-            <video
+            <audio
                 className="media-viewer-content"
                 src={mediaUrl}
                 autoPlay={true}
                 controls
-                onCanPlay={e => this.onLoaded(e.target)}
-                onError={e => this.setState({ error: e.target.error })}
+                onCanPlay={e => onLoaded(e.target)}
+                onError={e => e.target.error && onError && onError(e.target.error.message)}
             />
         );
     }
+
+    return (
+        <video
+            className="media-viewer-content"
+            src={mediaUrl}
+            autoPlay={true}
+            controls
+            onCanPlay={e => onLoaded(e.target)}
+            onError={e => e.target.error && onError && onError(e.target.error.message)}
+        />
+    );
 }

@@ -92,22 +92,14 @@ export default function ({path, onFolderLoaded}) {
         return {items, all: true};
     }
 
-    const parentPath = getParent(path);
-    const parentUrl = `/?folder=${encodeURIComponent(parentPath)}`;
-    const pathParts = !isLoading && content && content.path ? renderPathParts(content.path) : [];
-    const {items, all} = !isLoading && content ? renderItems(content, maxItemsCount) : {
-        items: [],
-        all: true
-    };
-
     const onScroll = () => {
         const scrollOffset = document.body.scrollTop || document.documentElement.scrollTop;
         const scrollHeight = document.body.scrollHeight || document.documentElement.scrollHeight;
         const height = document.body.offsetHeight || document.documentElement.offsetHeight;
 
-        if (items.length === maxItemsCount &&
+        if (state.lastItemsCount === state.maxItemsCount &&
             (scrollOffset + height + bottomAppendDistance > scrollHeight)) {
-            setMaxItemsCount(maxItemsCount + maxItemStepSize);
+            setMaxItemsCount(state.maxItemsCount + maxItemStepSize);
         }
 
         const newIsOnTop = scrollOffset < state.headOffsetTop;
@@ -142,13 +134,12 @@ export default function ({path, onFolderLoaded}) {
             }
         } catch (e) {
             console.error(e);
-        } finally {
-            setIsLoading(false);
         }
 
         if (currentIndex === state.loadIndex && !state.isUnmounted) {
             setContent(content);
             onFolderLoaded && onFolderLoaded(content);
+            setIsLoading(false);
         }
     }
 
@@ -156,7 +147,17 @@ export default function ({path, onFolderLoaded}) {
         updateContent();
     }, [path, update]);
 
+    const parentPath = getParent(path);
+    const parentUrl = `/?folder=${encodeURIComponent(parentPath)}`;
+    const pathParts = !isLoading && content && content.path ? renderPathParts(content.path) : [];
+    const {items, all} = !isLoading && content ? renderItems(content, maxItemsCount) : {
+        items: [],
+        all: true
+    };
+
     state.isOnTop = isOnTop;
+    state.lastItemsCount = items.length;
+    state.maxItemsCount = maxItemsCount;
 
     return (
         <div>

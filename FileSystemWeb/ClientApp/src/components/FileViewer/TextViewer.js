@@ -1,105 +1,67 @@
-﻿import React, { Component } from 'react';
+﻿import React, {useEffect, useState} from 'react';
 import Loading from '../Loading/Loading';
 import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
 import './TextViewer.css'
 
-export default class TextViewer extends Component {
-    static displayName = TextViewer.name;
+export default function ({path, onError}) {
+    const [state] = useState({isUnmounted: false, loadIndex: 0});
+    const [isLoading, setIsLoading] = useState(false);
+    const [text, setText] = useState(null);
 
-    constructor(props) {
-        super(props);
-
-        this.isUnmounted = true;
-        this.fetchPath = null;
-        this.state = {
-            loading: true,
-            filePath: null,
-            text: null,
-            error: null,
-        };
-    }
-
-    render() {
-        if (this.state.loading) {
-            return (
-                <div className="center">
-                    <Loading />
-                </div>
-            );
-        }
-        if (this.state.text) {
-            return (
-                <textarea className="text-viewer-text" readOnly="true" defaultValue={this.state.text}/>
-            );
-        }
-        if (this.state.error) {
-            return (
-                <label className="text-viewer-error">
-                    {this.state.error}
-                </label>
-            );
-        }
-        return (
-            <label className="text-viewer-no-text">
-                &lt;No Text&gt;
-            </label>
-        );
-    }
-
-    async componentDidMount() {
-        this.isUnmounted = false;
-        await this.checkUpdateText();
-    }
-
-    async componentDidUpdate() {
-        await this.checkUpdateText();
-    }
-
-    async checkUpdateText() {
-        const path = this.props.path;
-        if (path !== this.fetchPath && path !== this.state.filePath) await this.updateText(path);
-    }
-
-    async updateText(path) {
-        const textUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
-
+    const updateText = async () => {
+        const currentIndex = ++state.loadIndex;
+        let newText = null;
+        let error = null;
         try {
-            this.fetchPath = path;
-            this.setState({
-                loading: true,
-                error: null,
-            });
+            setIsLoading(true);
+            setText(null);
+
+            const textUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
             const response = await fetch(textUrl);
 
-            if (this.isUnmounted || this.fetchPath !== path) return;
-            const text = await response.text();
-
             if (response.ok) {
-                this.setState({
-                    loading: false,
-                    filePath: path,
-                    text,
-                });
+                newText = await response.text();
+                if (newText === '') error = 'File is empty';
             } else {
-                this.setState({
-                    loading: false,
-                    filePath: path,
-                    error: text || response.statusText || response.status,
-                });
+                error = (await response.text()) || response.statusText || `HTTP: ${response.status}`;
             }
         } catch (err) {
             console.error(err);
-            if (this.fetchPath === path) {
-                this.setState({
-                    loading: false,
-                    filePath: path,
-                    error: err.message,
-                });
-            }
+            error = err.message;
+        }
+
+        if (currentIndex === state.loadIndex && !state.isUnmounted) {
+            error && onError && onError(error);
+            setText(newText);
+            setIsLoading(false);
         }
     }
 
-    componentWillUnmount() {
-        this.isUnmounted = true;
+    useEffect(() => {
+        return () => {
+            state.isUnmounted = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        updateText();
+    }, [path]);
+
+    if (isLoading) {
+        return (
+            <div className="center">
+                <Loading/>
+            </div>
+        );
     }
+    if (text) {
+        return (
+            <textarea className="text-viewer-text" readOnly defaultValue={text}/>
+        );
+    }
+    return (
+        <label className="text-viewer-no-text">
+            &lt;No Text&gt;
+        </label>
+    );
 }

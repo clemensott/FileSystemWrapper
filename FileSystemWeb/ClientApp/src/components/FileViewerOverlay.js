@@ -1,25 +1,25 @@
-﻿import React, {useRef} from 'react';
+﻿import React from 'react';
+import {useHistory} from 'react-router-dom';
 import {Link} from 'react-router-dom';
-import {FileViewer} from './FileViewer/FileViewer';
+import FileViewer from './FileViewer/FileViewer';
 import './FileViewerOverlay.css';
 
 export default function ({closeUrl, previousItem, nextItem, ...rest}) {
-    const closeRef = useRef();
+    const history = useHistory();
 
-    console.log('overlay:', previousItem, nextItem)
     return (
         <div className="file-viewer-overlay" onClick={e => {
             if (e.target.classList.contains('file-viewer-overlay') ||
                 e.target.classList.contains('file-viewer-overlay-container') ||
                 e.target.classList.contains('file-viewer-content') ||
                 e.target.classList.contains('image-container')) {
-                closeRef.current.click();
+                history.push(closeUrl);
             }
         }}>
             <div className="file-viewer-overlay-container">
-                <FileViewer theme="dark" onClose={() => closeRef.current.click()} {...rest} />
+                <FileViewer theme="dark" onClose={() => history.push(nextItem ? nextItem.url : closeUrl)} {...rest} />
             </div>
-            <Link to={closeUrl} innerRef={closeRef}>
+            <Link to={closeUrl}>
                 <i className="fas fa-times-circle fa-3x file-viewer-overlay-close"/>
             </Link>
             {previousItem && (

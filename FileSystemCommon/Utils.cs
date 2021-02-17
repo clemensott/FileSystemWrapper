@@ -177,5 +177,16 @@ namespace FileSystemCommon
                 },
             });
         }
+
+        public static string ReplaceNonAscii(string text, char replace = '_')
+        {
+            StringBuilder builder = new StringBuilder(text.Length);
+            foreach (char c in text)
+            {
+                builder.Append(Convert.ToInt32(c) < 128 ? c : replace);
+            }
+
+            return builder.ToString();
+        }
     }
 }

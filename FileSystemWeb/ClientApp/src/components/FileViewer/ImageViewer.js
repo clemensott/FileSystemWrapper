@@ -1,33 +1,29 @@
-﻿import React, {Component} from 'react';
-import Loading from "../Loading/Loading";
-import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
+﻿import React, {useEffect, useState} from 'react';
+import Loading from '../Loading/Loading';
+import {encodeBase64UnicodeCustom} from '../../Helpers/Path';
 import './ImageViewer.css'
 
-export default class ImageViewer extends Component {
-    static displayName = ImageViewer.name;
+export default function ({path, onError}) {
+    const [isLoading, setIsLoading] = useState(false);
 
-    constructor(props) {
-        super(props);
+    const imageUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
 
-        this.state = {
-            isLoading: true,
-            error: null,
-        };
-    }
+    useEffect(() => {
+        setIsLoading(true);
+    }, [imageUrl]);
 
-    render() {
-        const imageUrl = `/api/files/${encodeBase64UnicodeCustom(this.props.path)}`;
+    return (
+        <div className="image-container">
+            <img src={imageUrl} className="image-content"
+                 onLoad={e => setIsLoading(false)}
+                 onError={() => {
+                     setIsLoading(false);
+                     onError && onError('An error occurred during loading of image');
+                 }} alt="preview"/>
 
-        return (
-            <div className="image-container">
-                <img src={imageUrl} className={`image-content ${this.state.error ? 'd-none' : ''}`}
-                     onLoad={() => this.setState({isLoading: false,})}
-                     onError={() => this.setState({error: true})}/>
-
-                <div className={this.state.isLoading ? 'center' : 'd-none'}>
-                    <Loading/>
-                </div>
+            <div className={isLoading ? 'center' : 'd-none'}>
+                <Loading/>
             </div>
-        );
-    }
+        </div>
+    );
 }

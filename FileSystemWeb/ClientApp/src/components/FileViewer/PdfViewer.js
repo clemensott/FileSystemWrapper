@@ -1,99 +1,72 @@
-﻿import React, { Component } from 'react';
+﻿import React, {useEffect, useState} from 'react';
 import Loading from '../Loading/Loading';
-import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
+import {encodeBase64UnicodeCustom} from '../../Helpers/Path';
 import './PdfViewer.css'
 
-export default class PdfViewer extends Component {
-    static displayName = PdfViewer.name;
+export default function ({path, onError}) {
+    const [state] = useState({isUnmounted: false, loadIndex: 0});
+    const [isLoading, setIsLoading] = useState(false);
+    const [localUrl, setLocalUrl] = useState(null);
 
-    constructor(props) {
-        super(props);
-
-        this.isUnmounted = true;
-        this.fetchPath = null;
-        this.state = {
-            loading: true,
-            localUrl: null,
-            error: null,
-        };
+    const clearLocalUrl = () => {
+        if (localUrl) URL.revokeObjectURL(localUrl);
+        if (!state.isUnmounted) setLocalUrl(localUrl);
     }
 
-    render() {
-        if (this.state.loading) {
-            return (
-                <div className="center">
-                    <Loading />
-                </div>
-            );
-        }
-        if (this.state.localUrl) {
-            return (
-                <embed src={this.state.localUrl} type="application/pdf" className="pdf-viewer-pdf" />
-            );
-        }
-        if (this.state.error) {
-            return (
-                <div className="pdf-viewer-error">
-                    {this.state.error}
-                </div>
-            );
-        }
-        return (
-            <label className="pdf-viewer-no-pdf">
-                &lt;No Text&gt;
-            </label>
-        );
-    }
-
-    async componentDidMount() {
-        this.isUnmounted = false;
-        await this.checkUpdatePdf();
-    }
-
-    async componentDidUpdate() {
-        await this.checkUpdatePdf();
-    }
-
-    async checkUpdatePdf() {
-        const path = this.props.path;
-        if (path !== this.fetchPath && path !== this.state.filePath) await this.updatePdf(path);
-    }
-
-    async updatePdf(path) {
-        const pdfUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
-
+    const updatePdf = async () => {
+        const currentIndex = ++state.loadIndex;
+        let blob = null;
+        let error = null;
         try {
-            this.fetchPath = path;
+            setIsLoading(true);
+            clearLocalUrl();
+
+            const pdfUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
             const response = await fetch(pdfUrl);
 
-            if (this.isUnmounted || this.fetchPath !== path) return;
-
             if (response.ok) {
-                const blob = await response.blob();
-                this.setState({
-                    loading: false,
-                    localUrl: URL.createObjectURL(blob),
-                });
+                blob = await response.blob();
             } else {
-                const error = await response.text();
-                this.setState({
-                    loading: false,
-                    error: error || response.statusText || response.status,
-                });
+                error = (await response.text()) || response.statusText || `HTTP: ${response.status}`;
             }
         } catch (err) {
             console.error(err);
-            if (this.fetchPath === path) {
-                this.setState({
-                    loading: false,
-                    error: err.message,
-                });
-            }
+            error = err.message;
+        }
+
+        if (currentIndex === state.loadIndex && !state.isUnmounted) {
+            error && onError && onError(error);
+            setLocalUrl(blob ? URL.createObjectURL(blob) : null);
+            setIsLoading(false);
         }
     }
 
-    componentWillUnmount() {
-        this.isUnmounted = true;
-        if (this.state.localUrl) URL.revokeObjectURL(this.state.localUrl);
+    useEffect(() => {
+        return () => {
+            state.isUnmounted = true;
+            clearLocalUrl();
+        };
+    }, []);
+
+    useEffect(() => {
+        updatePdf();
+    }, [path]);
+
+    if (isLoading) {
+        return (
+            <div className="center">
+                <Loading/>
+            </div>
+        );
     }
+    if (localUrl) {
+        return (
+            <embed src={localUrl} type="application/pdf" className="pdf-viewer-pdf"/>
+        );
+    }
+    return (
+        <label className="pdf-viewer-no-pdf">
+            &lt;No PDF&gt;
+        </label>
+    );
 }

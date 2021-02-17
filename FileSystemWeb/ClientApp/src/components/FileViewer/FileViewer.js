@@ -1,73 +1,75 @@
-﻿import React, {Component} from 'react';
+﻿import React, {useEffect, useState} from 'react';
 import {getFileType, encodeBase64UnicodeCustom} from '../../Helpers/Path';
 import ImageViewer from './ImageViewer';
 import TextViewer from './TextViewer';
 import MediaViewer from './MediaViewer';
 import PdfViewer from './PdfViewer';
+import Loading from '../Loading/Loading';
 import FileActionsDropdown from '../FSItem/FileActionsDropdown';
-import deleteFileSystemItem from "../../Helpers/deleteFileSystemItem";
+import deleteFileSystemItem from '../../Helpers/deleteFileSystemItem';
 import './FileViewer.css';
 
-export class FileViewer extends Component {
-    static displayName = FileViewer.name;
+export default function ({path, theme, onFileInfoLoaded, hideOpenFileLinkAction, onClose}) {
+    const [state] = useState({isUnmounted: false, loadIndex: 0});
+    const [error, setError] = useState(null);
+    const [contentError, setContentError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [file, setFile] = useState(null);
 
-    constructor(props) {
-        super(props);
-
-        this.fileFetchPath = null;
-
-        this.state = {
-            filePath: null,
-            file: null,
-            error: null,
-        }
+    const setViewerError = (viewerError) => {
+        if (!state.isUnmounted) setContentError(viewerError);
     }
 
-    async updateFile(path, force = false) {
-        if (!force && this.fileFetchPath === path) return;
-        this.fileFetchPath = path;
-
-        let file = null;
-        let error = false;
+    const updateFile = async () => {
+        const currentIndex = ++state.loadIndex;
+        let newFile = null;
+        let newError = false;
         if (path) {
             try {
+                setIsLoading(true);
                 const response = await fetch(`/api/files/${encodeBase64UnicodeCustom(path)}/info`, {
                     credentials: 'include',
                 });
 
                 if (response.ok) {
-                    file = await response.json();
-                    file.isFile = true;
+                    newFile = await response.json();
+                    newFile.isFile = true;
                 } else if (response.status === 403) {
-                    error = 'Forbidden to access file';
+                    newError = 'Forbidden to access file';
                 } else if (response.status === 404) {
-                    error = 'File not found';
+                    newError = 'File not found';
                 } else if (response.status === 401) {
-                    error = 'Unauthorized. It seems like your are not logged in';
+                    newError = 'Unauthorized. It seems like your are not logged in';
                 } else {
-                    error = 'An error occured';
+                    newError = 'An error occured';
                 }
             } catch (e) {
                 console.log(e);
-                error = e.message;
+                newError = e.message;
             }
         }
 
-        if (path === this.props.path) {
-            this.props.onFileInfoLoaded && this.props.onFileInfoLoaded(file);
-            this.setState({
-                filePath: path,
-                file,
-                error,
-            });
+        if (currentIndex === state.loadIndex && !state.isUnmounted) {
+            onFileInfoLoaded && onFileInfoLoaded(newFile);
+            setError(newError);
+            setFile(newFile);
+            setIsLoading(false);
         }
     }
 
-    getViewer(file) {
+    const renderContentError = (text) => {
+        return (
+            <label className={`file-viewer-content-error ${theme}`}>
+                {text}
+            </label>
+        );
+    }
+
+    const renderViewer = () => {
         if (!file.permission.read) {
             return (
                 <div className="text-center'">
-                    <h3 className={`font-italic file-viewer-info-text ${this.props.theme}`}>
+                    <h3 className={`font-italic file-viewer-info-text ${theme}`}>
                         Not authorized for reading
                     </h3>
                 </div>
@@ -76,79 +78,89 @@ export class FileViewer extends Component {
 
         switch (getFileType(file.extension)) {
             case 'image':
-                return <ImageViewer path={file.path}/>
+                return <ImageViewer path={file.path} onError={setViewerError}/>;
 
             case 'text':
-                return <TextViewer path={file.path}/>;
+                return file.size <= 500 * 1024 ? (
+                    <TextViewer path={file.path} onError={setViewerError}/>
+                ) : renderContentError('File to big (> 500kB)');
 
             case 'audio':
-                return <MediaViewer path={file.path} type="audio"/>;
+                return <MediaViewer path={file.path} type="audio" onError={setViewerError}/>;
 
             case 'video':
-                return <MediaViewer path={file.path} type="video"/>;
+                return <MediaViewer path={file.path} type="video" onError={setViewerError}/>;
 
             case 'pdf':
-                return <PdfViewer path={file.path}/>;
+                return file.size <= 100 * 1024 * 1024 ? (
+                    <PdfViewer path={file.path} onError={setViewerError}/>
+                ) : renderContentError('File to big (> 100MB)');
         }
 
         return (
             <div className="text-center'">
-                <h3 className={`font-italic file-viewer-info-text ${this.props.theme}`}>
+                <h3 className={`font-italic file-viewer-info-text ${theme}`}>
                     No preview for this file available
+                </h3>
+            </div>
+        );
+    };
+
+    useEffect(() => {
+        return () => {
+            state.isUnmounted = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        updateFile();
+    }, [path]);
+
+    if (error) {
+        return (
+            <div className="text-center'">
+                <h3 className={`font-italic file-viewer-info-text ${theme}`}>
+                    {error}
                 </h3>
             </div>
         );
     }
 
-    render() {
-        if (this.state.error) {
-            return (
-                <div className="text-center'">
-                    <h3 className={`font-italic file-viewer-info-text ${this.props.theme}`}>
-                        {this.state.error}
-                    </h3>
-                </div>
-            );
-        }
-        if (!this.state.file) {
-            return null;
-        }
-
-        const file = this.state.file;
-        const viewer = this.getViewer(file);
-
+    if (isLoading) {
         return (
-            <div className="file-viewer-container">
-                <div className="file-viewer-header-container">
-                    <div style={{flexGrow: 1}}/>
-                    <h4 className={`file-viewer-title ${this.props.theme}`}>{file.name}</h4>
-                    <div style={{flexGrow: 1}}/>
-                    <div className="m-1">
-                        <FileActionsDropdown file={file}
-                                             title="Options"
-                                             hideOpenFileLink={this.props.hideOpenFileLinkAction}
-                                             onDelete={() => deleteFileSystemItem(
-                                                 file,
-                                                 () => this.props.onClose && this.props.onClose(),
-                                             )}/>
-                    </div>
-                </div>
-                <div className="file-viewer-content-remaining">
-                    <div className="file-viewer-content-container">
-                        <div className="file-viewer-content">
-                            {viewer}
-                        </div>
-                    </div>
-                </div>
+            <div className="center">
+                <Loading/>
             </div>
         );
     }
 
-    componentDidMount() {
-        this.updateFile(this.props.path);
+    if (!file) {
+        return null;
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        this.updateFile(this.props.path);
-    }
+    return (
+        <div className="file-viewer-container">
+            <div className="file-viewer-header-container">
+                <div style={{flexGrow: 1}}/>
+                <h4 className={`file-viewer-title ${theme}`}>{file.name}</h4>
+                <div style={{flexGrow: 1}}/>
+                <div className="m-1">
+                    <FileActionsDropdown file={file}
+                                         title="Options"
+                                         hideOpenFileLink={hideOpenFileLinkAction}
+                                         onDelete={() => deleteFileSystemItem(
+                                             file,
+                                             onClose,
+                                         )}/>
+                </div>
+            </div>
+            <div className="file-viewer-content-remaining">
+                <div className="file-viewer-content-container">
+                    <div className="file-viewer-content">
+                        {contentError ? renderContentError(contentError) : renderViewer()}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }

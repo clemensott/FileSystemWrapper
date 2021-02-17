@@ -7,12 +7,3 @@
     background-color: white;
     padding: 5pt;
 }
-
-.text-viewer-error {
-    color: red;
-}
-
-.text-viewer-no-text {
-    color: orange;
-    font-style: italic;
-}
