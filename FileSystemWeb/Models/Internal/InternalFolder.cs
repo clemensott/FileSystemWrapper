@@ -1,11 +1,11 @@
 ﻿using System;
 
-namespace FileSystemWeb.Models
+namespace FileSystemWeb.Models.Internal
 {
     public class InternalFolder
     {
         public string BaseName { get; set; }
-        
+
         public string Name { get; set; }
 
         public string PhysicalPath { get; set; }
@@ -14,6 +14,6 @@ namespace FileSystemWeb.Models
 
         public Guid? SharedId { get; set; }
 
-        public FolderItemPermission Permission { get; set; }
+        public FileSystemCommon.Models.FileSystem.Folders.FolderItemPermission Permission { get; set; }
     }
 }

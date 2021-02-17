@@ -3,7 +3,7 @@
     public interface IFolderItem : IPathItem
     {
         FolderItemPermission Permission { get; }
-        
+
         bool Deletable { get; }
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,6 +6,7 @@ using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemWeb.Models;
+using FileSystemWeb.Models.Internal;
 
 namespace FileSystemWeb.Helpers
 {
@@ -70,7 +71,7 @@ namespace FileSystemWeb.Helpers
                 Name = file.Name,
                 Extension = info.Extension,
                 SharedId = file.SharedId,
-                Permission = file.Permission.ToFileItemPermission(),
+                Permission = file.Permission,
                 Size = info.Length,
                 Path = file.VirtualPath,
                 LastAccessTime = info.LastAccessTime,
@@ -92,7 +93,7 @@ namespace FileSystemWeb.Helpers
                 Name = folder.Name,
                 Path = folder.VirtualPath,
                 SharedId = folder.SharedId,
-                Permission = folder.Permission.ToFolderItemPermission(),
+                Permission = folder.Permission,
                 Deletable = info != null && info.FullName != info.Root.FullName,
                 FileCount = count,
                 Size = size,
@@ -135,9 +136,7 @@ namespace FileSystemWeb.Helpers
                         queue.Enqueue(subDir);
                     }
                 }
-                catch
-                {
-                }
+                catch { }
             }
         }
 

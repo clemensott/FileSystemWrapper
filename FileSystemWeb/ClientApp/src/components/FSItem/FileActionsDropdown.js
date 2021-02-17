@@ -3,20 +3,7 @@ import {Dropdown, DropdownToggle, DropdownMenu, DropdownItem,} from 'reactstrap'
 import DropdownLinkItem from './DropdownLinkItem';
 import {encodeBase64UnicodeCustom, getFileType} from '../../Helpers/Path';
 import store from '../../Helpers/store';
-
-function formatFileSize(size) {
-    const endings = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-    let ending = '';
-
-    for (let i = 0; i < endings.length; i++) {
-        ending = endings[i];
-        if (size < 1024) break;
-
-        size /= 1024;
-    }
-
-    return `${parseFloat(size.toPrecision(3))} ${ending}`;
-}
+import formatFileSize from "../../Helpers/formatFileSize";
 
 export default function ({file, title, hideOpenFileLink, onDelete}) {
     const fileOpenFileLink = `/file/view?path=${encodeURIComponent(file.path)}`;
@@ -35,7 +22,9 @@ export default function ({file, title, hideOpenFileLink, onDelete}) {
         setIsLoggedIn(store.get('isLoggedIn'));
     }, []);
     useEffect(() => {
-        return () => isLoggedInCallbackId && store.removeCallback('isLoggedIn', isLoggedInCallbackId)
+        return () => {
+            isLoggedInCallbackId && store.removeCallback('isLoggedIn', isLoggedInCallbackId);
+        }
     }, [isLoggedInCallbackId]);
 
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -59,7 +48,7 @@ export default function ({file, title, hideOpenFileLink, onDelete}) {
                     <i className="mr-2 fas fa-external-link-square-alt"/>
                     Open content in new tab
                 </DropdownLinkItem>
-                <DropdownLinkItem disabled={!file.permission.read} to={fileDownloadLink} 
+                <DropdownLinkItem disabled={!file.permission.read} to={fileDownloadLink}
                                   download={file.name} target="_blank" rel="noopener noreferrer">
                     <i className="mr-2 fas fa-download"/>
                     Download {file.size ? `(${formatFileSize(file.size)})` : ''}

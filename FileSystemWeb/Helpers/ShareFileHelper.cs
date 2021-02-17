@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,7 +20,7 @@ namespace FileSystemWeb.Helpers
             string[] parts = Utils.SplitPath(virtualPath);
             if (!Guid.TryParse(parts[0], out Guid uuid))
             {
-                throw (HttpResultException) controller.BadRequest("Can't parse uuid");
+                throw (HttpResultException)controller.BadRequest("Can't parse uuid");
             }
 
             if (parts.Length == 1)
@@ -31,7 +31,7 @@ namespace FileSystemWeb.Helpers
 
                 if (shareFile == null || (shareFile.UserId != null && shareFile.UserId != userId))
                 {
-                    throw (HttpResultException) controller.NotFound("Share file not found.");
+                    throw (HttpResultException)controller.NotFound("Share file not found.");
                 }
 
                 return new InternalFile()
@@ -40,7 +40,7 @@ namespace FileSystemWeb.Helpers
                     VirtualPath = virtualPath,
                     Name = shareFile.Name,
                     SharedId = shareFile.Uuid,
-                    Permission = shareFile.Permission,
+                    Permission = shareFile.Permission.ToFileItemPermission(),
                 };
             }
 
@@ -50,14 +50,14 @@ namespace FileSystemWeb.Helpers
 
             if (folder == null || (folder.UserId != null && folder.UserId != userId))
             {
-                throw (HttpResultException) controller.NotFound("Share folder not found.");
+                throw (HttpResultException)controller.NotFound("Share folder not found.");
             }
 
             IEnumerable<string> allPhysicalPathParts = new string[] {folder?.Path}.Concat(parts[1..]);
             string physicalPath = FileHelper.ToFilePath(allPhysicalPathParts.ToArray());
             if (!FileHelper.IsPathAllowed(physicalPath))
             {
-                throw (HttpResultException) controller.BadRequest("Path is not fully qualified");
+                throw (HttpResultException)controller.BadRequest("Path is not fully qualified");
             }
 
             return new InternalFile()
@@ -66,7 +66,7 @@ namespace FileSystemWeb.Helpers
                 VirtualPath = virtualPath,
                 Name = Path.GetFileName(physicalPath),
                 SharedId = null,
-                Permission = folder.Permission,
+                Permission = folder.Permission.ToFileItemPermission(),
             };
         }
     }

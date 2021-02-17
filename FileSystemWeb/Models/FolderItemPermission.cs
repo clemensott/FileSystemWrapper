@@ -1,6 +1,6 @@
 ﻿namespace FileSystemWeb.Models
 {
-    public class FolderItemPermission:FileItemPermission
+    public class FolderItemPermission : FileItemPermission
     {
 #nullable enable
         public bool List { get; set; }

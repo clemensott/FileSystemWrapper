@@ -10,6 +10,7 @@ using FileSystemWeb.Data;
 using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
+using FileSystemWeb.Models.Internal;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -120,23 +121,23 @@ namespace FileSystemWeb.Controllers
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             InternalFile file = await ShareFileHelper.GetFileItem(body.Path, dbContext, userId, this);
 
-            if (!HasPermission(file.Permission, body.Permission)) throw (HttpResultException) Forbid();
-            if (!System.IO.File.Exists(file.PhysicalPath)) throw (HttpResultException) NotFound("File not found");
+            if (!HasPermission(file.Permission, body.Permission)) throw (HttpResultException)Forbid();
+            if (!System.IO.File.Exists(file.PhysicalPath)) throw (HttpResultException)NotFound("File not found");
 
             return file;
         }
 
         private async Task ValidateFileSystemItemShare(EditFileSystemItemShareBody body)
         {
-            if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException) BadRequest("Name missing");
+            if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException)BadRequest("Name missing");
 
             if (!string.IsNullOrWhiteSpace(body.UserId) && !await dbContext.Users.AnyAsync(u => u.Id == body.UserId))
             {
-                throw (HttpResultException) BadRequest("User not found");
+                throw (HttpResultException)BadRequest("User not found");
             }
         }
 
-        private static bool HasPermission(Models.FileItemPermission hasPermission,
+        private static bool HasPermission(FileSystemCommon.Models.FileSystem.Files.FileItemPermission hasPermission,
             FileSystemCommon.Models.FileSystem.Files.FileItemPermission givePermission)
         {
             return
@@ -260,27 +261,27 @@ namespace FileSystemWeb.Controllers
 
         private async Task<InternalFolder> ValidateAddFolderShare(AddFolderShareBody body)
         {
-            if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException) BadRequest("Name missing");
+            if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException)BadRequest("Name missing");
 
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             InternalFolder folder = await ShareFolderHelper.GetFolderItem(body.Path, dbContext, userId, this);
 
-            if (folder == null) throw (HttpResultException) NotFound("Base not found");
-            if (!HasPermission(folder.Permission, body.Permission)) throw (HttpResultException) Forbid();
+            if (folder == null) throw (HttpResultException)NotFound("Base not found");
+            if (!HasPermission(folder.Permission, body.Permission)) throw (HttpResultException)Forbid();
             if (!string.IsNullOrWhiteSpace(folder.PhysicalPath) && !System.IO.Directory.Exists(folder.PhysicalPath))
             {
-                throw (HttpResultException) NotFound("Folder not found");
+                throw (HttpResultException)NotFound("Folder not found");
             }
 
             if (body.UserId != null && !await dbContext.Users.AnyAsync(u => u.Id == body.UserId))
             {
-                throw (HttpResultException) BadRequest("User not found");
+                throw (HttpResultException)BadRequest("User not found");
             }
 
             return folder;
         }
 
-        private static bool HasPermission(Models.FolderItemPermission hasPermission,
+        private static bool HasPermission(FileSystemCommon.Models.FileSystem.Folders.FolderItemPermission hasPermission,
             FileSystemCommon.Models.FileSystem.Folders.FolderItemPermission givePermission)
         {
             return

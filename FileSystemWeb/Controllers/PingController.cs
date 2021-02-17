@@ -11,7 +11,7 @@ namespace FileSystemWeb.Controllers
         {
             return "Success";
         }
-        
+
         [HttpGet("auth")]
         [Authorize]
         public ActionResult<string> GetIsAuthorized()

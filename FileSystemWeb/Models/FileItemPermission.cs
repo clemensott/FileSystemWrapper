@@ -4,13 +4,13 @@
     {
 #nullable enable
         public int Id { get; set; }
-        
+
         public bool Read { get; set; }
-        
+
         public bool Info { get; set; }
-        
+
         public bool Hash { get; set; }
-        
+
         public bool Write { get; set; }
 #nullable disable
 

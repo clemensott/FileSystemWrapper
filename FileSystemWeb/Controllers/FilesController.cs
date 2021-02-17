@@ -28,7 +28,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Get(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
             try
@@ -53,7 +53,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Download(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
             try
@@ -77,7 +77,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<bool>> Exists(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
             try
@@ -99,7 +99,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<FileItemInfo>> GetInfo(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
             try
@@ -130,7 +130,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<string>> GetHash(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
             try
@@ -234,7 +234,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Write(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
             try
@@ -255,10 +255,10 @@ namespace FileSystemWeb.Controllers
             try
             {
                 byte[] buffer = new byte[100000];
-                using (FileStream dest = System.IO.File.Create(tmpPath))
+                await using (Stream src = Request.Body)
+                await using (FileStream dest = System.IO.File.Create(tmpPath))
                 {
                     int size;
-                    Stream src = HttpContext.Request.Body;
                     do
                     {
                         size = await src.ReadAsync(buffer, 0, buffer.Length);
@@ -276,11 +276,9 @@ namespace FileSystemWeb.Controllers
             {
                 try
                 {
-                    System.IO.File.Delete(tmpPath);
+                    if (System.IO.File.Exists(tmpPath)) System.IO.File.Delete(tmpPath);
                 }
-                catch
-                {
-                }
+                catch { }
 
                 throw;
             }
@@ -292,7 +290,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Delete(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
             try

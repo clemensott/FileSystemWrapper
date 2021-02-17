@@ -7,7 +7,7 @@ namespace FileSystemCommon.Models.FileSystem
         string Name { get; }
 
         string Path { get; }
-        
+
         Guid? SharedId { get; set; }
     }
 }

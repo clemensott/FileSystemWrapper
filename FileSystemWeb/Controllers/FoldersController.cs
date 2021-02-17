@@ -10,7 +10,7 @@ using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemWeb.Data;
 using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
-using FileSystemWeb.Models;
+using FileSystemWeb.Models.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,7 +30,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<bool>> Exists(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFolder folder;
             try
@@ -52,7 +52,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<FolderContent>> ListFolders(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? string.Empty);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrWhiteSpace(virtualPath))
@@ -102,7 +102,7 @@ namespace FileSystemWeb.Controllers
                 return new FolderContent()
                 {
                     Path = FileHelper.GetPathParts(folder),
-                    Permission = folder.Permission.ToFolderItemPermission(),
+                    Permission = folder.Permission,
                     Folders = GetFolders(folder).OrderBy(f => f.Name).ToArray(),
                     Files = GetFiles(folder).OrderBy(f => f.Name).ToArray(),
                 };
@@ -122,7 +122,7 @@ namespace FileSystemWeb.Controllers
                     Name = d.Name,
                     Path = Path.Join(folder.VirtualPath, d.Name),
                     SharedId = null,
-                    Permission = folder.Permission.ToFolderItemPermission(),
+                    Permission = folder.Permission,
                     Deletable = false,
                 });
             }
@@ -132,7 +132,7 @@ namespace FileSystemWeb.Controllers
                 Name = Path.GetFileName(p),
                 Path = Path.Join(folder.VirtualPath, Path.GetFileName(p)),
                 SharedId = null,
-                Permission = folder.Permission.ToFolderItemPermission(),
+                Permission = folder.Permission,
                 Deletable = true,
             });
         }
@@ -151,7 +151,7 @@ namespace FileSystemWeb.Controllers
                     Extension = Path.GetExtension(path),
                     Path = Path.Join(folder.VirtualPath, name),
                     SharedId = null,
-                    Permission = folder.Permission.ToFileItemPermission(),
+                    Permission =(FileItemPermission)folder.Permission,
                 };
             }
         }
@@ -160,7 +160,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<FolderItemInfo>> GetInfo(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFolder folder;
             try
@@ -196,7 +196,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<FolderItemInfo>> Create(string encodedVirtualPath)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFolder folder;
             try
@@ -219,7 +219,7 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Delete(string encodedVirtualPath, [FromQuery] bool recursive)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath);
-            if (virtualPath == null) return BadRequest("Encoding error");
+            if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFolder folder;
             try
