@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Text;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using FileSystemCommon.Models.FileSystem;
-using FileSystemCommon.Models.FileSystem.Folders;
 
 namespace FileSystemCommon
 {
@@ -142,23 +142,34 @@ namespace FileSystemCommon
 
         public static string JoinPaths(IEnumerable<string> paths)
         {
-            return paths == null ? string.Empty : string.Join(@"\", paths.Select(TrimPath).Where(p => p != null && p.Length > 0));
+            IEnumerable<string> parts = paths?.Select(TrimPath).Where(p => !string.IsNullOrEmpty(p));
+            return parts == null
+                ? string.Empty
+                : string.Join(Path.DirectorySeparatorChar.ToString(), parts);
 
             string TrimPath(string path)
             {
-                return path?.Trim(' ', '\\');
+                return path?.Trim(' ', Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             }
+        }
+
+        public static string[] SplitPath(string path)
+        {
+            return path
+                .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
+                .Split(Path.DirectorySeparatorChar);
         }
 
         public static string GetParentPath(string path)
         {
-            int index = path.LastIndexOf('\\');
+            int index = path.LastIndexOf(Path.DirectorySeparatorChar);
             return index == -1 ? string.Empty : path.Substring(0, index + 1);
         }
 
         public static IEnumerable<PathPart> GetChildPathParts(this PathPart[] parentPath, IPathItem item)
         {
-            return parentPath.Concat(new PathPart[]{
+            return parentPath.Concat(new PathPart[]
+            {
                 new PathPart()
                 {
                     Name = item.Name,

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,7 +20,7 @@ namespace FileSystemWeb.Helpers
             string extension = Path.GetExtension(path);
 
             int nummeration;
-            if (!EndsWithNumberation(ref fileName, out nummeration)) nummeration = 0;
+            if (!EndsWithNumeration(ref fileName, out nummeration)) nummeration = 0;
 
             string newPath;
             do
@@ -36,7 +36,7 @@ namespace FileSystemWeb.Helpers
         /// Finds Numeration. Example "FileName (23)" would find 23.
         /// </summary>
         /// <returns>Returns true if find Numeration</returns>
-        private static bool EndsWithNumberation(ref string fileName, out int number)
+        private static bool EndsWithNumeration(ref string fileName, out int number)
         {
             if (fileName.Length < 3 ||
                 fileName[fileName.Length - 1] != ')' ||
@@ -148,11 +148,11 @@ namespace FileSystemWeb.Helpers
 
         public static PathPart[] GetPathParts(string virtualPath, string baseName)
         {
-            string[] parts = virtualPath.TrimEnd('\\').Split('\\');
+            string[] parts = virtualPath.TrimEnd(Path.DirectorySeparatorChar).Split(Path.DirectorySeparatorChar);
             return parts.Select((p, i) => new PathPart()
             {
                 Name = i == 0 ? baseName : p,
-                Path = string.Join(@"\", parts[..(i + 1)]),
+                Path = string.Join(Path.DirectorySeparatorChar, parts[..(i + 1)]),
             }).ToArray();
         }
 
@@ -163,20 +163,26 @@ namespace FileSystemWeb.Helpers
 
         public static string ToFilePath(string path)
         {
-            return path?.TrimEnd('\\');
+            return path?.TrimEnd(Path.DirectorySeparatorChar);
         }
 
-        public static string ToFolderPath(IEnumerable<string> paths)
+        public static string ToPhysicalFolderPath(IEnumerable<string> paths)
         {
-            return ToFolderPath(Path.Join(paths.ToArray()));
+            return ToPhysicalFolderPath(Path.Join(paths.ToArray()));
         }
 
-        public static string ToFolderPath(string path)
+        public static string ToPhysicalFolderPath(string path)
         {
             if (path == null) return null;
 
-            path = path.TrimEnd('\\');
-            return path.Length > 0 ? path + @"\\" : path;
+            path = path.TrimEnd(Path.DirectorySeparatorChar);
+            return path.Length > 0 ? path + Path.DirectorySeparatorChar : string.Empty;
+        }
+
+        public static bool IsPathAllowed(string path)
+        {
+            return !Path.IsPathFullyQualified(path) ||
+                   path.Contains($"{Path.DirectorySeparatorChar}..{Path.DirectorySeparatorChar}");
         }
     }
 }

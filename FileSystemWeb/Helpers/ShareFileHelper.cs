@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using FileSystemCommon;
 using FileSystemWeb.Data;
 using FileSystemWeb.Exceptions;
 using FileSystemWeb.Models;
@@ -16,7 +17,7 @@ namespace FileSystemWeb.Helpers
         public static async Task<InternalFile> GetFileItem(string virtualPath, AppDbContext dbContext, string userId,
             ControllerBase controller)
         {
-            string[] parts = virtualPath.Split('\\');
+            string[] parts = Utils.SplitPath(virtualPath);
             if (!Guid.TryParse(parts[0], out Guid uuid))
             {
                 throw (HttpResultException) controller.BadRequest("Can't parse uuid");
@@ -54,7 +55,7 @@ namespace FileSystemWeb.Helpers
 
             IEnumerable<string> allPhysicalPathParts = new string[] {folder?.Path}.Concat(parts[1..]);
             string physicalPath = FileHelper.ToFilePath(allPhysicalPathParts.ToArray());
-            if (!Path.IsPathFullyQualified(physicalPath))
+            if (!FileHelper.IsPathAllowed(physicalPath))
             {
                 throw (HttpResultException) controller.BadRequest("Path is not fully qualified");
             }
