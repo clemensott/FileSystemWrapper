@@ -1,13 +1,13 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {normalizeFolder, normalizeFile} from '../Helpers/Path';
 import FolderViewer from './FolderViewer';
-import {FileViewerOverlay} from './FileViewerOverlay';
+import FileViewerOverlay from './FileViewerOverlay';
 import {generateQueryUrl} from '../Helpers/generateNavigationUrl';
 
-function setDocumentTitle(folderContent, file) {
+function setDocumentTitle(folderContent, fileInfo) {
     let name = null;
-    if (file && file.name) {
-        name = file.name;
+    if (fileInfo && fileInfo.name) {
+        name = fileInfo.name;
     } else if (folderContent && folderContent.path) {
         name = folderContent.path.length ? folderContent.path[folderContent.path.length - 1].name : 'Root';
     }
@@ -24,21 +24,39 @@ export default function () {
     const fileNorm = fileNameDecoded && (folderNorm + fileNameDecoded);
     const closeFileOverlayUrl = generateQueryUrl({file: null});
 
-    let folderContent;
-    let fileInfo;
+    const [folderContent, setFolderContent] = useState(null);
+    const [fileInfo, setFileInfo] = useState(null);
+
+    let previousFile = null;
+    let nextFile = null;
+    if (fileNameDecoded && folderContent && folderContent.files && folderContent.files.length) {
+        const currentFileIndex = folderContent.files.findIndex(file => file.name === fileNameDecoded);
+        console.log('current index:', currentFileIndex);
+        if (currentFileIndex !== -1) {
+            const size = folderContent.files.length;
+            previousFile = folderContent.files[(currentFileIndex - 1 + size) % size];
+            nextFile = folderContent.files[(currentFileIndex + 1) % size];
+        }
+    }
+
+    useEffect(() => {
+        setDocumentTitle(folderContent, fileInfo);
+    }, [folderContent, fileInfo])
 
     return (
         <div>
-            <FolderViewer path={folderNorm} onFolderLoaded={content => {
-                folderContent = content;
-                setDocumentTitle(folderContent, file);
-            }}/>
+            <FolderViewer path={folderNorm} onFolderLoaded={setFolderContent}/>
             {fileNorm && (
                 <FileViewerOverlay path={fileNorm} closeUrl={closeFileOverlayUrl}
-                                   onFileInfoLoaded={file => {
-                                       fileInfo = file;
-                                       setDocumentTitle(folderContent, file);
-                                   }}/>
+                                   previousItem={previousFile && ({
+                                       url: generateQueryUrl({file: previousFile.name}),
+                                       title: previousFile.name,
+                                   })}
+                                   nextItem={nextFile && ({
+                                       url: generateQueryUrl({file: nextFile.name}),
+                                       title: nextFile.name,
+                                   })}
+                                   onFileInfoLoaded={setFileInfo}/>
             )}
         </div>
     );

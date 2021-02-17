@@ -20,11 +20,28 @@
 
 .file-viewer-overlay-close {
     position: absolute;
-    top: 10px;
+    top: 15px;
     right: 20px;
+}
+
+.file-viewer-overlay-previous {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+.file-viewer-overlay-next {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+.file-viewer-overlay-close, .file-viewer-overlay-previous, .file-viewer-overlay-next {
     color: white;
 }
 
-.file-viewer-overlay-close:hover {
+.file-viewer-overlay-close:hover, .file-viewer-overlay-previous:hover, .file-viewer-overlay-next:hover {
     color: lightgray;
 }
