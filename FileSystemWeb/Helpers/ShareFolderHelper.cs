@@ -39,7 +39,7 @@ namespace FileSystemWeb.Helpers
 
             if (physicalPath.Length > 0)
             {
-                if (FileHelper.IsPathAllowed(physicalPath))
+                if (!FileHelper.IsPathAllowed(physicalPath))
                 {
                     throw (HttpResultException)controller.BadRequest("Path is not fully qualified");
                 }

@@ -180,8 +180,8 @@ namespace FileSystemWeb.Helpers
 
         public static bool IsPathAllowed(string path)
         {
-            return !Path.IsPathFullyQualified(path) ||
-                   path.Contains($"{Path.DirectorySeparatorChar}..{Path.DirectorySeparatorChar}");
+            return Path.IsPathFullyQualified(path) &&
+                   !path.Contains($"{Path.DirectorySeparatorChar}..{Path.DirectorySeparatorChar}");
         }
     }
 }
