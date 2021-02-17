@@ -44,7 +44,10 @@ export default function () {
                     <Route exact path='/share/folder/add' component={AddShareFileSystemItemPage}/>
                     <Route path='/share/file/edit/:id' component={EditShareFileSystemItemPage}/>
                     <Route path='/share/folder/edit/:id' component={EditShareFileSystemItemPage}/>
-                    <Route exact path='/' exec component={Home}/>
+                    <Route exact path='/' component={Home}/>
+                    <Route path='/api/' render={() => (
+                        <h3>Please reload page without cache (Ctrl + F5)</h3>
+                    )}/>
                 </Switch>
             </Container>
             <DeleteShareItemModal ref={allRefs.deleteShareItem}/>
