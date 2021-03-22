@@ -1,8 +1,8 @@
-﻿using StdOttStandard.AsyncResult;
+﻿using System.Threading.Tasks;
 
 namespace FileSystemUWP.Sync.Definitions
 {
-    class SyncPairEdit : AsyncResult<bool>
+    class SyncPairEdit : TaskCompletionSource<bool>
     {
         public SyncPair Sync { get; }
 

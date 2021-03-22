@@ -49,12 +49,12 @@ namespace FileSystemUWP.Picker
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            if (e.NavigationMode == NavigationMode.Back && !picking.HasResult) picking.SetValue(null);
+            if (e.NavigationMode == NavigationMode.Back && !picking.Task.IsCompleted) picking.SetResult(null);
         }
 
         private void PcView_FileSelected(object sender, FileSystemItem e)
         {
-            picking.SetValue(e.FullPath);
+            picking.SetResult(e.FullPath);
             Frame.GoBack();
         }
 
@@ -63,7 +63,7 @@ namespace FileSystemUWP.Picker
             switch (picking.Type)
             {
                 case FileSystemPickType.Folder:
-                    picking.SetValue(pcView.CurrentFolder?.FullPath);
+                    picking.SetResult(pcView.CurrentFolder?.FullPath);
                     Frame.GoBack();
                     break;
 
@@ -76,10 +76,10 @@ namespace FileSystemUWP.Picker
 
                     string name = await namePicking.Task;
 
-                    if (!namePicking.HasResult) return;
+                    if (!namePicking.Task.IsCompleted) return;
 
                     string path = Utils.JoinPaths(pcView.CurrentFolder?.FullPath, name);
-                    picking.SetValue(path);
+                    picking.SetResult(path);
                     Frame.GoBack();
                     break;
             }

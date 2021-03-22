@@ -79,7 +79,7 @@ namespace FileSystemUWP.Sync.Definitions
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            if (e.NavigationMode == NavigationMode.Back && !edit.HasResult) edit.SetValue(false);
+            if (e.NavigationMode == NavigationMode.Back && !edit.Task.IsCompleted) edit.SetResult(false);
 
             base.OnNavigatedFrom(e);
         }
@@ -175,7 +175,7 @@ namespace FileSystemUWP.Sync.Definitions
 
         private void AbbApply_Click(object sender, RoutedEventArgs e)
         {
-            edit.SetValue(true);
+            edit.SetResult(true);
             Frame.GoBack();
         }
 

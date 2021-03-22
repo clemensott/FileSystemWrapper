@@ -32,7 +32,7 @@ namespace FileSystemUWP.Picker
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            if (e.NavigationMode == NavigationMode.Back && !picking.HasResult) picking.SetValue(null);
+            if (e.NavigationMode == NavigationMode.Back && !picking.Task.IsCompleted) picking.SetResult(null);
         }
 
         private async void TbxName_TextChanged(object sender, TextChangedEventArgs e)
@@ -92,7 +92,7 @@ namespace FileSystemUWP.Picker
 
         private void AbbAccept_Click(object sender, RoutedEventArgs e)
         {
-            picking.SetValue(tbxName.Text);
+            picking.SetResult(tbxName.Text);
         }
     }
 }

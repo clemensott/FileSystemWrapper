@@ -1,8 +1,8 @@
-﻿using StdOttStandard.AsyncResult;
+﻿using System.Threading.Tasks;
 
 namespace FileSystemUWP.Picker
 {
-    class NamePicking : AsyncResult<string>
+    class NamePicking : TaskCompletionSource<string>
     {
         public string FolderPath { get; }
 
