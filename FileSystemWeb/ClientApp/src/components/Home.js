@@ -39,8 +39,15 @@ export default function () {
     }
 
     useEffect(() => {
-        setDocumentTitle(folderContent, fileInfo);
-    }, [folderContent, fileInfo])
+        const expectedFolderPath = folderNorm || null;
+        const actualFolderPath = folderContent && folderContent.path && folderContent.path.length &&
+            normalizeFolder(folderContent.path[folderContent.path.length - 1].path) || null;
+        const expectedFilePath = fileNorm || null;
+        const actualFilePath = fileInfo && fileInfo.path || null;
+        setDocumentTitle(
+            expectedFolderPath === actualFolderPath ? folderContent : null,
+            expectedFilePath === actualFilePath ? fileInfo : null);
+    }, [folderNorm, fileNorm, folderContent, fileInfo])
 
     return (
         <div>

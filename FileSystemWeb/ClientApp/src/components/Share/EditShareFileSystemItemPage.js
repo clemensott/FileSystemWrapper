@@ -77,6 +77,7 @@ export default function () {
     const [users, setUsers] = useState(null);
 
     useEffect(() => {
+        setDocumentTitle(null);
         loadShareItem(decodedId, isFile).then(item => {
             if (item) {
                 setShareItem(item);

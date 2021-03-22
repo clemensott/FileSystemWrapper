@@ -52,6 +52,7 @@ export default function () {
     state.updateItems = updateItems;
 
     useEffect(() => {
+        document.title= 'Shares - File System';
         return () => {
             state.isUnmounted = true;
         };
