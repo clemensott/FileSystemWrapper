@@ -53,7 +53,7 @@ namespace FileSystemWeb.Helpers
             return new InternalFolder()
             {
                 BaseName = folder.Name,
-                Name = parts.Length == 1 ? folder.Name : Path.GetFileName(physicalPath),
+                Name = parts.Length == 1 ? folder.Name : Path.GetFileName(physicalPath.TrimEnd(Path.DirectorySeparatorChar)),
                 PhysicalPath = physicalPath,
                 VirtualPath = virtualPath,
                 SharedId = sharedId,
