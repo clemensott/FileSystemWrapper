@@ -70,6 +70,7 @@ namespace FileSystemUWP
 
         public Task<bool> FolderExists(string path)
         {
+            if (string.IsNullOrWhiteSpace(path)) return Task.FromResult(false);
             return Request<bool>(GetUri($"/api/folders/{Utils.EncodePath(path)}/exists"), HttpMethod.Get);
         }
 
@@ -97,6 +98,7 @@ namespace FileSystemUWP
 
         public Task<bool> FileExists(string path)
         {
+            if (string.IsNullOrWhiteSpace(path)) return Task.FromResult(false);
             return Request<bool>(GetUri($"/api/files/{Utils.EncodePath(path)}/exists"), HttpMethod.Get);
         }
 
@@ -172,7 +174,8 @@ namespace FileSystemUWP
                     {
                         using (HttpResponseMessage response = await client.SendRequestAsync(request))
                         {
-                            if (!response.IsSuccessStatusCode) return default(TData);
+                            if (!response.IsSuccessStatusCode || 
+                                response.Content.Headers.ContentType.MediaType != "application/json") return default(TData);
 
                             responseText = await response.Content.ReadAsStringAsync();
                         }

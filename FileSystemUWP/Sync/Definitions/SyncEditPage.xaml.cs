@@ -105,18 +105,20 @@ namespace FileSystemUWP.Sync.Definitions
             if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput ||
                 args.Reason == AutoSuggestionBoxTextChangeReason.ProgrammaticChange)
             {
+                string actualParentPath;
                 string folderName = string.IsNullOrWhiteSpace(sender.Text) ?
-                    null : Path.GetFileName(sender.Text);
+                    string.Empty : Path.GetFileName(sender.Text);
                 string searchKey = folderName.ToLower();
                 string parentPath = string.IsNullOrWhiteSpace(sender.Text) ?
-                    null : Utils.GetParentPath(sender.Text).TrimEnd('\\');
-                FolderContent content = await edit.Api.FolderContent(folderPaths[parentPath]);
+                    string.Empty : Utils.GetParentPath(sender.Text).TrimEnd(Path.DirectorySeparatorChar);
+                FolderContent content = folderPaths.TryGetValue(parentPath, out actualParentPath) ?
+                    await edit.Api.FolderContent(folderPaths[parentPath]) : null;
 
                 if (content?.Folders != null)
                 {
                     foreach (FolderItem folder in content.Folders)
                     {
-                        folderPaths[content.Path.GetChildPathParts(folder).GetNamePath().TrimEnd('\\')] = folder.Path;
+                        folderPaths[content.Path.GetChildPathParts(folder).GetNamePath().TrimEnd(Path.DirectorySeparatorChar)] = folder.Path;
                     }
 
                     FolderItem currentFolder;
@@ -137,7 +139,9 @@ namespace FileSystemUWP.Sync.Definitions
                 }
             }
 
-            bool exists = await edit.Api.FolderExists(sender.Text);
+            string actualPath;
+            string namePath = sender.Text.TrimEnd(Path.DirectorySeparatorChar);
+            bool exists = folderPaths.TryGetValue(namePath, out actualPath) && await edit.Api.FolderExists(actualPath);
             sinServerPathValid.Symbol = exists ? Symbol.Accept : Symbol.Dislike;
         }
 
