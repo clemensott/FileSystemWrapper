@@ -121,7 +121,10 @@ namespace FileSystemUWP
             {
                 StdUtils.XmlSerialize(syncsFilePath, viewModel.Syncs);
             }
-            catch { }
+            catch (Exception e)
+            {
+                Settings.Current.OnSyncException(new Exception("Save syncs error", e));
+            }
         }
 
         public static void SaveSyncPairs()
