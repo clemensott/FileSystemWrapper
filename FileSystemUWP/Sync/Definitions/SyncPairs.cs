@@ -72,7 +72,6 @@ namespace FileSystemUWP.Sync.Definitions
 
         private static void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-
             if (e.PropertyName == nameof(SyncPair.LocalFolder))
             {
                 SyncPair sync = (SyncPair)sender;

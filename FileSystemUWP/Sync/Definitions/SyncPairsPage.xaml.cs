@@ -143,7 +143,7 @@ namespace FileSystemUWP.Sync.Definitions
         {
             SyncPair sync = (SyncPair)((FrameworkElement)sender).DataContext;
 
-            if (await DialogUtils.ShowTwoOptionsAsync(sync.Name, "Delete?", "Yes", "No"))
+            if (await DialogUtils.ShowTwoOptionsAsync(sync.Name ?? string.Empty, "Delete?", "Yes", "No"))
             {
                 viewModel.Syncs.Remove(sync);
                 App.SaveSyncPairs();
