@@ -181,7 +181,7 @@ namespace FileSystemUWP.Sync.Definitions
 
         private async void AbbApply_Click(object sender, RoutedEventArgs e)
         {
-            Focus(FocusState.Pointer);
+            tblTitlePrefix.Focus(FocusState.Pointer);
             await Task.Delay(50);
 
             edit.SetResult(true);
