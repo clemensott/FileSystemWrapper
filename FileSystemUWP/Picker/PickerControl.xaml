@@ -51,14 +51,14 @@
                        Visibility="{Binding ElementName=lvwItems,Path=ItemsSource.Count,Converter={StaticResource colCon}}"/>
         </Grid>
         <Grid Grid.Row="1" Visibility="{Binding ElementName=control,Path=IsUpdating,Converter={StaticResource visCon}}">
-            <Grid VerticalAlignment="Center">
+            <Grid VerticalAlignment="Center"
+                  Visibility="{Binding ElementName=lvwItems,Path=ItemsSource.Count,Converter={StaticResource colCon}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
     
-                <ProgressRing Width="100" Height="100" IsActive="True" 
-                              Visibility="{Binding ElementName=lvwItems,Path=ItemsSource.Count,Converter={StaticResource colCon}}"/>
+                <ProgressRing Width="100" Height="100" IsActive="True" />
                 <TextBlock Grid.Row="1" Margin="5" FontWeight="SemiBold" Text="Loading Content..." HorizontalAlignment="Center"/>
             </Grid>
         </Grid>
