@@ -29,7 +29,8 @@
                    Text="{Binding ElementName=control,Path=CurrentFolderNamePath,Converter={StaticResource pathCon}}"/>
 
         <ListView Grid.Row="1" Name="lvwItems" SelectionMode="Single"
-                  SelectionChanged="LvwItems_SelectionChanged">
+                  SelectionChanged="LvwItems_SelectionChanged"
+                  Loaded="LvwItems_Loaded">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>

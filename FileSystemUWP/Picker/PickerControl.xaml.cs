@@ -13,6 +13,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media;
 
 // Die Elementvorlage "Benutzersteuerelement" wird unter https://go.microsoft.com/fwlink/?LinkId=234236 dokumentiert.
 
@@ -65,6 +66,7 @@ namespace FileSystemUWP.Picker
         private long updateCount = 0;
         private string currentUpdatePath;
         private readonly FileSystemItemCollection currentItems;
+        private ScrollViewer svrItems;
 
         public event EventHandler<FileSystemItem> FileSelected;
 
@@ -128,6 +130,41 @@ namespace FileSystemUWP.Picker
         private object SymConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
         {
             return UiUtils.GetSymbol((FileSystemItem)value);
+        }
+
+        private void LvwItems_Loaded(object sender, RoutedEventArgs e)
+        {
+            svrItems = FindVisualChild<ScrollViewer>(lvwItems);
+        }
+
+        public double GetVerticalScrollOffset()
+        {
+            return svrItems.VerticalOffset;
+        }
+
+        public void SetVerticalScrollOffset(double offset)
+        {
+            if (svrItems.ScrollableHeight < offset) offset = svrItems.ScrollableHeight;
+
+            svrItems.ChangeView(null, offset, null, true);
+        }
+
+        private static childItem FindVisualChild<childItem>(DependencyObject obj) where childItem : DependencyObject
+        {
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
+            {
+
+                DependencyObject child = VisualTreeHelper.GetChild(obj, i);
+                if (child != null && child is childItem) return (childItem)child;
+
+                else
+                {
+                    childItem childOfChild = FindVisualChild<childItem>(child);
+                    if (childOfChild != null) return childOfChild;
+                }
+            }
+            return null;
         }
 
         public Task SetParent()

@@ -46,6 +46,11 @@ namespace FileSystemUWP
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
+            if (e.NavigationMode == NavigationMode.Back)
+            {
+                viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
+            }
+
             Application.Current.LeavingBackground -= Application_LeavingBackground;
             isAway = true;
 
@@ -189,7 +194,6 @@ namespace FileSystemUWP
 
         private void AbbToServers_Click(object sender, RoutedEventArgs e)
         {
-            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
             Frame.GoBack();
         }
 
@@ -208,11 +212,15 @@ namespace FileSystemUWP
             try
             {
                 control.IsEnabled = false;
+
                 await pcView.UpdateCurrentFolderItems();
             }
             finally
             {
+                // Enabling button again does scroll for some misterious reason
+                double offset = pcView.GetVerticalScrollOffset();
                 control.IsEnabled = true;
+                pcView.SetVerticalScrollOffset(offset);
             }
         }
 
