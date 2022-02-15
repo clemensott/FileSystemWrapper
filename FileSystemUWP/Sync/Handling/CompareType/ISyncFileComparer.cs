@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using FileSystemUWP.API;
+using System.Threading.Tasks;
 using Windows.Storage;
 
 namespace FileSystemUWP.Sync.Handling.CompareType

@@ -16,16 +16,31 @@ using Windows.Storage.Streams;
 using Windows.Web.Http;
 using Windows.Web.Http.Filters;
 
-namespace FileSystemUWP
+namespace FileSystemUWP.API
 {
     public class Api
     {
-        public string[] RawCookies { get; set; }
+        public string Name { get; set; }
 
         public string BaseUrl { get; set; }
 
+        public string Username { get; set; }
+
+        public string[] RawCookies { get; set; }
+
         public Api()
         {
+        }
+
+        internal Api Clone()
+        {
+            return new Api()
+            {
+                Name = Name,
+                BaseUrl = BaseUrl,
+                Username = Username,
+                RawCookies = RawCookies?.ToArray(),
+            };
         }
 
         public Task<bool> Ping()
@@ -55,7 +70,7 @@ namespace FileSystemUWP
                         {
                             if (!response.IsSuccessStatusCode) return false;
 
-                            RawCookies = response.Headers.Where(p => p.Key == "set-cookie").Select(p => p.Value).ToArray();
+                            RawCookies = response.Headers.Where(p => p.Key.ToLower() == "set-cookie").Select(p => p.Value).ToArray();
                             return true;
                         }
                     }
@@ -174,7 +189,7 @@ namespace FileSystemUWP
                     {
                         using (HttpResponseMessage response = await client.SendRequestAsync(request))
                         {
-                            if (!response.IsSuccessStatusCode || 
+                            if (!response.IsSuccessStatusCode ||
                                 response.Content.Headers.ContentType.MediaType != "application/json") return default(TData);
 
                             responseText = await response.Content.ReadAsStringAsync();
@@ -297,16 +312,22 @@ namespace FileSystemUWP
             filter.CacheControl.ReadBehavior = HttpCacheReadBehavior.NoCache;
             filter.CacheControl.WriteBehavior = HttpCacheWriteBehavior.NoCache;
 
-            if (RawCookies != null && RawCookies.Length > 0)
-            {
-                foreach (string rawCookie in RawCookies)
-                {
-                    HttpCookie cookie = ParseCookie(rawCookie, BaseUrl);
-                    if (cookie != null) filter.CookieManager.SetCookie(cookie);
-                }
-            }
+            //if (RawCookies != null && RawCookies.Length > 0)
+            //{
+            //    foreach (string rawCookie in RawCookies)
+            //    {
+            //        HttpCookie cookie = ParseCookie(rawCookie, BaseUrl);
+            //        if (cookie != null) filter.CookieManager.SetCookie(cookie);
+            //    }
+            //}
 
             return filter;
+        }
+
+        private HttpCookie[] GetCookiesOfWebsite(string domain)
+        {
+            HttpBaseProtocolFilter filter = new HttpBaseProtocolFilter();
+            return filter.CookieManager.GetCookies(new Uri(domain)).ToArray();
         }
 
         private static HttpCookie ParseCookie(string raw, string domain)

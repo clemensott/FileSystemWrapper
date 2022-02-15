@@ -116,13 +116,14 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Api.cs" />
-    <Compile Include="ApiExtensions.cs" />
+    <Compile Include="API\Api.cs" />
+    <Compile Include="API\ApiEdit.cs" />
+    <Compile Include="API\ApiExtensions.cs" />
+    <Compile Include="API\AuthPage.xaml.cs">
+      <DependentUpon>AuthPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="AuthPage.xaml.cs">
-      <DependentUpon>AuthPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\BackgroundOperations.cs" />
     <Compile Include="Controls\BackgroundOperationsControl.xaml.cs">
@@ -171,7 +172,14 @@
       <DependentUpon>PickerPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServerExplorerPage.xaml.cs">
+      <DependentUpon>ServerExplorerPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="API\Server.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="SettingsStorage\ServerStore.cs" />
+    <Compile Include="SettingsStorage\Store.cs" />
+    <Compile Include="SettingsStorage\SyncPairStore.cs" />
     <Compile Include="Sync\Definitions\SyncCompareType.cs" />
     <Compile Include="Sync\Definitions\SyncConflictHandlingType.cs" />
     <Compile Include="Sync\Definitions\SyncMode.cs" />
@@ -267,9 +275,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="AuthPage.xaml">
-      <SubType>Designer</SubType>
+    <Page Include="API\AuthPage.xaml">
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Controls\BackgroundOperationsControl.xaml">
       <SubType>Designer</SubType>
@@ -312,6 +320,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Picker\PickerPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ServerExplorerPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

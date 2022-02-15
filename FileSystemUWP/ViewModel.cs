@@ -1,53 +1,46 @@
 ﻿using FileSystemUWP.Controls;
-using FileSystemUWP.Sync.Definitions;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace FileSystemUWP
 {
     class ViewModel : INotifyPropertyChanged
     {
-        private string currentFolderPath;
-        private SyncPairs syncs;
+        private bool isLoaded;
+        private Server currentServer;
 
-        public string CurrentFolderPath
+        public bool IsLoaded
         {
-            get => currentFolderPath;
+            get => isLoaded;
             set
             {
-                if (value == currentFolderPath) return;
+                if (value == isLoaded) return;
 
-                currentFolderPath = value;
-                OnPropertyChanged(nameof(CurrentFolderPath));
+                isLoaded = value;
+                OnPropertyChanged(nameof(IsLoaded));
             }
         }
 
-        public SyncPairs Syncs
+        public Server CurrentServer
         {
-            get => syncs;
-            private set
+            get => currentServer;
+            set
             {
-                if (value == syncs) return;
+                if (value == currentServer) return;
 
-                syncs = value;
-                OnPropertyChanged(nameof(Syncs));
+                currentServer = value;
+                OnPropertyChanged(nameof(CurrentServer));
             }
         }
 
-        public Api Api { get; }
+        public ObservableCollection<Server> Servers { get; }
 
         public BackgroundOperations BackgroundOperations { get; }
 
-        public ViewModel(IEnumerable<SyncPair> syncPairs)
+        public ViewModel()
         {
-            Api = new Api();
-            Syncs = new SyncPairs();
+            Servers = new ObservableCollection<Server>();
             BackgroundOperations = new BackgroundOperations();
-
-            foreach (SyncPair sync in syncPairs)
-            {
-                Syncs.Add(sync);
-            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -1,14 +1,17 @@
-﻿using FileSystemUWP.Sync.Definitions;
+﻿using FileSystemUWP.SettingsStorage;
+using FileSystemUWP.Sync.Definitions;
 using FileSystemUWP.Sync.Handling;
-using StdOttStandard;
 using StdOttStandard.Linq;
 using StdOttUwp.BackPress;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Background;
+using Windows.Foundation;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -34,11 +37,7 @@ namespace FileSystemUWP
             this.InitializeComponent();
             this.EnteredBackground += OnEnteredBackground;
 
-            viewModel = CreateViewModel();
-
-            viewModel.Api.BaseUrl = Settings.Current.BaseUrl;
-            viewModel.Api.RawCookies = Settings.Current.RawCookies;
-            viewModel.CurrentFolderPath = Settings.Current.FolderPath;
+            viewModel = new ViewModel();
         }
 
         /// <summary>
@@ -46,12 +45,13 @@ namespace FileSystemUWP
         /// werden z. B. verwendet, wenn die Anwendung gestartet wird, um eine bestimmte Datei zu öffnen.
         /// </summary>
         /// <param name="e">Details über Startanforderung und -prozess.</param>
-        protected override void OnLaunched(LaunchActivatedEventArgs e)
+        protected async override void OnLaunched(LaunchActivatedEventArgs e)
         {
             BackPressHandler.Current.Activate();
             BackgroundTaskHelper.Current.RegisterTimerBackgroundTask();
 
             Frame rootFrame = Window.Current.Content as Frame;
+            Task loadViewModelTaks = Task.CompletedTask;
 
             // App-Initialisierung nicht wiederholen, wenn das Fenster bereits Inhalte enthält.
             // Nur sicherstellen, dass das Fenster aktiv ist.
@@ -79,10 +79,13 @@ namespace FileSystemUWP
                     // und die neue Seite konfigurieren, indem die erforderlichen Informationen als Navigationsparameter
                     // übergeben werden
                     rootFrame.Navigate(typeof(MainPage), viewModel);
+                    loadViewModelTaks = LoadViewModel();
                 }
                 // Sicherstellen, dass das aktuelle Fenster aktiv ist
                 Window.Current.Activate();
             }
+
+            await loadViewModelTaks;
         }
 
         /// <summary>
@@ -95,41 +98,50 @@ namespace FileSystemUWP
             throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
         }
 
-        private ViewModel CreateViewModel()
+        private async void OnEnteredBackground(object sender, EnteredBackgroundEventArgs e)
         {
-            SyncPair[] syncs = StdUtils.XmlDeserializeFileOrDefault<SyncPair[]>(syncsFilePath) ?? new SyncPair[0];
-
-            return new ViewModel(syncs);
+            Deferral deferral = e.GetDeferral();
+            try
+            {
+                await StoreViewModel();
+            }
+            finally
+            {
+                deferral.Complete();
+            }
         }
 
-        private void OnEnteredBackground(object sender, object e)
-        {
-            SaveSettings();
-            SaveSyncs();
-        }
-
-        private void SaveSettings()
-        {
-            Settings.Current.BaseUrl = viewModel.Api.BaseUrl;
-            Settings.Current.RawCookies = viewModel.Api.RawCookies;
-            Settings.Current.FolderPath = viewModel.CurrentFolderPath;
-        }
-
-        private void SaveSyncs()
+        private async Task LoadViewModel()
         {
             try
             {
-                StdUtils.XmlSerialize(syncsFilePath, viewModel.Syncs);
+                await Store.LoadInto(syncsFilePath, viewModel);
             }
             catch (Exception e)
             {
-                Settings.Current.OnSyncException(new Exception("Save syncs error", e));
+                Settings.Current.OnSyncException(new Exception("Load viewModel error", e));
+            }
+            finally
+            {
+                viewModel.IsLoaded = true;
             }
         }
 
-        public static void SaveSyncPairs()
+        public static Task SaveViewModel()
         {
-            ((App)Current).SaveSyncs();
+            return ((App)Current).StoreViewModel();
+        }
+
+        private async Task StoreViewModel()
+        {
+            try
+            {
+                await Store.Save(syncsFilePath, viewModel);
+            }
+            catch (Exception e)
+            {
+                Settings.Current.OnSyncException(new Exception("Store viewModel error", e));
+            }
         }
 
         protected override async void OnBackgroundActivated(BackgroundActivatedEventArgs args)
@@ -139,23 +151,22 @@ namespace FileSystemUWP
 
             try
             {
-                if (!await viewModel.Api.IsAuthorized()) return;
-
-                if (args.TaskInstance.Task.Name == BackgroundTaskHelper.TimerBackgroundTaskBuilderName)
-                {
-                    Settings.Current.SyncTimerTime = DateTime.Now;
-                    await BackgroundTaskHelper.Current.Start(viewModel.Syncs, viewModel.Api);
-                }
+                //if (args.TaskInstance.Task.Name == BackgroundTaskHelper.TimerBackgroundTaskBuilderName)
+                //{
+                //    Settings.Current.SyncTimerTime = DateTime.Now;
+                //    await BackgroundTaskHelper.Current.Start(viewModel.Syncs, viewModel.Api);
+                //}
 
                 Queue<SyncPairHandler> syncs = BackgroundTaskHelper.Current.Queue;
                 while (syncs.Count > 0)
                 {
                     SyncPairHandler handler = syncs.Dequeue();
+                    if (!await handler.Api.IsAuthorized()) continue;
                     await handler.Start();
 
                     SyncPair sync;
                     if (!handler.IsTestRun && handler.State == SyncPairHandlerState.Finished &&
-                        viewModel.Syncs.TryFirst(s => s.Token == handler.Token, out sync))
+                        viewModel.Servers.SelectMany(s => s.Syncs).TryFirst(s => s.Token == handler.Token, out sync))
                     {
                         sync.Result = handler.NewResult.ToArray();
                     }
@@ -169,7 +180,7 @@ namespace FileSystemUWP
             {
                 BackgroundTaskHelper.Current.IsRunning = false;
 
-                SaveSyncs();
+                await SaveViewModel();
                 deferral.Complete();
             }
         }

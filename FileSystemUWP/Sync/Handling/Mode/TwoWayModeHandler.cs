@@ -1,4 +1,5 @@
-﻿using FileSystemUWP.Sync.Definitions;
+﻿using FileSystemUWP.API;
+using FileSystemUWP.Sync.Definitions;
 using FileSystemUWP.Sync.Handling.CompareType;
 using FileSystemUWP.Sync.Result;
 using System;

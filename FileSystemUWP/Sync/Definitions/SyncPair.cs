@@ -4,15 +4,17 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Windows.Storage;
+using Windows.Storage.AccessCache;
 
 namespace FileSystemUWP.Sync.Definitions
 {
     public class SyncPair : INotifyPropertyChanged
     {
-        private bool withSubfolders;
-        private string token, name;
+        private bool withSubfolders, isLocalFolderLoaded;
+        private string name;
         private PathPart[] serverPath;
         private StorageFolder localFolder;
         private SyncMode mode;
@@ -33,17 +35,20 @@ namespace FileSystemUWP.Sync.Definitions
             }
         }
 
-        public string Token
+        [XmlIgnore]
+        public bool IsLocalFolderLoaded
         {
-            get => token;
-            set
+            get => isLocalFolderLoaded;
+            private set
             {
-                if (value == token) return;
+                if (value == isLocalFolderLoaded) return;
 
-                token = value;
-                OnPropertyChanged(nameof(Token));
+                isLocalFolderLoaded = value;
+                OnPropertyChanged(nameof(IsLocalFolderLoaded));
             }
         }
+
+        public string Token { get; }
 
         public string Name
         {
@@ -154,10 +159,44 @@ namespace FileSystemUWP.Sync.Definitions
             }
         }
 
-        public SyncPair()
+        public SyncPair() : this(Guid.NewGuid().ToString())
         {
-            Token = Guid.NewGuid().ToString();
+        }
+
+        public SyncPair(string token)
+        {
+            Token = token;
             Result = new SyncedItem[0];
+        }
+
+        public async Task LoadLocalFolder()
+        {
+            if (StorageApplicationPermissions.FutureAccessList.ContainsItem(Token))
+            {
+                LocalFolder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(Token);
+            }
+            IsLocalFolderLoaded = true;
+        }
+
+        public void SaveLocalFolder()
+        {
+            if (LocalFolder != null)
+            {
+                StorageApplicationPermissions.FutureAccessList.AddOrReplace(Token, LocalFolder);
+                IsLocalFolderLoaded = true;
+            }
+            else if (IsLocalFolderLoaded)
+            {
+                try
+                {
+                    if (StorageApplicationPermissions.FutureAccessList.ContainsItem(Token))
+                    {
+                        StorageApplicationPermissions.FutureAccessList.Remove(Token);
+                    }
+                }
+                catch { }
+            }
+
         }
 
         public SyncPair Clone()

@@ -24,7 +24,7 @@ namespace FileSystemUWP.Sync.Definitions
     public sealed partial class SyncPairsPage : Page
     {
         private readonly IDictionary<string, SingleInputConverter> handlers;
-        private ViewModel viewModel;
+        private Server viewModel;
 
         public SyncPairsPage()
         {
@@ -33,11 +33,23 @@ namespace FileSystemUWP.Sync.Definitions
             handlers = new Dictionary<string, SingleInputConverter>();
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
-            DataContext = viewModel = (ViewModel)e.Parameter;
+            DataContext = viewModel = (Server)e.Parameter;
 
             base.OnNavigatedTo(e);
+
+            foreach (SyncPair pair in viewModel.Syncs)
+            {
+                if (!pair.IsLocalFolderLoaded)
+                {
+                    try
+                    {
+                        await pair.LoadLocalFolder();
+                    }
+                    catch { }
+                }
+            }
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -135,7 +147,7 @@ namespace FileSystemUWP.Sync.Definitions
             if (await edit.Task && viewModel.Syncs.TryIndexOf(s => s.Token == oldSync.Token, out index))
             {
                 viewModel.Syncs[index] = newSync;
-                App.SaveSyncPairs();
+                await App.SaveViewModel();
             }
         }
 
@@ -146,7 +158,7 @@ namespace FileSystemUWP.Sync.Definitions
             if (await DialogUtils.ShowTwoOptionsAsync(sync.Name ?? string.Empty, "Delete?", "Yes", "No"))
             {
                 viewModel.Syncs.Remove(sync);
-                App.SaveSyncPairs();
+                await App.SaveViewModel();
             }
         }
 
@@ -225,7 +237,7 @@ namespace FileSystemUWP.Sync.Definitions
             if (await edit.Task)
             {
                 viewModel.Syncs.Add(newSync);
-                App.SaveSyncPairs();
+                await App.SaveViewModel();
             }
         }
 

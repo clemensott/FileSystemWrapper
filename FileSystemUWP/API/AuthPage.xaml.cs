@@ -6,14 +6,15 @@ using Windows.UI.Xaml.Navigation;
 
 // Die Elementvorlage "Leere Seite" wird unter https://go.microsoft.com/fwlink/?LinkId=234238 dokumentiert.
 
-namespace FileSystemUWP
+namespace FileSystemUWP.API
 {
     /// <summary>
     /// Eine leere Seite, die eigenständig verwendet oder zu der innerhalb eines Rahmens navigiert werden kann.
     /// </summary>
     public sealed partial class AuthPage : Page
     {
-        private Api api;
+        private bool changedLoginData;
+        private ApiEdit edit;
 
         public AuthPage()
         {
@@ -24,10 +25,20 @@ namespace FileSystemUWP
         {
             base.OnNavigatedTo(e);
 
-            api = (Api)e.Parameter;
-            tbxBaseUrl.Text = api.BaseUrl ?? "https://";
+            edit = (ApiEdit)e.Parameter;
+            tbxServerName.Text = edit.Api.Name ?? string.Empty;
+            tbxBaseUrl.Text = edit.Api.BaseUrl ?? "https://";
+            tbxUsername.Text = edit.Api.Username ?? string.Empty;
+            changedLoginData = false;
 
             await UpdateBaseUrlStatus();
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            if (e.NavigationMode == NavigationMode.Back && !edit.Task.IsCompleted) edit.SetResult(false);
+
+            base.OnNavigatedFrom(e);
         }
 
         private async void TbxBaseUrl_LostFocus(object sender, RoutedEventArgs e)
@@ -37,12 +48,22 @@ namespace FileSystemUWP
 
         private async Task<bool> UpdateBaseUrlStatus()
         {
-            api.BaseUrl = tbxBaseUrl.Text;
+            edit.Api.BaseUrl = tbxBaseUrl.Text;
             sinBaseUrlStatus.Symbol = Symbol.Sync;
-            bool successful = await api.Ping();
+            bool successful = await edit.Api.Ping();
             sinBaseUrlStatus.Symbol = successful ? Symbol.Accept : Symbol.Dislike;
 
             return successful;
+        }
+
+        private void TbxUsername_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            changedLoginData = true;
+        }
+
+        private void PbxPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            changedLoginData = true;
         }
 
         private async void AbbApply_Click(object sender, RoutedEventArgs e)
@@ -60,17 +81,31 @@ namespace FileSystemUWP
                     return;
                 }
 
-                LoginBody body = new LoginBody()
+                if (changedLoginData)
                 {
-                    Username = tbxUsername.Text,
-                    Password = pbxPassword.Password,
-                    KeepLoggedIn = true,
-                };
+                    LoginBody body = new LoginBody()
+                    {
+                        Username = tbxUsername.Text,
+                        Password = pbxPassword.Password,
+                        KeepLoggedIn = true,
+                    };
 
-                if (await api.Login(body))
+                    if (await edit.Api.Login(body))
+                    {
+                        edit.Api.Name = tbxServerName.Text;
+                        edit.Api.Username = body.Username;
+
+                        GoBack(true);
+                        return;
+                    }
+                }
+                else if (await edit.Api.IsAuthorized())
                 {
-                    Frame.GoBack();
+                    edit.Api.Name = tbxServerName.Text;
+
+                    GoBack(true);
                     return;
+
                 }
 
                 tblError.Text = "Please enter a correct Username and password";
@@ -80,11 +115,16 @@ namespace FileSystemUWP
             {
                 element.IsEnabled = true;
             }
-            //Frame.GoBack();
         }
 
         private void AbbCancel_Click(object sender, RoutedEventArgs e)
         {
+            GoBack(false);
+        }
+
+        private void GoBack(bool success)
+        {
+            edit.SetResult(success);
             Frame.GoBack();
         }
     }

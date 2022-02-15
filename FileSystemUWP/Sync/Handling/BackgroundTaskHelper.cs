@@ -1,9 +1,9 @@
-﻿using FileSystemUWP.Sync.Definitions;
+﻿using FileSystemUWP.API;
+using FileSystemUWP.Sync.Definitions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
-using Windows.Foundation.Collections;
 
 namespace FileSystemUWP.Sync.Handling
 {
@@ -59,6 +59,10 @@ namespace FileSystemUWP.Sync.Handling
                 SyncPairHandler handler;
                 if (handlers.TryGetValue(pair.Token, out handler) && !handler.IsEnded) continue;
 
+                if (!pair.IsLocalFolderLoaded)
+                {
+                    await pair.LoadLocalFolder();
+                }
                 handler = SyncPairHandler.FromSyncPair(pair, api, isTestRun, mode);
 
                 Queue.Enqueue(handler);

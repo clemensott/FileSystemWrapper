@@ -1,7 +1,7 @@
-﻿using FileSystemUWP.Sync.Definitions;
+﻿using FileSystemUWP.API;
+using FileSystemUWP.Sync.Definitions;
 using FileSystemUWP.Sync.Handling.CompareType;
 using FileSystemUWP.Sync.Result;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

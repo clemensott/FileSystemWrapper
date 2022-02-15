@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
@@ -177,14 +178,18 @@ namespace FileSystemUWP.Sync.Definitions
             catch { }
         }
 
-        private void AbbApply_Click(object sender, RoutedEventArgs e)
+        private async void AbbApply_Click(object sender, RoutedEventArgs e)
         {
+            Focus(FocusState.Pointer);
+            await Task.Delay(50);
+
             edit.SetResult(true);
             Frame.GoBack();
         }
 
         private void AbbCancel_Click(object sender, RoutedEventArgs e)
         {
+            Focus(FocusState.Pointer);
             Frame.GoBack();
         }
     }

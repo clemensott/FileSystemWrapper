@@ -5,68 +5,78 @@
     xmlns:local="using:FileSystemUWP"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:ctl="using:FileSystemUWP.Controls"
-    xmlns:pick="using:FileSystemUWP.Picker"
     xmlns:con="using:StdOttUwp.Converters"
+    xmlns:ctl="using:StdOttUwp.Controls"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-    Loaded="Page_Loaded" Unloaded="Page_Unloaded">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
-        <con:TruthyConverter x:Key="truthyCon"/>
-        <con:FalsyConverter x:Key="invertCon"/>
-        <x:Boolean x:Key="false">False</x:Boolean>
+        <con:VisibleCollapsedConverter x:Key="visCon"/>
+        <con:CollapsedVisibleConverter x:Key="colCon"/>
     </Page.Resources>
 
-    <Grid>
+    <Grid Margin="5">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid DataContext="{Binding ElementName=pcView,Path=CurrentFolder}"
-              Visibility="Collapsed" DataContextChanged="GidThrough_DataContextChanged"/>
+        <TextBlock Margin="5" FontWeight="Bold" FontSize="30">Servers</TextBlock>
 
-        <ctl:BackgroundOperationsControl Margin="5,2" Operations="{Binding BackgroundOperations}"/>
+        <ListView Grid.Row="1" SelectionMode="Single" Background="Transparent"
+                  ItemsSource="{Binding Servers}"
+                  SelectedItem="{Binding CurrentServer,Mode=TwoWay}"
+                  Loaded="ListView_Loaded" Unloaded="ListView_Unloaded">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-        <pick:PickerControl Grid.Row="1" x:Name="pcView" Api="{Binding Api}"
-                            Loaded="PcView_Loaded" FileSelected="PcView_FileSelected">
-            <pick:PickerControl.FolderMenuFlyout>
-                <MenuFlyout>
-                    <MenuFlyoutItem Text="Details" Icon="List" Click="MfiDetails_Click" />
-                    <MenuFlyoutItem Text="Delete" Icon="Delete" Click="MfiDelete_Click" />
-                </MenuFlyout>
-            </pick:PickerControl.FolderMenuFlyout>
-            
-            <pick:PickerControl.FileMenuFlyout>
-                <MenuFlyout>
-                    <MenuFlyoutItem Text="Details" Icon="List" Click="MfiDetails_Click" />
-                    <MenuFlyoutItem Text="Download" Icon="Download" Click="MfiDownload_Click" />
-                    <MenuFlyoutItem Text="Delete" Icon="Delete" Click="MfiDelete_Click" />
-                </MenuFlyout>
-            </pick:PickerControl.FileMenuFlyout>
-        </pick:PickerControl>
+                        <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center">
+                            <TextBlock Margin="3" FontWeight="Bold" Text="{Binding Api.Name}" />
+                            <TextBlock Margin="3" Text="{Binding Api.BaseUrl}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="3" Orientation="Vertical">
+                            <ctl:IconButton Symbol="Edit" Margin="2" Click="IbnEditServer_Click" />
+                            <ctl:IconButton Symbol="Delete" Margin="2" Click="IbnDeleteServer_Click" />
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <Grid Grid.Row="1" Visibility="{Binding IsLoaded,Converter={StaticResource visCon}}">
+            <TextBlock Margin="5" Text="&lt;None&gt;" HorizontalAlignment="Center"
+                       Visibility="{Binding Servers.Count,Converter={StaticResource colCon}}"/>
+        </Grid>
+
+        <Grid Grid.Row="1" VerticalAlignment="Center"
+              Visibility="{Binding IsLoaded,Converter={StaticResource colCon}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <ProgressRing Width="100" Height="100" IsActive="True" />
+            <TextBlock Grid.Row="1" Margin="3" Text="Loading Servers..." HorizontalAlignment="Center"/>
+        </Grid>
     </Grid>
 
     <Page.BottomAppBar>
         <CommandBar>
             <CommandBar.PrimaryCommands>
-                <AppBarButton Icon="Up" Label="To parent" Click="AbbParent_Click"/>
-                <AppBarButton Icon="Refresh" Label="Refresh" Click="AbbRefesh_Click"
-                              IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
-                <AppBarButton x:Name="abbDetails" Icon="List" Label="Details"
-                              Loaded="AbbDetails_Loaded" Click="AbbDetails_Click" />
+                <AppBarButton Icon="Add" Label="Add server" Click="AbbAddServer_Click"/>
             </CommandBar.PrimaryCommands>
             <CommandBar.SecondaryCommands>
-                <AppBarButton Icon="Delete" Label="Delete" Click="AbbDeleteFolder_Click"
-                                  IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
-                <AppBarButton Icon="NewFolder" Label="New folder" Click="AbbNewFolder_Click"
-                                  IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
-                <AppBarButton Icon="Upload" Label="Upload file" Click="AbbUploadFile_Click"
-                                  IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
-                <AppBarSeparator />
-                <AppBarButton Icon="Sync" Label="Open syncs" Click="AbbOpenSyncs_Click"/>
-                <AppBarButton Icon="Setting" Label="Settings" Click="AbbSettings_Click"/>
                 <AppBarButton Icon="Read" Label="Unhandled exception" Click="AbbTest_Click"/>
             </CommandBar.SecondaryCommands>
         </CommandBar>

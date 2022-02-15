@@ -2,6 +2,7 @@
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
+using FileSystemUWP.API;
 using FileSystemUWP.Sync.Definitions;
 using FileSystemUWP.Sync.Handling.CompareType;
 using FileSystemUWP.Sync.Handling.Mode;
@@ -19,7 +20,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Storage;
-using Windows.Storage.Streams;
 
 namespace FileSystemUWP.Sync.Handling
 {

@@ -1,106 +1,52 @@
-﻿using System;
+﻿using StdOttStandard.Linq;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Threading.Tasks;
-using Windows.Storage;
 using Windows.Storage.AccessCache;
 
 namespace FileSystemUWP.Sync.Definitions
 {
     public class SyncPairs : ObservableCollection<SyncPair>
     {
-        public SyncPairs() : base() { }
+        private string[] loadedTokens;
 
-        protected override void ClearItems()
+        public SyncPairs()
         {
-            foreach (SyncPair sync in this)
+        }
+
+        public SyncPairs(IEnumerable<SyncPair> pairs) : base(pairs)
+        {
+            SaveLocalFolders();
+        }
+
+        public void SaveLocalFolders()
+        {
+            foreach (SyncPair pair in this)
             {
-                OnRemove(sync);
+                pair.SaveLocalFolder();
             }
 
-            base.ClearItems();
-        }
-
-        protected override async void InsertItem(int index, SyncPair item)
-        {
-            base.InsertItem(index, item);
-
-            await OnAdd(item);
-        }
-
-        protected override void RemoveItem(int index)
-        {
-            OnRemove(this[index]);
-
-            base.RemoveItem(index);
-        }
-
-        protected override async void SetItem(int index, SyncPair item)
-        {
-            OnRemove(this[index]);
-
-            base.SetItem(index, item);
-
-            await OnAdd(item);
-        }
-
-        private static async Task OnAdd(SyncPair sync)
-        {
-            if (sync == null) return;
-
-            sync.PropertyChanged += Item_PropertyChanged;
-
-            if (sync.LocalFolder != null)
+            foreach (string loadedToken in loadedTokens.ToNotNull())
             {
-                StorageApplicationPermissions.FutureAccessList.AddOrReplace(sync.Token, sync.LocalFolder);
+                if (this.All(p => p.Token != loadedToken))
+                {
+                    RemoveFromFutureAccessList(loadedToken);
+                }
             }
-            else
-            {
-                sync.LocalFolder = await TryGetFolderFromFutureAccessList(sync);
-            }
+
+            loadedTokens = this.Select(p => p.Token).ToArray();
         }
 
-        private static void OnRemove(SyncPair sync)
-        {
-            if (sync == null) return;
-
-            sync.PropertyChanged -= Item_PropertyChanged;
-
-            RemoveFromFutureAccessList(sync);
-        }
-
-        private static void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(SyncPair.LocalFolder))
-            {
-                SyncPair sync = (SyncPair)sender;
-                StorageApplicationPermissions.FutureAccessList.AddOrReplace(sync.Token, sync.LocalFolder);
-            }
-        }
-
-        private static void RemoveFromFutureAccessList(SyncPair sync)
+        private static void RemoveFromFutureAccessList(string token)
         {
             try
             {
-                if (StorageApplicationPermissions.FutureAccessList.Entries.Any(e => e.Token == sync.Token))
+                if (StorageApplicationPermissions.FutureAccessList.ContainsItem(token))
                 {
-                    StorageApplicationPermissions.FutureAccessList.Remove(sync.Token);
+                    StorageApplicationPermissions.FutureAccessList.Remove(token);
                 }
             }
             catch { }
-        }
-
-        private static async Task<StorageFolder> TryGetFolderFromFutureAccessList(SyncPair sync)
-        {
-            try
-            {
-                return await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(sync.Token);
-            }
-            catch
-            {
-                return null;
-            }
         }
     }
 }

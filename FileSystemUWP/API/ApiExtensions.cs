@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace FileSystemUWP
+namespace FileSystemUWP.API
 {
     static class ApiExtensions
     {
