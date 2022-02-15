@@ -204,7 +204,16 @@ namespace FileSystemUWP
 
         private async void AbbRefesh_Click(object sender, RoutedEventArgs e)
         {
-            await pcView.UpdateCurrentFolderItems();
+            Control control = (Control)sender;
+            try
+            {
+                control.IsEnabled = false;
+                await pcView.UpdateCurrentFolderItems();
+            }
+            finally
+            {
+                control.IsEnabled = true;
+            }
         }
 
         private void PcView_FileSelected(object sender, FileSystemItem e)
