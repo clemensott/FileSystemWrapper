@@ -98,7 +98,7 @@ namespace FileSystemUWP
         private async void CallApiSettingsPage()
         {
             Api newApi = viewModel.Api.Clone();
-            ApiEdit edit = new ApiEdit(newApi);
+            ApiEdit edit = new ApiEdit(newApi, false);
             Frame.Navigate(typeof(AuthPage), edit);
 
             if (await edit.Task)

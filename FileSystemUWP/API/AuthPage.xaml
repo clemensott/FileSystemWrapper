@@ -24,7 +24,10 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.ColumnSpan="3" Text="Server" FontSize="25" FontWeight="SemiBold" Margin="10"/>
+        <StackPanel Grid.ColumnSpan="3" Margin="5" Orientation="Horizontal">
+            <TextBlock Name="tblTitlePrefix" Text="Add" FontWeight="Bold" FontSize="30" />
+            <TextBlock Text=" Server" FontWeight="Bold" FontSize="30" />
+        </StackPanel>
 
         <TextBlock Grid.Row="1" Text="Name:" VerticalAlignment="Center" Margin="5" FontWeight="SemiBold"/>
         <TextBox Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1" Name="tbxServerName"

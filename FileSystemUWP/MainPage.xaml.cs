@@ -57,7 +57,7 @@ namespace FileSystemUWP
         {
             Server server = UwpUtils.GetDataContext<Server>(sender);
             Api newApi = server.Api.Clone();
-            ApiEdit edit = new ApiEdit(newApi);
+            ApiEdit edit = new ApiEdit(newApi, false);
 
             Frame.Navigate(typeof(AuthPage), edit);
 
@@ -82,7 +82,7 @@ namespace FileSystemUWP
         private async void AbbAddServer_Click(object sender, RoutedEventArgs e)
         {
             Api newApi = new Api();
-            ApiEdit edit = new ApiEdit(newApi);
+            ApiEdit edit = new ApiEdit(newApi, true);
 
             Frame.Navigate(typeof(AuthPage), edit);
 

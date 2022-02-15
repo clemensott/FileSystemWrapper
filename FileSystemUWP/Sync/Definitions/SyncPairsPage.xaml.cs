@@ -139,7 +139,7 @@ namespace FileSystemUWP.Sync.Definitions
         {
             SyncPair oldSync = (SyncPair)((FrameworkElement)sender).DataContext;
             SyncPair newSync = oldSync.Clone();
-            SyncPairEdit edit = new SyncPairEdit(newSync, viewModel.Api);
+            SyncPairEdit edit = new SyncPairEdit(newSync, viewModel.Api, false);
 
             Frame.Navigate(typeof(SyncEditPage), edit);
 
@@ -230,7 +230,7 @@ namespace FileSystemUWP.Sync.Definitions
         private async void AbbAddSyncPair_Click(object sender, RoutedEventArgs e)
         {
             SyncPair newSync = new SyncPair();
-            SyncPairEdit edit = new SyncPairEdit(newSync, viewModel.Api);
+            SyncPairEdit edit = new SyncPairEdit(newSync, viewModel.Api, true);
 
             Frame.Navigate(typeof(SyncEditPage), edit);
 

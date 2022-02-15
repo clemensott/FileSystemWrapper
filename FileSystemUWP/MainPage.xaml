@@ -15,51 +15,55 @@
         <con:CollapsedVisibleConverter x:Key="colCon"/>
     </Page.Resources>
 
-    <Grid Margin="5">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <Grid>
+        <Grid Visibility="{Binding IsLoaded,Converter={StaticResource visCon}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <TextBlock Margin="5" FontWeight="Bold" FontSize="30">Servers</TextBlock>
+            <TextBlock Margin="7" FontWeight="Bold" FontSize="30">Servers</TextBlock>
 
-        <ListView Grid.Row="1" SelectionMode="Single" Background="Transparent"
-                  ItemsSource="{Binding Servers}"
-                  SelectedItem="{Binding CurrentServer,Mode=TwoWay}"
-                  Loaded="ListView_Loaded" Unloaded="ListView_Unloaded">
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                </Style>
-            </ListView.ItemContainerStyle>
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+            <ListView Grid.Row="1" SelectionMode="Single" Background="Transparent"
+                      ItemsSource="{Binding Servers}"
+                      SelectedItem="{Binding CurrentServer,Mode=TwoWay}"
+                      Loaded="ListView_Loaded" Unloaded="ListView_Unloaded">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,3" Padding="5,3" BorderThickness="2"
+                              BorderBrush="{ThemeResource AccentButtonBackground}"
+                              Background="{ThemeResource AppBarBackground}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center">
-                            <TextBlock Margin="3" FontWeight="Bold" Text="{Binding Api.Name}" />
-                            <TextBlock Margin="3" Text="{Binding Api.BaseUrl}" />
-                        </StackPanel>
+                            <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center">
+                                <TextBlock Margin="3" FontWeight="Bold" Text="{Binding Api.Name}" />
+                                <TextBlock Margin="3" Text="{Binding Api.BaseUrl}" />
+                            </StackPanel>
 
-                        <StackPanel Grid.Column="1" Margin="3" Orientation="Vertical">
-                            <ctl:IconButton Symbol="Edit" Margin="2" Click="IbnEditServer_Click" />
-                            <ctl:IconButton Symbol="Delete" Margin="2" Click="IbnDeleteServer_Click" />
-                        </StackPanel>
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+                            <StackPanel Grid.Column="1" Margin="3" Orientation="Vertical">
+                                <ctl:IconButton Symbol="Edit" Margin="2" Click="IbnEditServer_Click" />
+                                <ctl:IconButton Symbol="Delete" Margin="2" Click="IbnDeleteServer_Click" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-        <Grid Grid.Row="1" Visibility="{Binding IsLoaded,Converter={StaticResource visCon}}">
-            <TextBlock Margin="5" Text="&lt;None&gt;" HorizontalAlignment="Center"
-                       Visibility="{Binding Servers.Count,Converter={StaticResource colCon}}"/>
+            <Grid Grid.Row="1" Visibility="{Binding IsLoaded,Converter={StaticResource visCon}}">
+                <TextBlock Margin="5" Text="&lt;None&gt;" HorizontalAlignment="Center"
+                           Visibility="{Binding Servers.Count,Converter={StaticResource colCon}}"/>
+            </Grid>
         </Grid>
 
-        <Grid Grid.Row="1" VerticalAlignment="Center"
+        <Grid Grid.RowSpan="2" VerticalAlignment="Center"
               Visibility="{Binding IsLoaded,Converter={StaticResource colCon}}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -67,12 +71,13 @@
             </Grid.RowDefinitions>
 
             <ProgressRing Width="100" Height="100" IsActive="True" />
-            <TextBlock Grid.Row="1" Margin="3" Text="Loading Servers..." HorizontalAlignment="Center"/>
+            <TextBlock Grid.Row="1" Margin="5" HorizontalAlignment="Center"
+                       FontWeight="SemiBold" Text="Loading Servers..." />
         </Grid>
     </Grid>
 
     <Page.BottomAppBar>
-        <CommandBar>
+        <CommandBar Visibility="{Binding IsLoaded,Converter={StaticResource visCon}}">
             <CommandBar.PrimaryCommands>
                 <AppBarButton Icon="Add" Label="Add server" Click="AbbAddServer_Click"/>
             </CommandBar.PrimaryCommands>

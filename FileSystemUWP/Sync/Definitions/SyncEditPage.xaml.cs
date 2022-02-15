@@ -72,6 +72,7 @@ namespace FileSystemUWP.Sync.Definitions
                 }
             }
 
+            tblTitlePrefix.Text = edit.IsAdd ? "Add" : "Edit";
             DataContext = edit.Sync;
             asbServerPath.Text = edit.Sync.ServerPath.GetNamePath();
 

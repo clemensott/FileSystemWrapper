@@ -26,6 +26,7 @@ namespace FileSystemUWP.API
             base.OnNavigatedTo(e);
 
             edit = (ApiEdit)e.Parameter;
+            tblTitlePrefix.Text = edit.IsAdd ? "Add" : "Edit";
             tbxServerName.Text = edit.Api.Name ?? string.Empty;
             tbxBaseUrl.Text = edit.Api.BaseUrl ?? "https://";
             tbxUsername.Text = edit.Api.Username ?? string.Empty;
