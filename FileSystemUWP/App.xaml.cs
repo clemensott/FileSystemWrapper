@@ -103,7 +103,9 @@ namespace FileSystemUWP
             Deferral deferral = e.GetDeferral();
             try
             {
-                await StoreViewModel();
+                await Task.Delay(100); // Wait a moment to give others the chance to save some stuff in the ViewModel
+
+                if (viewModel.IsLoaded) await StoreViewModel();
             }
             finally
             {

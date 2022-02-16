@@ -40,21 +40,27 @@ namespace FileSystemUWP
 
             if (await CheckServerConnection() && !isAway)
             {
+                Application.Current.EnteredBackground += Application_EnteredBackground;
                 Application.Current.LeavingBackground += Application_LeavingBackground;
             }
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            if (e.NavigationMode == NavigationMode.Back)
-            {
-                viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
-            }
+            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
+            viewModel.RestoreFileSystemItem = pcView.GetCenteredFileSystemItemName();
 
+            Application.Current.EnteredBackground -= Application_EnteredBackground;
             Application.Current.LeavingBackground -= Application_LeavingBackground;
             isAway = true;
 
             base.OnNavigatedFrom(e);
+        }
+
+        private void Application_EnteredBackground(object sender, EnteredBackgroundEventArgs e)
+        {
+            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
+            viewModel.RestoreFileSystemItem = pcView.GetCenteredFileSystemItemName();
         }
 
         private async void Application_LeavingBackground(object sender, LeavingBackgroundEventArgs e)
@@ -122,6 +128,10 @@ namespace FileSystemUWP
             pcView.Type = FileSystemItemViewType.Files | FileSystemItemViewType.Folders;
 
             await pcView.SetCurrentFolder(viewModel.CurrentFolderPath);
+            if (viewModel.RestoreFileSystemItem.HasValue)
+            {
+                pcView.ScrollToFileItemName(viewModel.RestoreFileSystemItem.Value);
+            }
         }
 
         private void MfiDetails_Click(object sender, RoutedEventArgs e)
@@ -201,7 +211,14 @@ namespace FileSystemUWP
         {
             try
             {
+                FileSystemItemName? lastFolder = null;
+                if (pcView.CurrentFolder.HasValue) lastFolder = new FileSystemItemName(false, pcView.CurrentFolder.Value.Name);
+
                 await pcView.SetParent();
+                if (lastFolder.HasValue)
+                {
+                    pcView.ScrollToFileItemName(lastFolder.Value);
+                }
             }
             catch { }
         }
@@ -226,8 +243,6 @@ namespace FileSystemUWP
 
         private void PcView_FileSelected(object sender, FileSystemItem e)
         {
-            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
-
             FilesViewing viewing = new FilesViewing(e, pcView.GetCurrentItems().Where(i => i.IsFile), viewModel.Api);
             Frame.Navigate(typeof(FilesPage), viewing);
         }

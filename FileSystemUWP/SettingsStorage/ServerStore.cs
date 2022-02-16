@@ -1,4 +1,6 @@
-﻿namespace FileSystemUWP.SettingsStorage
+﻿using FileSystemUWP.Picker;
+
+namespace FileSystemUWP.SettingsStorage
 {
     public class ServerStore
     {
@@ -11,6 +13,8 @@
         public string Name { get; set; }
 
         public string CurrentFolderPath { get; set; }
+
+        public FileSystemItemNameStore? RestoreFileSystemItem { get; set; }
 
         public SyncPairStore[] SyncPairs { get; set; }
     }

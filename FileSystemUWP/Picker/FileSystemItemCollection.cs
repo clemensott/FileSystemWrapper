@@ -1,4 +1,5 @@
-﻿using StdOttStandard.Linq;
+﻿using StdOttStandard;
+using StdOttStandard.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -71,6 +72,31 @@ namespace FileSystemUWP.Picker
                 a.Name == b.Name &&
                 a.PathParts.BothNullOrSequenceEqual(b.PathParts) &&
                 Equals(a.Permission, b.Permission);
+        }
+
+        public FileSystemItem? GetNearestItem(FileSystemItemName item)
+        {
+            if (Count == 0) return null;
+
+            int begin, end;
+            if (item.IsFile)
+            {
+                begin = filesBeginIndex;
+                end = Count;
+            }
+            else
+            {
+                begin = 0;
+                end = filesBeginIndex;
+            }
+
+            int index;
+            if (Search.BinarySearch(this, begin, end, f => f.Name.CompareTo(item.Name), out index) && index < Count)
+            {
+                return this[index];
+            }
+
+            return this.LastOrDefault();
         }
 
         protected override void ClearItems()

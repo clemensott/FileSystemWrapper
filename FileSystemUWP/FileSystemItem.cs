@@ -2,7 +2,6 @@
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
-using StdOttStandard.Linq;
 using System.Linq;
 
 namespace FileSystemUWP

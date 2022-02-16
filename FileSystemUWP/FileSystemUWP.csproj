@@ -157,6 +157,7 @@
     </Compile>
     <Compile Include="Picker\ConflictType.cs" />
     <Compile Include="Picker\FileSystemItemCollection.cs" />
+    <Compile Include="Picker\FileSystemItemName.cs" />
     <Compile Include="Picker\FileSystemItemViewType.cs" />
     <Compile Include="Picker\FileSystemPickType.cs" />
     <Compile Include="Picker\FolderPicker.cs" />
@@ -177,6 +178,7 @@
     </Compile>
     <Compile Include="API\Server.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="SettingsStorage\FileSystemItemNameStore.cs" />
     <Compile Include="SettingsStorage\ServerStore.cs" />
     <Compile Include="SettingsStorage\Store.cs" />
     <Compile Include="SettingsStorage\SyncPairStore.cs" />

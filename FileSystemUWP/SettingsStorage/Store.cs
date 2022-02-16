@@ -1,8 +1,10 @@
 ﻿using FileSystemUWP.API;
 using FileSystemUWP.Controls;
+using FileSystemUWP.Picker;
 using FileSystemUWP.Sync.Definitions;
 using StdOttStandard;
 using StdOttStandard.Linq;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -43,6 +45,7 @@ namespace FileSystemUWP.SettingsStorage
                     RawCookies = server.RawCookies,
                 },
                 CurrentFolderPath = server.CurrentFolderPath,
+                RestoreFileSystemItem = CreateFileSystemItemName(server.RestoreFileSystemItem),
             };
         }
 
@@ -60,6 +63,15 @@ namespace FileSystemUWP.SettingsStorage
                 Blacklist = sync.Blacklist != null ? new ObservableCollection<string>(sync.Blacklist) : null,
                 Result = sync.Result,
             };
+        }
+
+        private static FileSystemItemName? CreateFileSystemItemName(FileSystemItemNameStore? item)
+        {
+            if (item.HasValue)
+            {
+                return new FileSystemItemName(item.Value.IsFile, item.Value.Name);
+            }
+            return null;
         }
 
         internal static async Task Save(string path, ViewModel viewModel)
@@ -94,6 +106,7 @@ namespace FileSystemUWP.SettingsStorage
                 Username = viewModel.Api.Username,
                 RawCookies = viewModel.Api.RawCookies,
                 CurrentFolderPath = viewModel.CurrentFolderPath,
+                RestoreFileSystemItem = CreateFileSystemItemNameStore(viewModel.RestoreFileSystemItem),
                 SyncPairs = viewModel.Syncs.Select(CreateSyncPairStore).ToArray(),
             };
         }
@@ -113,6 +126,19 @@ namespace FileSystemUWP.SettingsStorage
                 Blacklist = pair.Blacklist?.ToArray(),
                 Result = pair.Result?.ToArray(),
             };
+        }
+
+        private static FileSystemItemNameStore? CreateFileSystemItemNameStore(FileSystemItemName? item)
+        {
+            if (item.HasValue)
+            {
+                return new FileSystemItemNameStore()
+                {
+                    IsFile = item.Value.IsFile,
+                    Name = item.Value.Name,
+                };
+            }
+            return null;
         }
     }
 }

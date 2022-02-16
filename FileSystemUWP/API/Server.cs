@@ -1,5 +1,6 @@
 ﻿using FileSystemUWP.API;
 using FileSystemUWP.Controls;
+using FileSystemUWP.Picker;
 using FileSystemUWP.Sync.Definitions;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,8 +9,9 @@ namespace FileSystemUWP
 {
     class Server : INotifyPropertyChanged
     {
-        private bool isLoading;
+        private bool isLoading, isRestoreItemFile;
         private string currentFolderPath;
+        private FileSystemItemName? restoreFileSystemItem;
         private Api api;
 
         public bool IsLoading
@@ -24,6 +26,18 @@ namespace FileSystemUWP
             }
         }
 
+        public bool IsRestoreItemFile
+        {
+            get => isRestoreItemFile;
+            set
+            {
+                if (value == isRestoreItemFile) return;
+
+                isRestoreItemFile = value;
+                OnPropertyChanged(nameof(IsRestoreItemFile));
+            }
+        }
+
         public string CurrentFolderPath
         {
             get => currentFolderPath;
@@ -33,6 +47,18 @@ namespace FileSystemUWP
 
                 currentFolderPath = value;
                 OnPropertyChanged(nameof(CurrentFolderPath));
+            }
+        }
+
+        public FileSystemItemName? RestoreFileSystemItem
+        {
+            get => restoreFileSystemItem;
+            set
+            {
+                if (Equals(value, restoreFileSystemItem)) return;
+
+                restoreFileSystemItem = value;
+                OnPropertyChanged(nameof(RestoreFileSystemItem));
             }
         }
 

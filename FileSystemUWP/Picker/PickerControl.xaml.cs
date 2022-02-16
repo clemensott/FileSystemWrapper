@@ -167,6 +167,25 @@ namespace FileSystemUWP.Picker
             return null;
         }
 
+        internal FileSystemItemName? GetCenteredFileSystemItemName()
+        {
+            double scrolledFactor = svrItems.VerticalOffset / svrItems.ExtentHeight;
+            int index = (int)Math.Floor(scrolledFactor * currentItems.Count);
+
+            FileSystemItem item;
+            if( currentItems.TryElementAt(index, out item))
+            {
+                return new FileSystemItemName(item.IsFile, item.Name);
+            }
+            return null;
+        }
+
+        internal void ScrollToFileItemName(FileSystemItemName itemName)
+        {
+            FileSystemItem? item = currentItems.GetNearestItem(itemName);
+            if (item.HasValue) lvwItems.ScrollIntoView(item, ScrollIntoViewAlignment.Leading);
+        }
+
         public Task SetParent()
         {
             PathPart[] currentPath = CurrentFolder?.PathParts;
