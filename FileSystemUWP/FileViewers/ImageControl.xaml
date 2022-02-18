@@ -19,9 +19,11 @@
                        VerticalAlignment="Center" Margin="5"/>
         </StackPanel>
         
-        <ScrollViewer ZoomMode="Enabled" MaxZoomFactor="10" MinZoomFactor="0.5"
+        <ScrollViewer Name="sv" ZoomMode="Enabled" MaxZoomFactor="10" MinZoomFactor="0.1" 
+                      HorizontalScrollMode="Enabled" VerticalScrollMode="Enabled"
+                      HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                       DoubleTapped="ScrollViewer_DoubleTapped">
-            <Image Name="img"/>
+            <Image Name="img" SizeChanged="Img_SizeChanged"/>
         </ScrollViewer>
     </Grid>
 </UserControl>
