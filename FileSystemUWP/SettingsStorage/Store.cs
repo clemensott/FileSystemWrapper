@@ -20,7 +20,7 @@ namespace FileSystemUWP.SettingsStorage
 
         internal static async Task LoadInto(string path, ViewModel viewModel)
         {
-            Store store = await Task.Run(() => StdUtils.XmlDeserializeFileOrDefault<Store>(path) ?? new Store());
+            Store store = await Task.Run(() => StdUtils.XmlDeserializeFile<Store>(path));
             LoadStoreIntoViewModel(store, viewModel);
         }
 

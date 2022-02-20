@@ -24,8 +24,7 @@ namespace FileSystemUWP
     /// </summary>
     sealed partial class App : Application
     {
-        private static readonly string syncsFilePath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "syncs.xml");
-
+        private static readonly Random rnd = new Random();
         private readonly ViewModel viewModel;
 
         /// <summary>
@@ -117,11 +116,20 @@ namespace FileSystemUWP
         {
             try
             {
-                await Store.LoadInto(syncsFilePath, viewModel);
-            }
-            catch (Exception e)
-            {
-                Settings.Current.OnSyncException(new Exception("Load viewModel error", e));
+                for (int i = 0; i < 3; i++)
+                {
+                    try
+                    {
+                        string fileName = Settings.Current.SaveFileName;
+                        if (string.IsNullOrWhiteSpace(fileName)) fileName = "syncs.xml";
+                        await Store.LoadInto(GetSaveFilePath(fileName), viewModel);
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        Settings.Current.OnSyncException(new Exception("Load viewModel error", e));
+                    }
+                }
             }
             finally
             {
@@ -136,14 +144,35 @@ namespace FileSystemUWP
 
         private async Task StoreViewModel()
         {
-            try
+            for (int i = 0; i < 3; i++)
             {
-                await Store.Save(syncsFilePath, viewModel);
+                try
+                {
+                    string fileName = GetNextSaveFileName();
+                    await Store.Save(GetSaveFilePath(fileName), viewModel);
+                    Settings.Current.SaveFileName = fileName;
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Settings.Current.OnSyncException(new Exception("Store viewModel error", e));
+                }
             }
-            catch (Exception e)
+        }
+
+        private static string GetNextSaveFileName()
+        {
+            string fileName;
+            do
             {
-                Settings.Current.OnSyncException(new Exception("Store viewModel error", e));
-            }
+                fileName = $"data_{rnd.Next(1, 5)}.xml";
+            } while (fileName == Settings.Current.SaveFileName);
+            return fileName;
+        }
+
+        private static string GetSaveFilePath(string fileName)
+        {
+            return Path.Combine(ApplicationData.Current.LocalFolder.Path, fileName);
         }
 
         protected override async void OnBackgroundActivated(BackgroundActivatedEventArgs args)

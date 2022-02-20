@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using StdOttUwp.ApplicationDataObjects;
+﻿using StdOttUwp.ApplicationDataObjects;
 using System;
 using Windows.Storage;
 
@@ -19,22 +18,10 @@ namespace FileSystemUWP
             }
         }
 
-        public string BaseUrl
+        public string SaveFileName
         {
-            get => GetValue<string>(nameof(BaseUrl));
-            set => SetValue(nameof(BaseUrl), value);
-        }
-
-        public string[] RawCookies
-        {
-            get => TryGetValue(nameof(RawCookies), out string json) ? JsonConvert.DeserializeObject<string[]>(json) : new string[0];
-            set => SetValue(nameof(RawCookies), JsonConvert.SerializeObject(value ?? new string[0]));
-        }
-
-        public string FolderPath
-        {
-            get => GetValue<string>(nameof(FolderPath));
-            set => SetValue(nameof(FolderPath), value);
+            get => GetValue<string>(nameof(SaveFileName));
+            set => SetValue(nameof(SaveFileName), value);
         }
 
         public Guid TimerBackgroundTaskRegistrationId
