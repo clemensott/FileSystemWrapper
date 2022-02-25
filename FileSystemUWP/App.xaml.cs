@@ -35,8 +35,14 @@ namespace FileSystemUWP
         {
             this.InitializeComponent();
             this.EnteredBackground += OnEnteredBackground;
+            this.UnhandledException += OnUnhandledException;
 
             viewModel = new ViewModel();
+        }
+
+        private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Settings.Current.OnUnhandledException(e.Exception);
         }
 
         /// <summary>
@@ -104,7 +110,7 @@ namespace FileSystemUWP
             {
                 await Task.Delay(100); // Wait a moment to give others the chance to save some stuff in the ViewModel
 
-                if (viewModel.IsLoaded) await StoreViewModel();
+                if (viewModel.IsLoaded) await StoreViewModel("enter background");
             }
             finally
             {
@@ -127,7 +133,7 @@ namespace FileSystemUWP
                     }
                     catch (Exception e)
                     {
-                        Settings.Current.OnSyncException(new Exception("Load viewModel error", e));
+                        Settings.Current.OnStorageException(new Exception("Load viewModel error", e));
                     }
                 }
             }
@@ -137,17 +143,27 @@ namespace FileSystemUWP
             }
         }
 
-        public static Task SaveViewModel()
+        public static Task SaveViewModel(string debug)
         {
-            return ((App)Current).StoreViewModel();
+            return ((App)Current).StoreViewModel(debug);
         }
 
-        private async Task StoreViewModel()
+        private async Task StoreViewModel(string debug)
         {
             for (int i = 0; i < 3; i++)
             {
                 try
                 {
+                    if (!viewModel.IsLoaded)
+                    {
+                        Settings.Current.OnStorageException(new Exception($"ViewModel not loaded from {debug}. {viewModel.Servers.Count} servers"));
+                        return;
+                    }
+                    if (viewModel.Servers.Count == 0 || true)
+                    {
+                        Settings.Current.OnStorageException(new Exception($"No Servers stored from: {debug}"));
+                    }
+
                     string fileName = GetNextSaveFileName();
                     await Store.Save(GetSaveFilePath(fileName), viewModel);
                     Settings.Current.SaveFileName = fileName;
@@ -155,7 +171,7 @@ namespace FileSystemUWP
                 }
                 catch (Exception e)
                 {
-                    Settings.Current.OnSyncException(new Exception("Store viewModel error", e));
+                    Settings.Current.OnStorageException(new Exception("Store viewModel error", e));
                 }
             }
         }
@@ -211,7 +227,7 @@ namespace FileSystemUWP
             {
                 BackgroundTaskHelper.Current.IsRunning = false;
 
-                await SaveViewModel();
+                await SaveViewModel("sync finished");
                 deferral.Complete();
             }
         }

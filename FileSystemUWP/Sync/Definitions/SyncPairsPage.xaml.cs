@@ -147,7 +147,7 @@ namespace FileSystemUWP.Sync.Definitions
             if (await edit.Task && viewModel.Syncs.TryIndexOf(s => s.Token == oldSync.Token, out index))
             {
                 viewModel.Syncs[index] = newSync;
-                await App.SaveViewModel();
+                await App.SaveViewModel("edited sync pair");
             }
         }
 
@@ -158,7 +158,7 @@ namespace FileSystemUWP.Sync.Definitions
             if (await DialogUtils.ShowTwoOptionsAsync(sync.Name ?? string.Empty, "Delete?", "Yes", "No"))
             {
                 viewModel.Syncs.Remove(sync);
-                await App.SaveViewModel();
+                await App.SaveViewModel("removed sync pair");
             }
         }
 
@@ -237,7 +237,7 @@ namespace FileSystemUWP.Sync.Definitions
             if (await edit.Task)
             {
                 viewModel.Syncs.Add(newSync);
-                await App.SaveViewModel();
+                await App.SaveViewModel("added sync pair");
             }
         }
 

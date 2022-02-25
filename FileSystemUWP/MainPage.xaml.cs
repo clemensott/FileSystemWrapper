@@ -1,6 +1,8 @@
 ﻿using FileSystemUWP.API;
 using StdOttUwp;
+using StdOttUwp.ApplicationDataObjects;
 using System;
+using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -64,7 +66,7 @@ namespace FileSystemUWP
             if (await edit.Task)
             {
                 server.Api = newApi;
-                await App.SaveViewModel();
+                await App.SaveViewModel("edited server");
             }
         }
 
@@ -75,7 +77,7 @@ namespace FileSystemUWP
             if (delete)
             {
                 viewModel.Servers.Remove(server);
-                await App.SaveViewModel();
+                await App.SaveViewModel("deleted server");
             }
         }
 
@@ -93,21 +95,30 @@ namespace FileSystemUWP
                     Api = newApi,
                 };
                 viewModel.Servers.Add(server);
-                await App.SaveViewModel();
+                await App.SaveViewModel("added server");
             }
         }
 
         private async void AbbTest_Click(object sender, RoutedEventArgs e)
         {
-            string exceptionText = Settings.Current.SyncExceptionText;
-            string formatedExceptionTime = Settings.Current.SyncExceptionTime.ToString();
+            if (await ShowExceptionDialog(Settings.Current.StorageException, "Storage Exception") && 
+                await ShowExceptionDialog(Settings.Current.UnhandledException, "Unhandled Exception") && 
+                await ShowExceptionDialog(Settings.Current.SyncException, "Sync Exception"))
+            {
+                string formatedTimerSyncTime = Settings.Current.SyncTimerTime.ToString();
+                await DialogUtils.ShowSafeAsync(formatedTimerSyncTime, "Timer synced");
+            }
+        }
 
-            if (string.IsNullOrWhiteSpace(exceptionText)) exceptionText = "<None>";
+        private Task<bool> ShowExceptionDialog(AppDataExceptionObject exception, string title)
+        {
+            string message = "<None>";
+            if (exception != null)
+            {
+                message = $"{exception.Timestamp}\n{exception.Error}";
+            }
 
-            await DialogUtils.ShowSafeAsync(exceptionText, formatedExceptionTime);
-
-            string formatedTimerSyncTime = Settings.Current.SyncTimerTime.ToString();
-            await DialogUtils.ShowSafeAsync(formatedTimerSyncTime, "Timer synced");
+            return DialogUtils.ShowTwoOptionsAsync(message, title, "Next", "Close");
         }
     }
 }

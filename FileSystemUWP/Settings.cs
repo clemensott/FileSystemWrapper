@@ -52,14 +52,19 @@ namespace FileSystemUWP
             set => SetValue(nameof(ApplicationBackgroundTaskRegistrationId), value.ToString());
         }
 
-        public string SyncExceptionText
+        public AppDataExceptionObject StorageException
         {
-            get => GetValue<string>(nameof(SyncExceptionText));
+            get => DeserialzeObject<AppDataExceptionObject>(nameof(StorageException));
         }
 
-        public DateTime SyncExceptionTime
+        public AppDataExceptionObject UnhandledException
         {
-            get => new DateTime(GetValue<long>(nameof(SyncExceptionTime)));
+            get => DeserialzeObject<AppDataExceptionObject>(nameof(UnhandledException));
+        }
+
+        public AppDataExceptionObject SyncException
+        {
+            get => DeserialzeObject<AppDataExceptionObject>(nameof(SyncException));
         }
 
         public DateTime SyncTimerTime
@@ -72,12 +77,19 @@ namespace FileSystemUWP
         {
         }
 
+        public void OnStorageException(Exception e)
+        {
+            SerialzeObject(nameof(StorageException), (AppDataExceptionObject)e);
+        }
+
+        public void OnUnhandledException(Exception e)
+        {
+            SerialzeObject(nameof(UnhandledException), (AppDataExceptionObject)e);
+        }
+
         public void OnSyncException(Exception e)
         {
-            if (SetValue(nameof(SyncExceptionText), e.ToString()))
-            {
-                SetValue(nameof(SyncExceptionTime), DateTime.Now.Ticks);
-            }
+            SerialzeObject(nameof(SyncException), (AppDataExceptionObject)e);
         }
     }
 }
