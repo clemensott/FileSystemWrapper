@@ -61,7 +61,7 @@ namespace FileSystemUWP.FileViewers
 
         private async void FvwFiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!isFirstOpening) MediaPlayback.Current.Stop();
+            if (!isFirstOpening || !viewing.ResumePlayback) MediaPlayback.Current.Stop();
             await SetCurrentContent();
         }
 
