@@ -18,7 +18,7 @@
         <x:Boolean x:Key="false">False</x:Boolean>
     </Page.Resources>
 
-    <Grid SizeChanged="GidSmallPlayer_SizeChanged">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -46,13 +46,27 @@
                 </MenuFlyout>
             </pick:PickerControl.FileMenuFlyout>
         </pick:PickerControl>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="2*" MaxWidth="1500" />
+                <ColumnDefinition Width="15" />
+            </Grid.ColumnDefinitions>
 
-        <viewers:SmallMediaPlayerControl Grid.Row="1" x:Name="smpcCurrent" Visibility="Collapsed" Margin="15"
-                                         HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                         Loaded="SmallMediaPlayerControl_Loaded"
-                                         Open="SmallMediaPlayerControl_Open"
-                                         Stop="SmallMediaPlayerControl_Stop" />
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="2*" MaxHeight="1200" />
+                <RowDefinition Height="15" />
+            </Grid.RowDefinitions>
+
+            <viewers:SmallMediaPlayerControl Grid.Column="1" Grid.Row="1" Visibility="Collapsed"
+                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                             MaxSpaceUsage="0.5"
+                                             Loaded="SmallMediaPlayerControl_Loaded"
+                                             Open="SmallMediaPlayerControl_Open"
+                                             Stop="SmallMediaPlayerControl_Stop" />
         </Grid>
+    </Grid>
 
     <Page.BottomAppBar>
         <CommandBar>

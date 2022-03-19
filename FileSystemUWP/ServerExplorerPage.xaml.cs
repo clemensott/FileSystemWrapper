@@ -118,18 +118,6 @@ namespace FileSystemUWP
             }
         }
 
-        private void GidSmallPlayer_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            double width = Math.Min(e.NewSize.Width - 100, e.NewSize.Width * 2 / 3);
-            double heigth = e.NewSize.Height / 3;
-
-            heigth = Math.Min(heigth, 400);
-            heigth = Math.Max(heigth, 100);
-
-            smpcCurrent.Width = width;
-            smpcCurrent.Height = heigth;
-        }
-
         private void GidThrough_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
             if (abbDetails != null) abbDetails.IsEnabled = ((FileSystemItem?)args.NewValue).HasValue;
