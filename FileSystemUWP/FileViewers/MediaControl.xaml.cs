@@ -12,14 +12,12 @@ namespace FileSystemUWP.FileViewers
 {
     public sealed partial class MediaControl : UserControl
     {
-        private readonly CustomViewerControls controls;
+        public event EventHandler<IsFullScreenChangedEventArgs> IsFullScreenChanged;
+        public event EventHandler MinimizePlayerClicked;
 
-        public MediaControl(MediaPlayer player, CustomViewerControls controls)
+        public MediaControl(MediaPlayer player)
         {
             this.InitializeComponent();
-
-            this.controls = controls;
-            controls.AbbStop.Visibility = Visibility.Visible;
 
             SetPlayer(player);
         }
@@ -50,7 +48,7 @@ namespace FileSystemUWP.FileViewers
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             SetPlayer(null);
-            mpe.IsFullWindow = false;
+            SetIsFullWindow(false);
         }
 
         private void SetPlayer(MediaPlayer player)
@@ -120,16 +118,22 @@ namespace FileSystemUWP.FileViewers
 
         private void Mpe_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
-            if (mpe.IsFullWindow || mpe.MediaPlayer.PlaybackSession.NaturalVideoHeight == 0)
+            if(mpe.MediaPlayer.PlaybackSession.NaturalVideoHeight > 0)
             {
-                mpe.IsFullWindow = false;
-                controls.BottomAppBar.Visibility = Visibility.Visible;
+                SetIsFullWindow(!mpe.IsFullWindow);
             }
-            else
-            {
-                mpe.IsFullWindow = true;
-                controls.BottomAppBar.Visibility = Visibility.Collapsed;
-            }
+        }
+
+        private void SetIsFullWindow(bool isFullWindow)
+        {
+            mpe.IsFullWindow = isFullWindow;
+            IsFullScreenChanged?.Invoke(this, new IsFullScreenChangedEventArgs(isFullWindow));
+        }
+
+        private void Emtc_BackToWindowClicked(object sender, EventArgs e)
+        {
+            MinimizePlayerClicked?.Invoke(this, EventArgs.Empty);
+            SetIsFullWindow(false);
         }
     }
 }

@@ -15,6 +15,32 @@
                    TextAlignment="Center" Visibility="Collapsed"/>
         <ProgressRing Name="prgLoading" Width="100" Height="100" IsActive="True"/>
         <MediaPlayerElement Name="mpe" IsDoubleTapEnabled="True"
-                            DoubleTapped="Mpe_DoubleTapped"/>
+                            DoubleTapped="Mpe_DoubleTapped">
+            <MediaPlayerElement.TransportControls>
+                <local:EventifiedMediaTransportControls
+                    IsStopEnabled="True"
+                    IsStopButtonVisible="True"
+                    IsSeekBarVisible="True"
+                    IsSeekEnabled="True"
+                    IsCompact="True"
+                    IsFastForwardButtonVisible="False"
+                    IsFastRewindButtonVisible="False"
+                    IsFullWindowButtonVisible="True"
+                    IsPlaybackRateButtonVisible="False"
+                    IsSkipBackwardButtonVisible="False"
+                    IsSkipForwardButtonVisible="False"
+                    IsVolumeButtonVisible="False"
+                    IsZoomButtonVisible="False"
+                    IsNextTrackButtonVisible="False"
+                    IsPreviousTrackButtonVisible="False"
+                    IsCastButtonEnabled="False"
+                    IsCastButtonVisable="False"
+                    IsBackToWindowButtonEnabled="True"
+                    IsBackToWindowButtonVisable="True"
+                    IsEnabled="True"
+                    Visibility="Visible"
+                    BackToWindowClicked="Emtc_BackToWindowClicked"/>
+            </MediaPlayerElement.TransportControls>
+        </MediaPlayerElement>
     </Grid>
 </UserControl>

@@ -14,9 +14,10 @@ namespace FileSystemUWP.FileViewers
 {
     public sealed partial class FileControl : UserControl
     {
-        public FileSystemItem Source { get; private set; }
+        public event EventHandler<IsFullScreenChangedEventArgs> IsFullScreenChanged;
+        public event EventHandler MinimizePlayerClicked;
 
-        public CustomViewerControls Controls { get; set; }
+        public FileSystemItem Source { get; private set; }
 
         public Api Api { get; set; }
 
@@ -57,7 +58,7 @@ namespace FileSystemUWP.FileViewers
         {
             if (resumePlayback && (mainType == "audio" || mainType == "video") && MediaPlayback.Current.Player != null)
             {
-                SetContent(new MediaControl(MediaPlayback.Current.Player, Controls));
+                SetContent(new MediaControl(MediaPlayback.Current.Player));
                 return;
             }
             if (IsMainTypeImpelmented(mainType)) SetLoading(contentType);
@@ -92,7 +93,7 @@ namespace FileSystemUWP.FileViewers
                     case "audio":
                     case "video":
                         MediaPlayer player = MediaPlayback.Current.SetSource(stream, Source.Name, contentType);
-                        SetContent(new MediaControl(player, Controls));
+                        SetContent(new MediaControl(player));
                         break;
 
                     case "image":
@@ -163,11 +164,33 @@ namespace FileSystemUWP.FileViewers
 
         private void SetContent(UIElement content)
         {
+            if (main.Children.Count > 0 && main.Children[0] is MediaControl oldMedia)
+            {
+                oldMedia.IsFullScreenChanged -= Media_IsFullScreenChanged;
+                oldMedia.MinimizePlayerClicked -= Media_MinimizePlayerClicked;
+            }
+
+            if (content is MediaControl newMedia)
+            {
+                newMedia.IsFullScreenChanged += Media_IsFullScreenChanged;
+                newMedia.MinimizePlayerClicked += Media_MinimizePlayerClicked;
+            }
+
             main.Children.Clear();
             main.Children.Add(content);
 
             splLoading.Visibility = Visibility.Collapsed;
             prgLoading.IsActive = false;
+        }
+
+        private void Media_IsFullScreenChanged(object sender, IsFullScreenChangedEventArgs e)
+        {
+            IsFullScreenChanged?.Invoke(this, e);
+        }
+
+        private void Media_MinimizePlayerClicked(object sender, EventArgs e)
+        {
+            MinimizePlayerClicked?.Invoke(this, e);
         }
     }
 }

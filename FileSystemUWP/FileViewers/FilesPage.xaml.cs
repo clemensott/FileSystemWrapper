@@ -18,7 +18,7 @@ namespace FileSystemUWP.FileViewers
     /// </summary>
     public sealed partial class FilesPage : Page
     {
-        private bool isLoading, isFirstOpening;
+        private bool isLoading, isFirstOpening, keepPlayback;
         private readonly List<FileControl> fileControls;
         private FilesViewing viewing;
 
@@ -50,6 +50,13 @@ namespace FileSystemUWP.FileViewers
             await SetCurrentContent(viewing.ResumePlayback);
 
             base.OnNavigatedTo(e);
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            if (!keepPlayback)                            MediaPlayback.Current.Stop();            
+
+            base.OnNavigatedFrom(e);
         }
 
         private async void FvwFiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -85,7 +92,6 @@ namespace FileSystemUWP.FileViewers
         {
             if (fileControls.Contains(control)) return;
 
-            control.Controls = new CustomViewerControls(cbrBottom, abbStop, Frame);
             control.Api = viewing.Api;
 
             fileControls.Add(control);
@@ -108,14 +114,19 @@ namespace FileSystemUWP.FileViewers
             }
         }
 
-        private void AbbBack_Click(object sender, RoutedEventArgs e)
+        private void FileControl_IsFullScreenChanged(object sender, IsFullScreenChangedEventArgs e)
         {
+            cbrBottom.Visibility = e.IsFullScreen ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void FileControl_MinimizePlayerClicked(object sender, EventArgs e)
+        {
+            keepPlayback = true;
             Frame.GoBack();
         }
 
-        private void AbbStop_Click(object sender, RoutedEventArgs e)
+        private void AbbBack_Click(object sender, RoutedEventArgs e)
         {
-            MediaPlayback.Current.Stop();
             Frame.GoBack();
         }
 

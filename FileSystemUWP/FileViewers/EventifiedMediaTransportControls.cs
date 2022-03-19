@@ -9,7 +9,8 @@ namespace FileSystemUWP.FileViewers
 {
     class EventifiedMediaTransportControls : MediaTransportControls
     {
-        private bool isCastButtonEnabled, isCastButtonVisable;
+        private bool isCastButtonEnabled, isCastButtonVisable,
+            isBackToWindowButtonEnabled, isBackToWindowButtonVisable;
 
         public event EventHandler PlayPauseOnLeftClicked;
         public event EventHandler VolumeMuteClicked;
@@ -29,6 +30,7 @@ namespace FileSystemUWP.FileViewers
         public event EventHandler FullWindowClicked;
         public event EventHandler MoreClicked;
         public event EventHandler AnyPlayPauseClicked;
+        public event EventHandler BackToWindowClicked;
 
         public bool IsCastButtonEnabled
         {
@@ -47,6 +49,26 @@ namespace FileSystemUWP.FileViewers
             {
                 isCastButtonVisable = value;
                 if (CastButton != null) CastButton.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        public bool IsBackToWindowButtonEnabled
+        {
+            get => isBackToWindowButtonEnabled;
+            set
+            {
+                isBackToWindowButtonEnabled = value;
+                if (BackToWindowButton != null) BackToWindowButton.IsEnabled = value;
+            }
+        }
+
+        public bool IsBackToWindowButtonVisable
+        {
+            get => isBackToWindowButtonVisable;
+            set
+            {
+                isBackToWindowButtonVisable = value;
+                if (BackToWindowButton != null) BackToWindowButton.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -84,16 +106,40 @@ namespace FileSystemUWP.FileViewers
 
         public Button MoreButton { get; private set; }
 
+        public AppBarButton BackToWindowButton { get; private set; }
+
         public EventifiedMediaTransportControls()
         {
-            VerticalAlignment = VerticalAlignment.Bottom;
-            Loaded += OnLoaded;
+            //    Loaded += OnLoaded;
+            //}
+
+            //private async void OnLoaded(object sender, RoutedEventArgs e)
+            //{
+            //    await System.Threading.Tasks.Task.Delay(2000);
+            //    var button = FindVisualChild<FrameworkElement>(this);
+            //    var array = button.ToArray();
+            //    System.Diagnostics.Debug.WriteLine(string.Join("\n", array));
         }
 
-        private void OnLoaded(object sender, RoutedEventArgs e)
+        private static IEnumerable<string> FindVisualChild<childItem>(DependencyObject obj, int depth = 0) where childItem : FrameworkElement
         {
-            var button = FindVisualChild<FrameworkElement>(this);
-            var array = button.ToArray();
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(obj, i);
+                if (child != null && child is childItem cast)
+                {
+                    string whiteSpaces = "".PadLeft(depth, ' ');
+                    string name = string.IsNullOrWhiteSpace(cast.Name) ? "<None>" : cast.Name;
+                    yield return $"{whiteSpaces}{name} | {cast.GetType().Name} | {cast.Visibility}";
+                }
+
+                {
+                    foreach (var item in FindVisualChild<childItem>(child, depth + 1))
+                    {
+                        yield return item;
+                    }
+                }
+            }
         }
 
         protected override void OnApplyTemplate()
@@ -142,16 +188,60 @@ namespace FileSystemUWP.FileViewers
             base.OnApplyTemplate();
         }
 
-        private void CastButton_LayoutUpdated(object sender, object e)
+        private void CreateAdditionalElements()
         {
-            if (IsCastButtonVisable && CastButton.Visibility != Visibility.Visible)
+            if (BackToWindowButton == null && PlayPauseButtonOnLeft != null && CastButton != null)
             {
-                CastButton.Visibility = Visibility.Visible;
+                BackToWindowButton = InsertAppBarButtonButtonBefore(Symbol.BackToWindow,
+                    "BackToWindowButton", CastButton, PlayPauseButtonOnLeft);
+                if (BackToWindowButton != null)
+                {
+                    BackToWindowButton.IsEnabled = IsBackToWindowButtonEnabled;
+                    BackToWindowButton.Visibility = IsBackToWindowButtonVisable ? Visibility.Visible : Visibility.Collapsed;
+                    BackToWindowButton.Click += BackToWindowButton_Click;
+                }
             }
-            else if (!IsCastButtonVisable && CastButton.Visibility != Visibility.Collapsed)
+        }
+
+        private AppBarButton InsertAppBarButtonButtonBefore(Symbol symbol, string name, UIElement before, AppBarButton template)
+        {
+            Panel panel = (Panel)FindParentOf(this, before);
+            if (panel == null) return null;
+
+            AppBarButton button = new AppBarButton()
             {
-                CastButton.Visibility = Visibility.Collapsed;
+                Icon = new SymbolIcon(symbol),
+                Name = name,
+                Width = template.Width,
+                Height = template.Height,
+                Background = new SolidColorBrush(((SolidColorBrush)template.Background).Color),
+                BorderBrush = new SolidColorBrush(((SolidColorBrush)template.BorderBrush).Color),
+                HorizontalAlignment = template.HorizontalAlignment,
+                VerticalAlignment = template.VerticalAlignment,
+                IsCompact = template.IsCompact,
+                IsTextScaleFactorEnabled = template.IsTextScaleFactorEnabled,
+                UseSystemFocusVisuals = template.UseSystemFocusVisuals,
+            };
+            panel.Children.Insert(panel.Children.IndexOf(before), button);
+
+            return button;
+        }
+
+        private static DependencyObject FindParentOf(DependencyObject obj, DependencyObject element)
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(obj, i);
+                if (child == element)
+                {
+                    return obj;
+                }
+
+                var parent = FindParentOf(child, element);
+                if (parent != null) return parent;
             }
+
+            return null;
         }
 
         private void PlayPauseButtonOnLeft_Click(object sender, object e)
@@ -235,6 +325,22 @@ namespace FileSystemUWP.FileViewers
         {
             CastButton.IsEnabled = IsCastButtonEnabled;
             CastButton.Visibility = IsCastButtonVisable ? Visibility.Visible : Visibility.Collapsed;
+
+            CreateAdditionalElements();
+        }
+
+        private void CastButton_LayoutUpdated(object sender, object e)
+        {
+            if (IsCastButtonVisable && CastButton.Visibility != Visibility.Visible)
+            {
+                CastButton.Visibility = Visibility.Visible;
+            }
+            else if (!IsCastButtonVisable && CastButton.Visibility != Visibility.Collapsed)
+            {
+                CastButton.Visibility = Visibility.Collapsed;
+            }
+
+            CreateAdditionalElements();
         }
 
         private void FullWindowButton_Click(object sender, object e)
@@ -247,23 +353,9 @@ namespace FileSystemUWP.FileViewers
             MoreClicked?.Invoke(this, EventArgs.Empty);
         }
 
-        private static IEnumerable<string> FindVisualChild<childItem>(DependencyObject obj) where childItem : FrameworkElement
+        private void BackToWindowButton_Click(object sender, RoutedEventArgs e)
         {
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
-            {
-                DependencyObject child = VisualTreeHelper.GetChild(obj, i);
-                if (child != null && child is childItem cast)
-                {
-                    yield return $"{cast.Name} | {cast.GetType().Name} | {cast.Visibility}";
-                }
-
-                {
-                    foreach (var item in FindVisualChild<childItem>(child))
-                    {
-                        yield return item;
-                    }
-                }
-            }
+            BackToWindowClicked?.Invoke(this, EventArgs.Empty);
         }
     }
 }

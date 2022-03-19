@@ -133,7 +133,6 @@
     <Compile Include="FileSystemItemInfoPage.xaml.cs">
       <DependentUpon>FileSystemItemInfoPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="FileViewers\CustomViewerControls.cs" />
     <Compile Include="FileViewers\EventifiedMediaTransportControls.cs" />
     <Compile Include="FileViewers\FileControl.xaml.cs">
       <DependentUpon>FileControl.xaml</DependentUpon>
@@ -142,6 +141,7 @@
       <DependentUpon>FilesPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="FileViewers\FilesViewing.cs" />
+    <Compile Include="FileViewers\IsFullScreenChangedEventArgs.cs" />
     <Compile Include="FileViewers\ImageControl.xaml.cs">
       <DependentUpon>ImageControl.xaml</DependentUpon>
     </Compile>

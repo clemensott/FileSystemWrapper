@@ -39,8 +39,11 @@
                     IsPreviousTrackButtonVisible="False"
                     IsCastButtonEnabled="False"
                     IsCastButtonVisable="False"
+                    IsBackToWindowButtonEnabled="False"
+                    IsBackToWindowButtonVisable="False"
                     IsEnabled="True"
                     Visibility="Visible" 
+                    VerticalAlignment="Bottom"
                     StopClicked="Emtc_StopClicked"
                     Tapped="Emtc_Tapped"/>
             </MediaPlayerElement.TransportControls>

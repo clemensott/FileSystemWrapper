@@ -16,7 +16,9 @@
                 <DataTemplate>
                     <view:FileControl Loaded="FileControl_Loaded" 
                                       Unloaded="FileControl_Unloaded"
-                                      DataContextChanged="FileControl_DataContextChanged" />
+                                      DataContextChanged="FileControl_DataContextChanged"
+                                      IsFullScreenChanged="FileControl_IsFullScreenChanged"
+                                      MinimizePlayerClicked="FileControl_MinimizePlayerClicked"/>
                 </DataTemplate>
             </FlipView.ItemTemplate>
         </FlipView>
@@ -26,8 +28,6 @@
         <CommandBar Name="cbrBottom">
             <CommandBar.PrimaryCommands>
                 <AppBarButton Icon="Back" Label="Back" Click="AbbBack_Click"/>
-                <AppBarButton Name="abbStop" Icon="Stop" Label="Stop" 
-                              Visibility="Collapsed" Click="AbbStop_Click"/>
                 <AppBarButton Icon="Download" Label="Download" Click="AbbDownload_Click"/>
                 <AppBarButton Icon="List" Label="Details" Click="AbbDetails_Click"/>
             </CommandBar.PrimaryCommands>
