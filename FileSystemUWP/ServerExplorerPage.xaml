@@ -8,6 +8,7 @@
     xmlns:ctl="using:FileSystemUWP.Controls"
     xmlns:pick="using:FileSystemUWP.Picker"
     xmlns:con="using:StdOttUwp.Converters"
+    xmlns:viewers="using:FileSystemUWP.FileViewers"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
@@ -17,7 +18,7 @@
         <x:Boolean x:Key="false">False</x:Boolean>
     </Page.Resources>
 
-    <Grid>
+    <Grid SizeChanged="GidSmallPlayer_SizeChanged">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -28,7 +29,7 @@
 
         <ctl:BackgroundOperationsControl Margin="5,2" Operations="{Binding BackgroundOperations}"/>
 
-        <pick:PickerControl Grid.Row="1" x:Name="pcView" Api="{Binding Api}"
+        <pick:PickerControl Grid.Row="1" Grid.RowSpan="2" x:Name="pcView" Api="{Binding Api}"
                             Loaded="PcView_Loaded" FileSelected="PcView_FileSelected">
             <pick:PickerControl.FolderMenuFlyout>
                 <MenuFlyout>
@@ -45,7 +46,13 @@
                 </MenuFlyout>
             </pick:PickerControl.FileMenuFlyout>
         </pick:PickerControl>
-    </Grid>
+
+        <viewers:SmallMediaPlayerControl Grid.Row="1" x:Name="smpcCurrent" Visibility="Collapsed" Margin="15"
+                                         HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                         Loaded="SmallMediaPlayerControl_Loaded"
+                                         Open="SmallMediaPlayerControl_Open"
+                                         Stop="SmallMediaPlayerControl_Stop" />
+        </Grid>
 
     <Page.BottomAppBar>
         <CommandBar>

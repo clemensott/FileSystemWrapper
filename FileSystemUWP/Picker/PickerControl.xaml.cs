@@ -151,13 +151,10 @@ namespace FileSystemUWP.Picker
 
         private static childItem FindVisualChild<childItem>(DependencyObject obj) where childItem : DependencyObject
         {
-
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
             {
-
                 DependencyObject child = VisualTreeHelper.GetChild(obj, i);
                 if (child != null && child is childItem) return (childItem)child;
-
                 else
                 {
                     childItem childOfChild = FindVisualChild<childItem>(child);
@@ -173,7 +170,7 @@ namespace FileSystemUWP.Picker
             int index = (int)Math.Floor(scrolledFactor * currentItems.Count);
 
             FileSystemItem item;
-            if( currentItems.TryElementAt(index, out item))
+            if (currentItems.TryElementAt(index, out item))
             {
                 return new FileSystemItemName(item.IsFile, item.Name);
             }

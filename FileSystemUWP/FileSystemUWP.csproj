@@ -134,6 +134,7 @@
       <DependentUpon>FileSystemItemInfoPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="FileViewers\CustomViewerControls.cs" />
+    <Compile Include="FileViewers\EventifiedMediaTransportControls.cs" />
     <Compile Include="FileViewers\FileControl.xaml.cs">
       <DependentUpon>FileControl.xaml</DependentUpon>
     </Compile>
@@ -148,6 +149,9 @@
       <DependentUpon>MediaControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="FileViewers\MediaPlayback.cs" />
+    <Compile Include="FileViewers\SmallMediaPlayerControl.xaml.cs">
+      <DependentUpon>SmallMediaPlayerControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="FileViewers\TextControl.xaml.cs">
       <DependentUpon>TextControl.xaml</DependentUpon>
     </Compile>
@@ -302,6 +306,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="FileViewers\MediaControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="FileViewers\SmallMediaPlayerControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

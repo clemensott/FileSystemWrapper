@@ -47,14 +47,14 @@ namespace FileSystemUWP.FileViewers
             }
 
             isLoading = false;
-            await SetCurrentContent();
+            await SetCurrentContent(viewing.ResumePlayback);
 
             base.OnNavigatedTo(e);
         }
 
         private async void FvwFiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            MediaPlayback.Current.Stop();
+            if (!isFirstOpening) MediaPlayback.Current.Stop();
             await SetCurrentContent();
         }
 
@@ -64,12 +64,21 @@ namespace FileSystemUWP.FileViewers
 
             AddFileControl(control);
 
-            if (isFirstOpening) await SetCurrentContent();
+            if (isFirstOpening) await SetCurrentContent(viewing.ResumePlayback);
         }
 
         private void FileControl_Unloaded(object sender, RoutedEventArgs e)
         {
             fileControls.Remove((FileControl)sender);
+        }
+
+        private async void FileControl_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            FileControl control = (FileControl)sender;
+
+            AddFileControl(control);
+
+            if (isFirstOpening) await SetCurrentContent(viewing.ResumePlayback);
         }
 
         private void AddFileControl(FileControl control)
@@ -82,7 +91,7 @@ namespace FileSystemUWP.FileViewers
             fileControls.Add(control);
         }
 
-        private async Task SetCurrentContent()
+        private async Task SetCurrentContent(bool resumePlayback = false)
         {
             if (fvwFiles.SelectedItem == null || isLoading) return;
 
@@ -93,7 +102,7 @@ namespace FileSystemUWP.FileViewers
                 if (file.Equals(control.DataContext))
                 {
                     isFirstOpening = false;
-                    await control.Activate();
+                    await control.Activate(resumePlayback);
                 }
                 else control.Deactivate();
             }
@@ -106,7 +115,7 @@ namespace FileSystemUWP.FileViewers
 
         private void AbbStop_Click(object sender, RoutedEventArgs e)
         {
-            MediaPlayback.Current.Player.Source = null;
+            MediaPlayback.Current.Stop();
             Frame.GoBack();
         }
 

@@ -118,6 +118,18 @@ namespace FileSystemUWP
             }
         }
 
+        private void GidSmallPlayer_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            double width = Math.Min(e.NewSize.Width - 100, e.NewSize.Width * 2 / 3);
+            double heigth = e.NewSize.Height / 3;
+
+            heigth = Math.Min(heigth, 400);
+            heigth = Math.Max(heigth, 100);
+
+            smpcCurrent.Width = width;
+            smpcCurrent.Height = heigth;
+        }
+
         private void GidThrough_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
             if (abbDetails != null) abbDetails.IsEnabled = ((FileSystemItem?)args.NewValue).HasValue;
@@ -243,8 +255,37 @@ namespace FileSystemUWP
 
         private void PcView_FileSelected(object sender, FileSystemItem e)
         {
-            FilesViewing viewing = new FilesViewing(e, pcView.GetCurrentItems().Where(i => i.IsFile), viewModel.Api);
+            FilesViewing viewing = new FilesViewing(false, e, pcView.GetCurrentItems().Where(i => i.IsFile), viewModel.Api);
             Frame.Navigate(typeof(FilesPage), viewing);
+            viewModel.LastFilesViewing = viewing;
+        }
+
+        private void SmallMediaPlayerControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            SmallMediaPlayerControl control = (SmallMediaPlayerControl)sender;
+
+            control.Player = MediaPlayback.Current.Player;
+            control.FileName = MediaPlayback.Current.FileName;
+            if (control.Player != null)
+            {
+                control.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void SmallMediaPlayerControl_Open(object sender, EventArgs e)
+        {
+            FilesViewing viewing = new FilesViewing(true, viewModel.LastFilesViewing.CurrentFile,
+                viewModel.LastFilesViewing.Files, viewModel.LastFilesViewing.Api);
+            Frame.Navigate(typeof(FilesPage), viewing);
+            viewModel.LastFilesViewing = viewing;
+        }
+
+        private void SmallMediaPlayerControl_Stop(object sender, EventArgs e)
+        {
+            SmallMediaPlayerControl control = (SmallMediaPlayerControl)sender;
+
+            MediaPlayback.Current.Stop();
+            control.Visibility = Visibility.Collapsed;
         }
 
         private void AbbOpenSyncs_Click(object sender, RoutedEventArgs e)

@@ -50,6 +50,7 @@ namespace FileSystemUWP.FileViewers
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             SetPlayer(null);
+            mpe.IsFullWindow = false;
         }
 
         private void SetPlayer(MediaPlayer player)
@@ -60,6 +61,9 @@ namespace FileSystemUWP.FileViewers
             if (player == null) return;
 
             Subscribe(player);
+
+            MediaPlaybackState state = player.PlaybackSession.PlaybackState;
+            prgLoading.IsActive = state != MediaPlaybackState.Paused && state != MediaPlaybackState.Playing;
 
             SystemMediaTransportControls smtc = player.SystemMediaTransportControls;
             smtc.IsPreviousEnabled =

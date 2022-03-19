@@ -45,16 +45,21 @@ namespace FileSystemUWP.FileViewers
             await Activate(mainType, contentType);
         }
 
-        public Task Activate()
+        public Task Activate(bool resumePlayback)
         {
             string contentType = Utils.GetContentType(Source.Extension);
             string mainType = contentType.Split('/')[0];
 
-            return Activate(mainType, contentType);
+            return Activate(mainType, contentType, resumePlayback);
         }
 
-        private async Task Activate(string mainType, string contentType)
+        private async Task Activate(string mainType, string contentType, bool resumePlayback = false)
         {
+            if (resumePlayback && (mainType == "audio" || mainType == "video") && MediaPlayback.Current.Player != null)
+            {
+                SetContent(new MediaControl(MediaPlayback.Current.Player, Controls));
+                return;
+            }
             if (IsMainTypeImpelmented(mainType)) SetLoading(contentType);
             else
             {

@@ -1,18 +1,13 @@
-﻿using System;
-using System.ComponentModel;
-using System.Threading.Tasks;
-using Windows.ApplicationModel.Core;
+﻿using System.ComponentModel;
 using Windows.Media;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage.Streams;
-using Windows.UI.Core;
 
 namespace FileSystemUWP.FileViewers
 {
     class MediaPlayback : INotifyPropertyChanged
     {
-
         private static MediaPlayback instance;
 
         public static MediaPlayback Current
@@ -32,7 +27,7 @@ namespace FileSystemUWP.FileViewers
         public string FileName
         {
             get => fileName;
-            set
+            private set
             {
                 if (value == fileName) return;
 
@@ -44,7 +39,7 @@ namespace FileSystemUWP.FileViewers
         public string ContenType
         {
             get => contenType;
-            set
+            private set
             {
                 if (value == contenType) return;
 
@@ -56,7 +51,7 @@ namespace FileSystemUWP.FileViewers
         public MediaPlayer Player
         {
             get => player;
-            set
+            private set
             {
                 if (value == player) return;
 
@@ -68,7 +63,7 @@ namespace FileSystemUWP.FileViewers
         public IRandomAccessStream Stream
         {
             get => stream;
-            set
+            private set
             {
                 if (value == stream) return;
 

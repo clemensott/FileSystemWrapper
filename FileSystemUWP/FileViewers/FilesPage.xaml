@@ -14,7 +14,9 @@
                   SelectionChanged="FvwFiles_SelectionChanged">
             <FlipView.ItemTemplate>
                 <DataTemplate>
-                    <view:FileControl Loaded="FileControl_Loaded" Unloaded="FileControl_Unloaded"/>
+                    <view:FileControl Loaded="FileControl_Loaded" 
+                                      Unloaded="FileControl_Unloaded"
+                                      DataContextChanged="FileControl_DataContextChanged" />
                 </DataTemplate>
             </FlipView.ItemTemplate>
         </FlipView>

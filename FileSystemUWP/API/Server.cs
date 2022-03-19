@@ -1,5 +1,6 @@
 ﻿using FileSystemUWP.API;
 using FileSystemUWP.Controls;
+using FileSystemUWP.FileViewers;
 using FileSystemUWP.Picker;
 using FileSystemUWP.Sync.Definitions;
 using System.Collections.Generic;
@@ -73,6 +74,8 @@ namespace FileSystemUWP
                 OnPropertyChanged(nameof(Api));
             }
         }
+
+        internal FilesViewing LastFilesViewing { get; set; }
 
         public SyncPairs Syncs { get; }
 
