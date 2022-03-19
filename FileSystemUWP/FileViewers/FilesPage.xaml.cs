@@ -54,7 +54,7 @@ namespace FileSystemUWP.FileViewers
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            if (!keepPlayback)                            MediaPlayback.Current.Stop();            
+            if (!keepPlayback) MediaPlayback.Current.Stop();
 
             base.OnNavigatedFrom(e);
         }

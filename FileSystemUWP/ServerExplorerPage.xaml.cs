@@ -3,6 +3,7 @@ using FileSystemUWP.API;
 using FileSystemUWP.FileViewers;
 using FileSystemUWP.Picker;
 using FileSystemUWP.Sync.Definitions;
+using StdOttStandard.Linq;
 using StdOttUwp;
 using System;
 using System.IO;
@@ -262,7 +263,12 @@ namespace FileSystemUWP
 
         private void SmallMediaPlayerControl_Open(object sender, EventArgs e)
         {
-            FilesViewing viewing = new FilesViewing(true, viewModel.LastFilesViewing.CurrentFile,
+            FileSystemItem currentFile;
+            if (!viewModel.LastFilesViewing.Files.TryFirst(f => f.Name == MediaPlayback.Current.FileName, out currentFile))
+            {
+                currentFile = viewModel.LastFilesViewing.CurrentFile;
+            }
+            FilesViewing viewing = new FilesViewing(true, currentFile,
                 viewModel.LastFilesViewing.Files, viewModel.LastFilesViewing.Api);
             Frame.Navigate(typeof(FilesPage), viewing);
             viewModel.LastFilesViewing = viewing;
