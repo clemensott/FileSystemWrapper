@@ -25,6 +25,7 @@ namespace FileSystemCommon
         {
             try
             {
+                if (customBase64 == null) return null;
                 string base64 = customBase64.Replace('_', '/').Replace('!', '=');
                 return Encoding.Unicode.GetString(Convert.FromBase64String(base64));
             }

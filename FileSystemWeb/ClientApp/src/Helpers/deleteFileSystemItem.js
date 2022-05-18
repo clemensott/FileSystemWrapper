@@ -1,6 +1,6 @@
 ﻿import React from 'react';
-import {encodeBase64UnicodeCustom} from './Path';
-import {closeLoadingModal, getAllRefs, showErrorModal, showLoadingModal} from './storeExtensions';
+import API from './API';
+import { closeLoadingModal, getAllRefs, showErrorModal, showLoadingModal } from './storeExtensions';
 
 export default async function (item, callback = null) {
     const allRefs = getAllRefs();
@@ -9,21 +9,16 @@ export default async function (item, callback = null) {
 
     try {
         showLoadingModal();
-        const url = item.isFile ?
-            `/api/files/${encodeBase64UnicodeCustom(item.path)}` :
-            `/api/folders/${encodeBase64UnicodeCustom(item.path)}`;
-        const response = await fetch(url, {
-            method: 'DELETE'
-        });
-
+        const response = await API.deleteFileSystemItem(item.path, item.isFile);
         closeLoadingModal();
+
         if (response.ok) await callback && callback();
         else {
             const text = await response.text();
             await showErrorModal(
                 <div>
                     Status: {response.status}
-                    <br/>
+                    <br />
                     {text}
                 </div>
             );

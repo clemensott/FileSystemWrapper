@@ -1,6 +1,6 @@
 ﻿import React, {useEffect, useState} from 'react';
 import Loading from '../Loading/Loading';
-import {encodeBase64UnicodeCustom} from '../../Helpers/Path';
+import API from '../../Helpers/API';
 import './PdfViewer.css'
 
 export default function ({path, onError}) {
@@ -21,9 +21,7 @@ export default function ({path, onError}) {
             setIsLoading(true);
             clearLocalUrl();
 
-            const pdfUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
-            const response = await fetch(pdfUrl);
-
+            const response = await API.getFile(path);
             if (response.ok) {
                 blob = await response.blob();
             } else {

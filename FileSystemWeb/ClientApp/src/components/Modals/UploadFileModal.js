@@ -1,8 +1,8 @@
 import React, {forwardRef, useImperativeHandle, useRef, useState} from 'react'
 import {Button, Modal, ModalHeader, ModalFooter, ModalBody, Form} from 'reactstrap';
 import {closeLoadingModal, showErrorModal, showLoadingModal} from '../../Helpers/storeExtensions';
-import {encodeBase64UnicodeCustom} from '../../Helpers/Path';
 import formatFileSize from '../../Helpers/formatFileSize';
+import API from '../../Helpers/API';
 
 function formatFile(file) {
     return `${file.name} (${formatFileSize(file.size)})`
@@ -34,16 +34,9 @@ const modal = forwardRef((props, ref) => {
 
         try {
             showLoadingModal();
-
-            const body = new FormData();
-            body.append('file', file);
-            const response = await fetch(`/api/files/${encodeBase64UnicodeCustom(promise.folderPath + name)}`, {
-                method: 'POST',
-                body: file,
-                credentials: 'include'
-            });
-
+            const response = await API.createFile(promise.folderPath + name, file);
             closeLoadingModal();
+
             if (response.ok) {
                 closeUploadModal();
             } else {

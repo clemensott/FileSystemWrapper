@@ -86,75 +86,91 @@ namespace FileSystemUWP.API
         public Task<bool> FolderExists(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return Task.FromResult(false);
-            return Request<bool>(GetUri($"/api/folders/{Utils.EncodePath(path)}/exists"), HttpMethod.Get);
+
+            Uri uri = GetUri("/api/folders/exists", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return Request<bool>(uri, HttpMethod.Get);
         }
 
         public Task<FolderContent> FolderContent(string path)
         {
-            return Request<FolderContent>(GetUri($"/api/folders/content/{Utils.EncodePath(path)}"), HttpMethod.Get);
+            Uri uri = GetUri("/api/folders/content", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return Request<FolderContent>(uri, HttpMethod.Get);
         }
 
         public Task<FolderItemInfo> GetFolderInfo(string path)
         {
-            return Request<FolderItemInfo>(GetUri($"/api/folders/{Utils.EncodePath(path)}/info"), HttpMethod.Get);
+            Uri uri = GetUri("/api/folders/info", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return Request<FolderItemInfo>(uri, HttpMethod.Get);
         }
 
         public Task<bool> CreateFolder(string path)
         {
-            return Request(GetUri($"/api/folders/{Utils.EncodePath(path)}"), HttpMethod.Post);
+            Uri uri = GetUri("/api/folders", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return Request(uri, HttpMethod.Post);
         }
 
         public Task<bool> DeleteFolder(string path, bool recrusive)
         {
-            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils.CreatePairs("recrusive", recrusive.ToString());
-
-            return Request(GetUri($"/api/folders/{Utils.EncodePath(path)}", values), HttpMethod.Delete);
+            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils
+                .CreatePairs("path", path, "recrusive", recrusive.ToString());
+            return Request(GetUri("/api/folders", values), HttpMethod.Delete);
         }
 
         public Task<bool> FileExists(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return Task.FromResult(false);
-            return Request<bool>(GetUri($"/api/files/{Utils.EncodePath(path)}/exists"), HttpMethod.Get);
+
+            Uri uri = GetUri("/api/files/exists", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return Request<bool>(uri, HttpMethod.Get);
         }
 
         public Task<FileItemInfo> GetFileInfo(string path)
         {
-            return Request<FileItemInfo>(GetUri($"/api/files/{Utils.EncodePath(path)}/info"), HttpMethod.Get);
+            Uri uri = GetUri("/api/files/info", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return Request<FileItemInfo>(uri, HttpMethod.Get);
         }
 
         public Task<string> GetFileHash(string path)
         {
-            return RequestString(GetUri($"/api/files/{Utils.EncodePath(path)}/hash"), HttpMethod.Get);
+            Uri uri = GetUri("/api/files/hash", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return RequestString(uri, HttpMethod.Get);
         }
 
         public Task<bool> CopyFile(string srcPath, string destPath)
         {
-            return Request(GetUri($"/api/files/{Utils.EncodePath(srcPath)}/{Utils.EncodePath(destPath)}/copy"), HttpMethod.Post);
+            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils
+                .CreatePairs("srcPath", Utils.EncodePath(srcPath), "destPath", Utils.EncodePath(srcPath));
+            return Request(GetUri("/api/files/copy", values), HttpMethod.Post);
         }
 
         public Task<bool> MoveFile(string srcPath, string destPath)
         {
-            return Request(GetUri($"/api/files/{Utils.EncodePath(srcPath)}/{Utils.EncodePath(destPath)}/move"), HttpMethod.Post);
+            IEnumerable<KeyValuePair<string, string>> values = KeyValuePairsUtils
+                .CreatePairs("srcPath", Utils.EncodePath(srcPath), "destPath", Utils.EncodePath(srcPath));
+            return Request(GetUri("/api/files/move", values), HttpMethod.Post);
         }
 
         public Task<bool> UploadFile(string path, IInputStream stream)
         {
-            return Request(GetUri($"/api/files/{Utils.EncodePath(path)}"), HttpMethod.Post, stream);
+            Uri uri = GetUri("/api/files", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return Request(uri, HttpMethod.Post, stream);
         }
 
         public Task<bool> DeleteFile(string path)
         {
-            return Request(GetUri($"/api/files/{Utils.EncodePath(path)}"), HttpMethod.Delete);
+            Uri uri = GetUri("/api/files", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return Request(uri, HttpMethod.Delete);
         }
 
         public Task<IRandomAccessStreamWithContentType> GetFileRandomAccessStream(string path)
         {
-            return RequestRandmomAccessStream(GetUri($"/api/files/{Utils.EncodePath(path)}"), HttpMethod.Get);
+            Uri uri = GetUri("/api/files", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return RequestRandmomAccessStream(uri, HttpMethod.Get);
         }
 
         public async Task DownloadFile(string path, StorageFile destFile)
         {
-            Uri uri = GetUri($"/api/files/{Utils.EncodePath(path)}/download");
+            Uri uri = GetUri("/api/files/download", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
             if (uri == null) return;
 
             using (IRandomAccessStream fileStream = await destFile.OpenAsync(FileAccessMode.ReadWrite))
@@ -273,12 +289,7 @@ namespace FileSystemUWP.API
             }
         }
 
-        public Uri GetUri(string resource)
-        {
-            return GetUri(resource, null);
-        }
-
-        public Uri GetUri(string resource, IEnumerable<KeyValuePair<string, string>> values)
+        public Uri GetUri(string resource, IEnumerable<KeyValuePair<string, string>> values = null)
         {
             if (string.IsNullOrWhiteSpace(BaseUrl)) return null;
 

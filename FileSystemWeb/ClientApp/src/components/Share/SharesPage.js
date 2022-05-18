@@ -1,15 +1,13 @@
-﻿import React, {useState, useEffect} from 'react';
-import {Button, CustomInput, Input, Table} from 'reactstrap';
+﻿import React, { useState, useEffect } from 'react';
+import { Button, CustomInput, Input, Table } from 'reactstrap';
 import './SharesPage.css'
 import deleteShareItem from "../../Helpers/deleteShareItem";
-import {Link} from "react-router-dom";
-import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
+import { Link } from "react-router-dom";
+import API from '../../Helpers/API';
 
-async function load(url) {
+async function load(promise) {
     try {
-        const response = await fetch(url, {
-            credentials: 'include',
-        });
+        const response = await promise;
 
         if (response.ok) {
             return await response.json();
@@ -23,11 +21,7 @@ async function load(url) {
 
 async function loadShareItems(isFile) {
     try {
-        const url = isFile ? '/api/share/files' : '/api/share/folders';
-        const response = await fetch(url, {
-            credentials: 'include',
-        });
-
+        const response = await API.getShareItems(isFile);
         if (response.ok) {
             return await response.json();
         }
@@ -39,7 +33,7 @@ async function loadShareItems(isFile) {
 }
 
 export default function () {
-    const [state] = useState([{isUnmounted: false}]);
+    const [state] = useState([{ isUnmounted: false }]);
     const [updateItems, setUpdateItems] = useState(0);
     const [shareFiles, setShareFiles] = useState(null);
     const [shareFolders, setShareFolders] = useState(null);
@@ -52,7 +46,7 @@ export default function () {
     state.updateItems = updateItems;
 
     useEffect(() => {
-        document.title= 'Shares - File System';
+        document.title = 'Shares - File System';
         return () => {
             state.isUnmounted = true;
         };
@@ -71,27 +65,27 @@ export default function () {
     }, [updateItems]);
 
     useEffect(() => {
-        load('/api/users/all').then(users => {
+        load(API.getAllUsers()).then(users => {
             if (!state.isUnmounted && state.updateItems === updateItems && users) setUsers(users);
         });
     }, [updateItems]);
 
     useEffect(() => {
         if (!shareFolders) return;
-        shareFolders.forEach(folder => load(`/api/folders/${encodeBase64UnicodeCustom(folder.id)}/exists`).then(e => {
+        shareFolders.forEach(folder => load(API.getFolderExists(folder.id)).then(e => {
             if (!state.isUnmounted && state.updateItems === updateItems) {
                 shareItemsExists.folders[folder.id] = e;
-                setShareItemsExists({...shareItemsExists});
+                setShareItemsExists({ ...shareItemsExists });
             }
         }));
     }, [shareFolders]);
 
     useEffect(() => {
         if (!shareFiles) return;
-        shareFiles.forEach(file => load(`/api/files/${encodeBase64UnicodeCustom(file.id)}/exists`).then(e => {
+        shareFiles.forEach(file => load(API.getFileExists(file.id)).then(e => {
             if (!state.isUnmounted && state.updateItems === updateItems) {
                 shareItemsExists.files[file.id] = e;
-                setShareItemsExists({...shareItemsExists});
+                setShareItemsExists({ ...shareItemsExists });
             }
         }));
     }, [shareFiles]);
@@ -112,35 +106,35 @@ export default function () {
                 <td className="text-center">
                     {exists !== undefined ? (
                         <Input type="checkbox" className="share-page-exists-item"
-                               checked={exists} readOnly/>
+                            checked={exists} readOnly />
                     ) : null}
                 </td>
                 <td className="text-center">
-                    <Input type="checkbox" checked={item.isListed} readOnly/>
+                    <Input type="checkbox" checked={item.isListed} readOnly />
                 </td>
                 <td>{item.userId ? user && user.name : (
                     <i>PUBLIC</i>
                 )}</td>
                 <td className="shares-page-removable-column">
                     <CustomInput type="checkbox" id="permission-info" className="share-page-permission-item"
-                                 label="info" checked={item.permission.info} inline readOnly/>
+                        label="info" checked={item.permission.info} inline readOnly />
                     <CustomInput type="checkbox" id="permission-info"
-                                 className={item.isFile ? 'd-none' : '"share-page-permission-item"'}
-                                 label="list" checked={item.permission.list} inline readOnly/>
+                        className={item.isFile ? 'd-none' : '"share-page-permission-item"'}
+                        label="list" checked={item.permission.list} inline readOnly />
                     <CustomInput type="checkbox" id="permission-hash" className="share-page-permission-item"
-                                 label="hash" checked={item.permission.hash} inline readOnly/>
+                        label="hash" checked={item.permission.hash} inline readOnly />
                     <CustomInput type="checkbox" id="permission-read" className="share-page-permission-item"
-                                 label="read" checked={item.permission.read} inline readOnly/>
+                        label="read" checked={item.permission.read} inline readOnly />
                     <CustomInput type="checkbox" id="permission-write" className="share-page-permission-item"
-                                 label="write" checked={item.permission.write} inline readOnly/>
+                        label="write" checked={item.permission.write} inline readOnly />
                 </td>
                 <td className="text-center">
                     <Button color="info" className="mb-2 mr-2" tag={Link} to={editLink}>
-                        <i className="fas fa-edit"/>
+                        <i className="fas fa-edit" />
                     </Button>
                     <Button color="danger" className="mb-2 mr-2"
-                            onClick={() => deleteShareItem(item, () => setUpdateItems(updateItems + 1))}>
-                        <i className="fas fa-trash"/>
+                        onClick={() => deleteShareItem(item, () => setUpdateItems(updateItems + 1))}>
+                        <i className="fas fa-trash" />
                     </Button>
                 </td>
             </tr>
@@ -151,19 +145,19 @@ export default function () {
         return (
             <Table striped>
                 <thead>
-                <tr>
-                    <th>Name</th>
-                    <th className="shares-page-header-exists">Exists</th>
-                    <th className="shares-page-header-is-listed">Is listed</th>
-                    <th className="shares-page-header-user">User</th>
-                    <th className="shares-page-header-permissions shares-page-removable-column">
-                        Permissions
+                    <tr>
+                        <th>Name</th>
+                        <th className="shares-page-header-exists">Exists</th>
+                        <th className="shares-page-header-is-listed">Is listed</th>
+                        <th className="shares-page-header-user">User</th>
+                        <th className="shares-page-header-permissions shares-page-removable-column">
+                            Permissions
                     </th>
-                    <th className="shares-page-header-actions">Actions</th>
-                </tr>
+                        <th className="shares-page-header-actions">Actions</th>
+                    </tr>
                 </thead>
                 <tbody>
-                {items && items.map(renderShareItem)}
+                    {items && items.map(renderShareItem)}
                 </tbody>
             </Table>
         );
@@ -172,7 +166,7 @@ export default function () {
     return (
         <div id="shares-page-container">
             <div className="float-right m-4" onClick={() => setUpdateItems(updateItems + 1)}>
-                <i className="folder-viewer-head-update-icon fa fa-retweet fa-2x"/>
+                <i className="folder-viewer-head-update-icon fa fa-retweet fa-2x" />
             </div>
             <h2>Share Items</h2>
 

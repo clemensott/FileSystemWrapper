@@ -26,10 +26,11 @@ namespace FileSystemWeb.Controllers
             this.dbContext = dbContext;
         }
 
+        [HttpGet("exists")]
         [HttpGet("{encodedVirtualPath}/exists")]
-        public async Task<ActionResult<bool>> Exists(string encodedVirtualPath)
+        public async Task<ActionResult<bool>> Exists(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFolder folder;
@@ -49,9 +50,9 @@ namespace FileSystemWeb.Controllers
 
         [HttpGet("content")]
         [HttpGet("content/{encodedVirtualPath}")]
-        public async Task<ActionResult<FolderContent>> ListFolders(string encodedVirtualPath)
+        public async Task<ActionResult<FolderContent>> ListFolders(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? string.Empty);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path ?? string.Empty);
             if (virtualPath == null) return BadRequest("Path encoding error");
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -151,15 +152,16 @@ namespace FileSystemWeb.Controllers
                     Extension = Path.GetExtension(path),
                     Path = Path.Join(folder.VirtualPath, name),
                     SharedId = null,
-                    Permission =(FileItemPermission)folder.Permission,
+                    Permission = (FileItemPermission)folder.Permission,
                 };
             }
         }
 
+        [HttpGet("info")]
         [HttpGet("{encodedVirtualPath}/info")]
-        public async Task<ActionResult<FolderItemInfo>> GetInfo(string encodedVirtualPath)
+        public async Task<ActionResult<FolderItemInfo>> GetInfo(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFolder folder;
@@ -192,10 +194,11 @@ namespace FileSystemWeb.Controllers
             }
         }
 
+        [HttpPost("")]
         [HttpPost("{encodedVirtualPath}")]
-        public async Task<ActionResult<FolderItemInfo>> Create(string encodedVirtualPath)
+        public async Task<ActionResult<FolderItemInfo>> Create(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFolder folder;
@@ -215,10 +218,11 @@ namespace FileSystemWeb.Controllers
             return FileHelper.GetInfo(folder, info);
         }
 
+        [HttpDelete("")]
         [HttpDelete("{encodedVirtualPath}")]
-        public async Task<ActionResult> Delete(string encodedVirtualPath, [FromQuery] bool recursive)
+        public async Task<ActionResult> Delete(string encodedVirtualPath, [FromQuery] string path, [FromQuery] bool recursive)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFolder folder;

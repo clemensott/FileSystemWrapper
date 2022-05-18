@@ -5,6 +5,7 @@ import ShareFileSystemItemForm from './ShareFileSystemItemForm';
 import Loading from '../Loading/Loading';
 import deleteShareItem from '../../Helpers/deleteShareItem'
 import {closeLoadingModal, showErrorModal, showLoadingModal} from '../../Helpers/storeExtensions';
+import API from '../../Helpers/API';
 
 function setDocumentTitle(shareItem) {
     let name = null;
@@ -20,13 +21,7 @@ async function loadShareItem(id, isFile) {
     let infoError = null;
     if (id) {
         try {
-            const url = isFile ?
-                `/api/share/file/${encodeURIComponent(id)}` :
-                `/api/share/folder/${encodeURIComponent(id)}`;
-            const response = await fetch(url, {
-                credentials: 'include',
-            });
-
+            const response = await API.getShareItem(id, isFile);
             if (response.ok) {
                 item = await response.json();
             } else if (response.status === 401) {
@@ -53,10 +48,7 @@ async function loadShareItem(id, isFile) {
 async function loadUsers() {
     let users = [];
     try {
-        const response = await fetch('/api/users/all', {
-            credentials: 'include',
-        });
-
+        const response = await API.getAllUsers();
         if (response.ok) {
             users = await response.json();
         }
@@ -98,17 +90,7 @@ export default function () {
                 let submitError = null;
                 try {
                     showLoadingModal();
-
-                    const url = `${isFile ? '/api/share/file/' : '/api/share/folder'}${shareItem.id}`;
-                    const response = await fetch(url, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json;charset=utf-8'
-                        },
-                        body: JSON.stringify(body),
-                        credentials: 'include',
-                    });
-
+                    const response = await API.putShareItem(id, body, isFile);
                     if (response.ok) {
                         const shareItem = await response.json();
                         redirect = isFile ?

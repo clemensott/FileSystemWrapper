@@ -1,6 +1,6 @@
 ﻿import React, {useEffect, useState} from 'react';
 import Loading from '../Loading/Loading';
-import {encodeBase64UnicodeCustom} from "../../Helpers/Path";
+import API from '../../Helpers/API';
 import './TextViewer.css'
 
 export default function ({path, onError}) {
@@ -16,8 +16,7 @@ export default function ({path, onError}) {
             setIsLoading(true);
             setText(null);
 
-            const textUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
-            const response = await fetch(textUrl);
+            const response = await API.getFile(path);
 
             if (response.ok) {
                 newText = await response.text();

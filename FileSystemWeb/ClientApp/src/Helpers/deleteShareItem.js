@@ -1,4 +1,5 @@
 ﻿import React from 'react';
+import API from './API';
 import {closeLoadingModal, getAllRefs, showErrorModal, showLoadingModal} from './storeExtensions';
 
 export default async function (item, callback = null) {
@@ -8,15 +9,9 @@ export default async function (item, callback = null) {
 
     try {
         showLoadingModal();
-
-        const url = item.isFile ?
-            `/api/share/file/${encodeURIComponent(item.id)}` :
-            `/api/share/folder/${encodeURIComponent(item.id)}`;
-        const response = await fetch(url, {
-            method: 'DELETE'
-        });
-
+        const response = await API.deleteShareItem(item.id);
         closeLoadingModal();
+
         if (response.ok) await callback && callback();
         else {
             const text = await response.text();

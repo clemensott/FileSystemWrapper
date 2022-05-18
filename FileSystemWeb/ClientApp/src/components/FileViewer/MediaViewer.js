@@ -1,10 +1,10 @@
 ﻿import React, {useEffect, useState} from 'react';
-import {encodeBase64UnicodeCustom} from '../../Helpers/Path';
+import formatUrl from '../../Helpers/formatUrl';
 import './MediaViewer.css'
 
 export default function ({path, type, onError}) {
     const [internalType, setInternalType] = useState(null);
-    const mediaUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
+    const mediaUrl = formatUrl({ resource: '/api/files', path });
 
     const onLoaded = (target) => {
         setInternalType(!!target.videoWidth || !!target.videoHeight ? 'video' : 'audio');

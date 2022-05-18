@@ -1,12 +1,12 @@
-﻿import React, {useEffect, useState} from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import Loading from '../Loading/Loading';
-import {encodeBase64UnicodeCustom} from '../../Helpers/Path';
 import './ImageViewer.css'
+import formatUrl from '../../Helpers/formatUrl';
 
-export default function ({path, onError}) {
+export default function ({ path, onError }) {
     const [isLoading, setIsLoading] = useState(false);
 
-    const imageUrl = `/api/files/${encodeBase64UnicodeCustom(path)}`;
+    const imageUrl = formatUrl({ resource: '/api/files', path });
 
     useEffect(() => {
         setIsLoading(true);
@@ -15,14 +15,14 @@ export default function ({path, onError}) {
     return (
         <div className="image-container">
             <img src={imageUrl} className="image-content"
-                 onLoad={e => setIsLoading(false)}
-                 onError={() => {
-                     setIsLoading(false);
-                     onError && onError('An error occurred during loading of image');
-                 }} alt="preview"/>
+                onLoad={e => setIsLoading(false)}
+                onError={() => {
+                    setIsLoading(false);
+                    onError && onError('An error occurred during loading of image');
+                }} alt="preview" />
 
             <div className={isLoading ? 'center' : 'd-none'}>
-                <Loading/>
+                <Loading />
             </div>
         </div>
     );

@@ -1,21 +1,22 @@
-﻿import React, {useEffect, useState, useRef} from 'react';
+﻿import React, { useEffect, useState, useRef } from 'react';
 import FSItem from './FSItem/FSItem'
-import {getParent, encodeBase64UnicodeCustom, getName} from '../Helpers/Path'
-import {Link} from 'react-router-dom';
+import { getParent, getName } from '../Helpers/Path'
+import { Link } from 'react-router-dom';
 import Loading from './Loading/Loading';
-import {Button} from 'reactstrap';
+import { Button } from 'reactstrap';
 import FileActionsDropdown from './FSItem/FileActionsDropdown';
 import FolderActionsDropdown from './FSItem/FolderActionsDropdown';
 import deleteFileSystemItem from '../Helpers/deleteFileSystemItem';
 import UploadFileModal from './Modals/UploadFileModal'
+import API from '../Helpers/API';
 import './FolderViewer.css';
 
 const startMaxItemCount = 100;
 const maxItemStepSize = 150;
 const bottomAppendDistance = 1000;
 
-export default function ({path, onFolderLoaded}) {
-    const [state] = useState({isUnmounted: false, loadIndex: 0});
+export default function ({ path, onFolderLoaded }) {
+    const [state] = useState({ isUnmounted: false, loadIndex: 0 });
     const [content, setContent] = useState(null);
     const [update, setUpdate] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -54,27 +55,27 @@ export default function ({path, onFolderLoaded}) {
                 <div className={`folder-viewer-file-item-content ${link ? 'folder-viewer-item-container-link' : ''}`}>
                     {link ? (
                         <Link to={link}>
-                            <FSItem item={item}/>
+                            <FSItem item={item} />
                         </Link>
                     ) : (
-                        <div>
-                            <FSItem item={item}/>
-                        </div>
-                    )}
+                            <div>
+                                <FSItem item={item} />
+                            </div>
+                        )}
                 </div>
                 {item.isFile ? (
                     <FileActionsDropdown file={item}
-                                         onDelete={() => deleteFileSystemItem(
-                                             item,
-                                             () => updateContent(true),
-                                         )}/>
+                        onDelete={() => deleteFileSystemItem(
+                            item,
+                            () => updateContent(true),
+                        )} />
                 ) : (
-                    <FolderActionsDropdown folder={item}
-                                           onDelete={() => deleteFileSystemItem(
-                                               item,
-                                               () => updateContent(true),
-                                           )}/>
-                )}
+                        <FolderActionsDropdown folder={item}
+                            onDelete={() => deleteFileSystemItem(
+                                item,
+                                () => updateContent(true),
+                            )} />
+                    )}
             </div>
         );
     }
@@ -82,14 +83,14 @@ export default function ({path, onFolderLoaded}) {
     const renderItems = (content, maxItemsCount) => {
         const items = [];
         for (let i = 0; i < content.folders.length; i++) {
-            if (items.length >= maxItemsCount) return {items, all: false};
+            if (items.length >= maxItemsCount) return { items, all: false };
             items.push(renderItem(content.folders[i]));
         }
         for (let i = 0; i < content.files.length; i++) {
-            if (items.length >= maxItemsCount) return {items, all: false};
+            if (items.length >= maxItemsCount) return { items, all: false };
             items.push(renderItem(content.files[i]));
         }
-        return {items, all: true};
+        return { items, all: true };
     }
 
     const onScroll = () => {
@@ -123,10 +124,7 @@ export default function ({path, onFolderLoaded}) {
         let content = null;
         try {
             setIsLoading(true);
-            const response = await fetch(`/api/folders/content/${encodeBase64UnicodeCustom(path)}`, {
-                credentials: 'include',
-            });
-
+            const response = await API.getFolderContent(path);
             if (response.ok) {
                 content = await response.json();
                 content.folders.forEach(f => f.isFile = false);
@@ -150,7 +148,7 @@ export default function ({path, onFolderLoaded}) {
     const parentPath = getParent(path);
     const parentUrl = `/?folder=${encodeURIComponent(parentPath)}`;
     const pathParts = !isLoading && content && content.path ? renderPathParts(content.path) : [];
-    const {items, all} = !isLoading && content ? renderItems(content, maxItemsCount) : {
+    const { items, all } = !isLoading && content ? renderItems(content, maxItemsCount) : {
         items: [],
         all: true
     };
@@ -161,22 +159,22 @@ export default function ({path, onFolderLoaded}) {
 
     return (
         <div>
-            <UploadFileModal ref={uploadFileModalRef}/>
+            <UploadFileModal ref={uploadFileModalRef} />
             <div ref={headContainerRef}
-                 className={`folder-viewer-head-container ${isOnTop ? '' : 'folder-viewer-head-sticky container'}`}>
+                className={`folder-viewer-head-container ${isOnTop ? '' : 'folder-viewer-head-sticky container'}`}>
                 <div onClick={forceUpdate}>
-                    <i className="folder-viewer-head-update-icon fa fa-retweet fa-2x"/>
+                    <i className="folder-viewer-head-update-icon fa fa-retweet fa-2x" />
                 </div>
                 <Link to={parentUrl}>
-                    <i className={`pl-2 fa fa-arrow-up fa-2x ${parentPath === null ? 'd-none' : ''}`}/>
+                    <i className={`pl-2 fa fa-arrow-up fa-2x ${parentPath === null ? 'd-none' : ''}`} />
                 </Link>
                 <div className="path pl-2 folder-viewer-head-path">
                     {pathParts}
                 </div>
                 <div className="folder-viewer-upload-container">
                     <Button color="dark" outline={true} disabled={isLoading || !(content && content.permission.write)}
-                            onClick={async () => (await uploadFileModalRef.current.show(path)) && forceUpdate()}>
-                        <i className="fa fa-upload"/>
+                        onClick={async () => (await uploadFileModalRef.current.show(path)) && forceUpdate()}>
+                        <i className="fa fa-upload" />
                     </Button>
                 </div>
             </div>
@@ -186,7 +184,7 @@ export default function ({path, onFolderLoaded}) {
                 {items}
                 {all ? null : (
                     <div className="text-center m-4">
-                        <Loading/>
+                        <Loading />
                     </div>
                 )}
             </div>
@@ -204,7 +202,7 @@ export default function ({path, onFolderLoaded}) {
                 </button>
             </div>
             <div className={isLoading ? 'center' : 'center d-none'}>
-                <Loading/>
+                <Loading />
             </div>
         </div>
     );

@@ -1,5 +1,6 @@
 ﻿import React, {useEffect, useRef, useState} from 'react';
 import {useHistory} from 'react-router-dom';
+import API from '../Helpers/API';
 import store from '../Helpers/store';
 import {closeLoadingModal, showErrorModal, showLoadingModal} from '../Helpers/storeExtensions';
 
@@ -31,18 +32,7 @@ export default function () {
         try {
             showLoadingModal();
 
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json;charset=utf-8'
-                },
-                body: JSON.stringify({
-                    Username: username,
-                    Password: password,
-                    keepLoggedIn: true,
-                }),
-                credentials: 'include'
-            });
+            const response = await API.login(username, password, true);
 
             closeLoadingModal();
             if (response.ok) {

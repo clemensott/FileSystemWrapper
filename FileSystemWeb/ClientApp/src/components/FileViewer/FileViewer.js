@@ -7,6 +7,7 @@ import PdfViewer from './PdfViewer';
 import Loading from '../Loading/Loading';
 import FileActionsDropdown from '../FSItem/FileActionsDropdown';
 import deleteFileSystemItem from '../../Helpers/deleteFileSystemItem';
+import API from '../../Helpers/API';
 import './FileViewer.css';
 
 export default function ({path, theme, onFileInfoLoaded, hideOpenFileLinkAction, onClose}) {
@@ -27,9 +28,7 @@ export default function ({path, theme, onFileInfoLoaded, hideOpenFileLinkAction,
         if (path) {
             try {
                 setIsLoading(true);
-                const response = await fetch(`/api/files/${encodeBase64UnicodeCustom(path)}/info`, {
-                    credentials: 'include',
-                });
+                const response = await API.getFileInfo(path);
 
                 if (response.ok) {
                     newFile = await response.json();

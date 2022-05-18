@@ -24,10 +24,11 @@ namespace FileSystemWeb.Controllers
             this.dbContext = dbContext;
         }
 
+        [HttpGet("")]
         [HttpGet("{encodedVirtualPath}")]
-        public async Task<ActionResult> Get(string encodedVirtualPath)
+        public async Task<ActionResult> Get(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
@@ -50,10 +51,11 @@ namespace FileSystemWeb.Controllers
             return PhysicalFile(file.PhysicalPath, contentType, true);
         }
 
+        [HttpGet("download")]
         [HttpGet("{encodedVirtualPath}/download")]
-        public async Task<ActionResult> Download(string encodedVirtualPath)
+        public async Task<ActionResult> Download(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
@@ -74,10 +76,11 @@ namespace FileSystemWeb.Controllers
             return PhysicalFile(file.PhysicalPath, contentType, file.Name);
         }
 
+        [HttpGet("exists")]
         [HttpGet("{encodedVirtualPath}/exists")]
-        public async Task<ActionResult<bool>> Exists(string encodedVirtualPath)
+        public async Task<ActionResult<bool>> Exists(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
@@ -96,10 +99,11 @@ namespace FileSystemWeb.Controllers
             return System.IO.File.Exists(file.PhysicalPath);
         }
 
+        [HttpGet("info")]
         [HttpGet("{encodedVirtualPath}/info")]
-        public async Task<ActionResult<FileItemInfo>> GetInfo(string encodedVirtualPath)
+        public async Task<ActionResult<FileItemInfo>> GetInfo(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
@@ -127,10 +131,11 @@ namespace FileSystemWeb.Controllers
             }
         }
 
+        [HttpGet("hash")]
         [HttpGet("{encodedVirtualPath}/hash")]
-        public async Task<ActionResult<string>> GetHash(string encodedVirtualPath)
+        public async Task<ActionResult<string>> GetHash(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
@@ -158,12 +163,13 @@ namespace FileSystemWeb.Controllers
             }
         }
 
+        [HttpPost("copy")]
         [HttpPost("{encodedVirtualSrcPath}/{encodedVirtualDestPath}/copy")]
-        public async Task<ActionResult> Copy(string encodedVirtualSrcPath, string encodedVirtualDestPath)
+        public async Task<ActionResult> Copy(string encodedVirtualSrcPath, string encodedVirtualDestPath, [FromQuery] string srcPath, [FromQuery] string destPath)
         {
-            string virtualSrcPath = Utils.DecodePath(encodedVirtualSrcPath);
+            string virtualSrcPath = Utils.DecodePath(encodedVirtualSrcPath ?? srcPath);
             if (virtualSrcPath == null) return BadRequest("Src encoding error");
-            string virtualDestPath = Utils.DecodePath(encodedVirtualDestPath);
+            string virtualDestPath = Utils.DecodePath(encodedVirtualDestPath ?? destPath);
             if (virtualDestPath == null) return BadRequest("Dest encoding error");
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -195,12 +201,13 @@ namespace FileSystemWeb.Controllers
             return Ok();
         }
 
+        [HttpPost("move")]
         [HttpPost("{encodedVirtualSrcPath}/{encodedVirtualDestPath}/move")]
-        public async Task<ActionResult> Move(string encodedVirtualSrcPath, string encodedVirtualDestPath)
+        public async Task<ActionResult> Move(string encodedVirtualSrcPath, string encodedVirtualDestPath, [FromQuery] string srcPath, [FromQuery] string destPath)
         {
-            string virtualSrcPath = Utils.DecodePath(encodedVirtualSrcPath);
+            string virtualSrcPath = Utils.DecodePath(encodedVirtualSrcPath ?? srcPath);
             if (virtualSrcPath == null) return BadRequest("Src encoding error");
-            string virtualDestPath = Utils.DecodePath(encodedVirtualDestPath);
+            string virtualDestPath = Utils.DecodePath(encodedVirtualDestPath ?? destPath);
             if (virtualDestPath == null) return BadRequest("Dest encoding error");
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -231,10 +238,11 @@ namespace FileSystemWeb.Controllers
         }
 
         [DisableRequestSizeLimit]
+        [HttpPost("")]
         [HttpPost("{encodedVirtualPath}")]
-        public async Task<ActionResult> Write(string encodedVirtualPath)
+        public async Task<ActionResult> Write(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
@@ -250,8 +258,8 @@ namespace FileSystemWeb.Controllers
 
             if (!file.Permission.Write) return Forbid();
 
-            string path = file.PhysicalPath;
-            string tmpPath = FileHelper.GenerateUniqueFileName(path);
+            string physicalPath = file.PhysicalPath;
+            string tmpPath = FileHelper.GenerateUniqueFileName(physicalPath);
 
             try
             {
@@ -267,10 +275,10 @@ namespace FileSystemWeb.Controllers
                     } while (size > 0);
                 }
 
-                if (tmpPath != path)
+                if (tmpPath != physicalPath)
                 {
-                    if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
-                    System.IO.File.Move(tmpPath, path);
+                    if (System.IO.File.Exists(physicalPath)) System.IO.File.Delete(physicalPath);
+                    System.IO.File.Move(tmpPath, physicalPath);
                 }
             }
             catch (Exception)
@@ -287,10 +295,11 @@ namespace FileSystemWeb.Controllers
             return Ok();
         }
 
+        [HttpDelete("")]
         [HttpDelete("{encodedVirtualPath}")]
-        public async Task<ActionResult> Delete(string encodedVirtualPath)
+        public async Task<ActionResult> Delete(string encodedVirtualPath, [FromQuery] string path)
         {
-            string virtualPath = Utils.DecodePath(encodedVirtualPath);
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
 
             InternalFile file;
