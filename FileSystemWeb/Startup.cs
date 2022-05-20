@@ -35,7 +35,7 @@ namespace FileSystemWeb
             services.ConfigureApplicationCookie(config =>
             {
                 config.Cookie.Name = "fs_login";
-                config.Cookie.HttpOnly = false;
+                config.Cookie.HttpOnly = true;
             });
 
             services.AddControllersWithViews();
