@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemCommon.Models.Share;
+using FileSystemWeb.Constants;
 using FileSystemWeb.Data;
 using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
@@ -29,6 +30,7 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpPost("file")]
+        [Authorize(Policy = Permissions.Share.PostShareFile)]
         public async Task<ActionResult<FileItem>> AddShareFile([FromBody] AddFileShareBody body)
         {
             InternalFile file;
@@ -62,6 +64,7 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpGet("files")]
+        [Authorize(Policy = Permissions.Share.GetShareFiles)]
         public async Task<ActionResult<IEnumerable<ShareItem>>> GetShareFiles()
         {
             ShareFile[] shareFiles = await dbContext.ShareFiles
@@ -72,6 +75,7 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpGet("file/{uuid}")]
+        [Authorize(Policy = Permissions.Share.GetShareFile)]
         public async Task<ActionResult<ShareItem>> GetShareFile(Guid uuid)
         {
             ShareFile shareFile = await dbContext.ShareFiles
@@ -83,6 +87,7 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpPut("file/{uuid}")]
+        [Authorize(Policy = Permissions.Share.PutShareFile)]
         public async Task<ActionResult<FileItem>> EditShareFile(Guid uuid, [FromBody] EditFileSystemItemShareBody body)
         {
             try
@@ -148,6 +153,7 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpDelete("file/{uuid}")]
+        [Authorize(Policy = Permissions.Share.DeleteShareFile)]
         public async Task<ActionResult> DeleteShareFile(Guid uuid)
         {
             ShareFile shareFile = await dbContext.ShareFiles
@@ -162,6 +168,7 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpPost("folder")]
+        [Authorize(Policy = Permissions.Share.PostShareFolder)]
         public async Task<ActionResult<FolderItem>> AddFolderShare([FromBody] AddFolderShareBody body)
         {
             InternalFolder folder;
@@ -206,6 +213,7 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpGet("folders")]
+        [Authorize(Policy = Permissions.Share.GetShareFolders)]
         public async Task<ActionResult<IEnumerable<ShareItem>>> GetShareFolders()
         {
             ShareFolder[] shareFolders = await dbContext.ShareFolders
@@ -216,6 +224,7 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpGet("folder/{uuid}")]
+        [Authorize(Policy = Permissions.Share.GetShareFolder)]
         public async Task<ActionResult<ShareItem>> GetShareFolder(Guid uuid)
         {
             ShareFolder shareFolder = await dbContext.ShareFolders
@@ -227,6 +236,7 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpPut("folder/{uuid}")]
+        [Authorize(Policy = Permissions.Share.PutShareFolder)]
         public async Task<ActionResult<FolderItem>> EditFolderShare(Guid uuid,
             [FromBody] EditFileSystemItemShareBody body)
         {
@@ -293,6 +303,7 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpDelete("folder/{uuid}")]
+        [Authorize(Policy = Permissions.Share.DeleteShareFolder)]
         public async Task<ActionResult> DeleteShareFolder(Guid uuid)
         {
             ShareFolder shareFolder = await dbContext.ShareFolders

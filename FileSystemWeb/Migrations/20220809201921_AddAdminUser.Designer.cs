@@ -3,14 +3,16 @@ using System;
 using FileSystemWeb.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FileSystemWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220809201921_AddAdminUser")]
+    partial class AddAdminUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -88,9 +90,9 @@ namespace FileSystemWeb.Migrations
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAEAACcQAAAAEBZelFpQhWYTFtlOcTvtLN0rt4fREufEjiIbwyluGH0csuemo5EVhoKzGvsGVs2CmQ==",
+                            PasswordHash = "AQAAAAEAACcQAAAAEMHBFoSWKmqC8P0o5CLNcrCCgf8uG6gUf2dU4HaxYSeqiWVt4VCXFhrUNTBCew1dOg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "5cb0a7f5-2654-4b15-a001-4afc0fa1058d",
+                            SecurityStamp = "33ead55f-df4b-4875-8d09-324e727d0eb9",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -219,15 +221,6 @@ namespace FileSystemWeb.Migrations
                         .HasName("RoleNameIndex");
 
                     b.ToTable("AspNetRoles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "0B31FD59-1205-437C-AF9C-8F831C69F200",
-                            ConcurrencyStamp = "A4CBB65E-6481-4FDC-A3A3-653030012687",
-                            Name = "share_manager",
-                            NormalizedName = "SHARE_MANAGER"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -251,78 +244,6 @@ namespace FileSystemWeb.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetRoleClaims");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ClaimType = "claims/permission",
-                            ClaimValue = "permissions.share.get_share_files",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ClaimType = "claims/permission",
-                            ClaimValue = "permissions.share.post_share_file",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            ClaimType = "claims/permission",
-                            ClaimValue = "permissions.share.get_share_file",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            ClaimType = "claims/permission",
-                            ClaimValue = "permissions.share.get_share_file",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            ClaimType = "claims/permission",
-                            ClaimValue = "permissions.share.delete_share_file",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            ClaimType = "claims/permission",
-                            ClaimValue = "permissions.share.get_share_folders",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            ClaimType = "claims/permission",
-                            ClaimValue = "permissions.share.post_share_folder",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            ClaimType = "claims/permission",
-                            ClaimValue = "permissions.share.get_share_folder",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            ClaimType = "claims/permission",
-                            ClaimValue = "permissions.share.get_share_folder",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            ClaimType = "claims/permission",
-                            ClaimValue = "permissions.share.delete_share_folder",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -383,13 +304,6 @@ namespace FileSystemWeb.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles");
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = "FAA6421E-6E8B-4B38-B963-28851886F08A",
-                            RoleId = "0B31FD59-1205-437C-AF9C-8F831C69F200"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>

@@ -1,4 +1,6 @@
 using System.IO;
+using System.Security.Claims;
+using FileSystemWeb.Constants;
 using FileSystemWeb.Data;
 using FileSystemWeb.Models;
 using Microsoft.AspNetCore.Builder;
@@ -11,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using static FileSystemWeb.Constants.Permissions;
 
 namespace FileSystemWeb
 {
@@ -31,6 +34,29 @@ namespace FileSystemWeb
             services.AddIdentity<AppUser, IdentityRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
+
+            services.AddAuthorization(options =>
+            {
+                string[] permissions = new string[]
+                {
+                    Share.GetShareFiles,
+                    Share.PostShareFile,
+                    Share.GetShareFile,
+                    Share.PutShareFile,
+                    Share.DeleteShareFile,
+                    Share.GetShareFolders,
+                    Share.PostShareFolder,
+                    Share.GetShareFolder,
+                    Share.PutShareFolder,
+                    Share.DeleteShareFolder,
+                    Users.GetAllUsers,
+                    Users.PostUser,
+                };
+                foreach (string permission in permissions)
+                {
+                    options.AddPolicy(permission, policy => policy.RequireClaim(CustomClaimTypes.Permission, permissions));
+                }
+            });
 
             services.ConfigureApplicationCookie(config =>
             {
