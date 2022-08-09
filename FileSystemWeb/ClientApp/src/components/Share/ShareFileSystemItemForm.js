@@ -107,18 +107,22 @@ export default function ({
                         <CustomInput innerRef={permissionInfoRef} type="checkbox" id="permission-info"
                                      label="info" defaultChecked={true} disabled inline/>
                         <CustomInput innerRef={permissionListRef} type="checkbox" id="permission-list" label="list"
-                                     className={isFile ? 'd-none' : ''} disabled={isEdit} inline/>
+                                     className={isFile ? 'd-none' : ''} disabled={isEdit}
+                                     defaultChecked={isEdit && item.permission.list} inline />
                         <CustomInput innerRef={permissionHashRef} type="checkbox"
-                                     id="permission-hash" label="hash" disabled={isEdit} inline/>
+                                     id="permission-hash" label="hash" disabled={isEdit}
+                                     defaultChecked={isEdit && item.permission.hash} inline/>
                         <CustomInput innerRef={permissionReadRef} type="checkbox"
-                                     id="permission-read" label="read" disabled={isEdit} inline/>
+                                     id="permission-read" label="read" disabled={isEdit}
+                                     defaultChecked={isEdit && item.permission.read} inline/>
                         <CustomInput innerRef={permissionWriteRef} type="checkbox"
-                                     id="permission-write" label="write" disabled={isEdit} inline/>
+                                     id="permission-write" label="write" disabled={isEdit}
+                                     defaultChecked={isEdit && item.permission.write} inline/>
                     </div>
                 </FormGroup>
 
                 <FormGroup>
-                    <Label for="permission">Visibility</Label>
+                    <Label for="visibility">Visibility</Label>
                     <div>
                         <CustomInput type="radio" id="is-link" name="is-listed" label="Link only"
                                      defaultChecked={defaultIsListed !== undefined ? !defaultIsListed : true}

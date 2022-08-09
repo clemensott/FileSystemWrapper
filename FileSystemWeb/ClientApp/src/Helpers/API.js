@@ -83,7 +83,6 @@ export default class API {
     }
 
     static getFolderExists(path) {
-        console.log('folder exists:', path);
         return this.fetch('/folders/exists', {
             path,
         });
@@ -125,7 +124,7 @@ export default class API {
     }
 
     static deleteShareFile(id) {
-        return this.fetch(`/share/files/${id}`, {
+        return this.fetch(`/share/file/${id}`, {
             method: 'DELETE',
         });
     }
@@ -184,6 +183,6 @@ export default class API {
     }
 
     static deleteShareItem(id, isFile) {
-        return isFile ? this.deleteShareFile(id) : this.deleteShareItem(id);
+        return isFile ? this.deleteShareFile(id) : this.deleteShareFolder(id);
     }
 }

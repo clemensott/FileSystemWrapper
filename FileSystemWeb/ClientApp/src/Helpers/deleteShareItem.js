@@ -9,7 +9,7 @@ export default async function (item, callback = null) {
 
     try {
         showLoadingModal();
-        const response = await API.deleteShareItem(item.id);
+        const response = await API.deleteShareItem(item.id, item.isFile);
         closeLoadingModal();
 
         if (response.ok) await callback && callback();
