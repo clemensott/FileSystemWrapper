@@ -194,6 +194,43 @@ namespace FileSystemWeb.Controllers
             }
         }
 
+        [HttpGet("infoWithSize")]
+        [HttpGet("{encodedVirtualPath}/infoWithSize")]
+        public async Task<ActionResult<FolderItemInfoWithSize>> GetInfoWithSize(string encodedVirtualPath, [FromQuery] string path)
+        {
+            string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
+            if (virtualPath == null) return BadRequest("Path encoding error");
+
+            InternalFolder folder;
+            try
+            {
+                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId, this);
+            }
+            catch (HttpResultException exc)
+            {
+                return exc.Result;
+            }
+
+            if (!folder.Permission.Info) return Forbid();
+
+            try
+            {
+                DirectoryInfo info = null;
+                if (!string.IsNullOrWhiteSpace(folder.PhysicalPath))
+                {
+                    info = new DirectoryInfo(folder.PhysicalPath);
+                    if (!info.Exists) return NotFound();
+                }
+
+                return FileHelper.GetInfoWithSize(folder, info);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                return NotFound("Directory not found");
+            }
+        }
+
         [HttpPost("")]
         [HttpPost("{encodedVirtualPath}")]
         public async Task<ActionResult<FolderItemInfo>> Create(string encodedVirtualPath, [FromQuery] string path)

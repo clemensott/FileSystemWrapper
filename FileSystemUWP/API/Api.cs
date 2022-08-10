@@ -103,6 +103,12 @@ namespace FileSystemUWP.API
             return Request<FolderItemInfo>(uri, HttpMethod.Get);
         }
 
+        public Task<FolderItemInfoWithSize> GetFolderInfoWithSize(string path)
+        {
+            Uri uri = GetUri("/api/folders/infoWithSize", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return Request<FolderItemInfoWithSize>(uri, HttpMethod.Get);
+        }
+
         public Task<bool> CreateFolder(string path)
         {
             Uri uri = GetUri("/api/folders", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));

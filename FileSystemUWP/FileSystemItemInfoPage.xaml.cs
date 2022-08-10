@@ -1,4 +1,6 @@
 ﻿using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Files;
+using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemUWP.API;
 using StdOttStandard.Linq;
 using StdOttUwp;
@@ -19,7 +21,7 @@ namespace FileSystemUWP
     /// </summary>
     public sealed partial class FileSystemItemInfoPage : Page
     {
-        private static FileSystemItemInfoPageViewModel viewModel;
+        private readonly FileSystemItemInfoPageViewModel viewModel;
         private bool leftPage;
         private Api api;
 
@@ -95,16 +97,26 @@ namespace FileSystemUWP
             {
                 viewModel.IsReloading = true;
 
-                object info = viewModel.Item.IsFile ?
-                    (object)await api.GetFileInfo(viewModel.Item.FullPath) :
-                    await api.GetFolderInfo(viewModel.Item.FullPath);
+                FileItemInfo? fileInfo = null;
+                FolderItemInfoWithSize? folderInfo = null;
+                if (viewModel.Item.IsFile)
+                {
+                    fileInfo = await api.GetFileInfo(viewModel.Item.FullPath);
+                }
+                else
+                {
+                    folderInfo = await api.GetFolderInfoWithSize(viewModel.Item.FullPath);
+                }
 
-
-                if (info != null) viewModel.Info = info;
+                if (fileInfo.HasValue || folderInfo.HasValue)
+                {
+                    viewModel.FileInfo = fileInfo;
+                    viewModel.FolderInfo = folderInfo;
+                }
                 else if (!leftPage)
                 {
                     await DialogUtils.ShowSafeAsync("Loading infos failed");
-                    Frame.GoBack();
+                    if (!leftPage) Frame.GoBack();
                 }
 
             }
@@ -113,7 +125,7 @@ namespace FileSystemUWP
                 if (leftPage) return;
 
                 await DialogUtils.ShowSafeAsync(exc.Message, "Load infos error");
-                Frame.GoBack();
+                if (!leftPage) Frame.GoBack();
             }
             finally
             {
@@ -125,7 +137,8 @@ namespace FileSystemUWP
         {
             private bool isReloading;
             private FileSystemItem item;
-            private object info;
+            private FileItemInfo? fileInfo;
+            private FolderItemInfoWithSize? folderInfo;
 
             public bool IsReloading
             {
@@ -153,15 +166,36 @@ namespace FileSystemUWP
 
             public object Info
             {
-                get => info;
+                get => (object)FileInfo ?? FolderInfo;
+            }
+
+
+            public FileItemInfo? FileInfo
+            {
+                get => fileInfo;
                 set
                 {
-                    if (value == info) return;
+                    if (Equals(value, fileInfo)) return;
 
-                    info = value;
+                    fileInfo = value;
+                    OnPropertyChanged(nameof(FileInfo));
                     OnPropertyChanged(nameof(Info));
                 }
             }
+
+            public FolderItemInfoWithSize? FolderInfo
+            {
+                get => folderInfo;
+                set
+                {
+                    if (Equals(value, folderInfo)) return;
+
+                    folderInfo = value;
+                    OnPropertyChanged(nameof(FolderInfo));
+                    OnPropertyChanged(nameof(Info));
+                }
+            }
+
 
             public event PropertyChangedEventHandler PropertyChanged;
 

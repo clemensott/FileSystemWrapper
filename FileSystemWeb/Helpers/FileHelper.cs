@@ -83,12 +83,28 @@ namespace FileSystemWeb.Helpers
 
         public static FolderItemInfo GetInfo(InternalFolder folder, DirectoryInfo info)
         {
+            return new FolderItemInfo()
+            {
+                Name = folder.Name,
+                Path = folder.VirtualPath,
+                SharedId = folder.SharedId,
+                Permission = folder.Permission,
+                Deletable = info != null && info.FullName != info.Root.FullName,
+                LastAccessTime = info?.LastAccessTime ?? DateTime.MinValue,
+                LastWriteTime = info?.LastWriteTime ?? DateTime.MinValue,
+                CreationTime = info?.CreationTime ?? DateTime.MinValue,
+                Attributes = info?.Attributes ?? FileAttributes.Directory,
+            };
+        }
+
+        public static FolderItemInfoWithSize GetInfoWithSize(InternalFolder folder, DirectoryInfo info)
+        {
             int count;
             long size;
             if (info == null) GetFileCountAndSize(out count, out size);
             else GetFileCountAndSize(info, out count, out size);
 
-            return new FolderItemInfo()
+            return new FolderItemInfoWithSize()
             {
                 Name = folder.Name,
                 Path = folder.VirtualPath,

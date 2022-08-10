@@ -3,7 +3,7 @@ using System.IO;
 
 namespace FileSystemCommon.Models.FileSystem.Folders
 {
-    public struct FolderItemInfo : IFolderItem
+    public struct FolderItemInfoWithSize : IFolderItem
     {
         public string Name { get; set; }
 
@@ -14,6 +14,10 @@ namespace FileSystemCommon.Models.FileSystem.Folders
         public FolderItemPermission Permission { get; set; }
 
         public bool Deletable { get; set; }
+
+        public int FileCount { get; set; }
+
+        public long Size { get; set; }
 
         public DateTime LastWriteTime { get; set; }
 
