@@ -1,4 +1,5 @@
-﻿using FileSystemUWP.API;
+﻿using FileSystemCommon.Models.FileSystem.Content;
+using FileSystemUWP.API;
 using FileSystemUWP.Controls;
 using FileSystemUWP.FileViewers;
 using FileSystemUWP.Picker;
@@ -12,7 +13,8 @@ namespace FileSystemUWP
     {
         private bool isLoading, isRestoreItemFile;
         private string currentFolderPath;
-        private FileSystemItemName? restoreFileSystemItem;
+        private FileSystemItemSortBy sortBy;
+        private FileSystemSortItem? restoreFileSystemItem;
         private Api api;
 
         public bool IsLoading
@@ -51,7 +53,19 @@ namespace FileSystemUWP
             }
         }
 
-        public FileSystemItemName? RestoreFileSystemItem
+        public FileSystemItemSortBy SortBy
+        {
+            get => sortBy;
+            set
+            {
+                if (Equals(value, sortBy)) return;
+
+                sortBy = value;
+                OnPropertyChanged(nameof(SortBy));
+            }
+        }
+
+        public FileSystemSortItem? RestoreFileSystemItem
         {
             get => restoreFileSystemItem;
             set

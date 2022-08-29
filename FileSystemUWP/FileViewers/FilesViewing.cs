@@ -1,4 +1,5 @@
 ﻿using FileSystemUWP.API;
+using FileSystemUWP.Models;
 using System.Collections.Generic;
 
 namespace FileSystemUWP.FileViewers

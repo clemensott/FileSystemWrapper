@@ -1,5 +1,6 @@
 ﻿using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemUWP.API;
@@ -407,13 +408,13 @@ namespace FileSystemUWP.Sync.Handling
                 IAsyncOperation<IReadOnlyList<StorageFile>> localFilesTask = localFolder?.GetFilesAsync();
 
                 FolderContent serverFolderContent = await serverFolderContentTask ?? new FolderContent();
-                FileItem[] serverFiles = serverFolderContent.Files ?? new FileItem[0];
+                FileSortItem[] serverFiles = serverFolderContent.Files ?? new FileSortItem[0];
                 List<StorageFile> localFiles = localFilesTask != null ?
                     (await localFilesTask).ToList() : new List<StorageFile>();
 
                 if (IsCanceled) return;
 
-                foreach (FileItem serverFile in serverFiles)
+                foreach (FileSortItem serverFile in serverFiles)
                 {
                     if (!CheckWhitelistAndBlacklist(serverFile.Path)) continue;
 
@@ -449,11 +450,11 @@ namespace FileSystemUWP.Sync.Handling
 
                 IAsyncOperation<IReadOnlyList<StorageFolder>> localSubFoldersTask = localFolder?.GetFoldersAsync();
 
-                FolderItem[] serverSubFolders = serverFolderContent.Folders ?? new FolderItem[0];
+                FolderSortItem[] serverSubFolders = serverFolderContent.Folders ?? new FolderSortItem[0];
                 List<StorageFolder> localSubFolders = localSubFoldersTask != null ?
                     (await localSubFoldersTask).ToList() : new List<StorageFolder>();
 
-                foreach (FolderItem serverSubFolder in serverSubFolders)
+                foreach (FolderSortItem serverSubFolder in serverSubFolders)
                 {
                     int index;
                     string relSubFolderPath = Utils.JoinPaths(relPath, serverSubFolder.Name);

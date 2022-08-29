@@ -15,8 +15,8 @@ import LoadingModal from './components/Modals/LoadingModal';
 import ErrorModal from './components/Modals/ErrorModal';
 import store from './Helpers/store'
 import { getAllRefs } from './Helpers/storeExtensions';
-import './App.css';
 import API from './Helpers/API';
+import './App.css';
 
 export default function () {
     useEffect(() => {

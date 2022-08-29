@@ -2,7 +2,7 @@
 using System;
 using Windows.Storage;
 
-namespace FileSystemUWP
+namespace FileSystemUWP.Models
 {
     class Settings : AppDataContainerObject
     {

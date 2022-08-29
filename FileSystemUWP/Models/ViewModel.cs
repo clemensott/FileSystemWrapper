@@ -2,7 +2,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
-namespace FileSystemUWP
+namespace FileSystemUWP.Models
 {
     class ViewModel : INotifyPropertyChanged
     {

@@ -1,4 +1,5 @@
-﻿using FileSystemUWP.SettingsStorage;
+﻿using FileSystemUWP.Models;
+using FileSystemUWP.SettingsStorage;
 using FileSystemUWP.Sync.Definitions;
 using FileSystemUWP.Sync.Handling;
 using StdOttStandard.Linq;
@@ -159,7 +160,7 @@ namespace FileSystemUWP
                         Settings.Current.OnStorageException(new Exception($"ViewModel not loaded from {debug}. {viewModel.Servers.Count} servers"));
                         return;
                     }
-                    if (viewModel.Servers.Count == 0 || true)
+                    if (viewModel.Servers.Count == 0)
                     {
                         Settings.Current.OnStorageException(new Exception($"No Servers stored from: {debug}"));
                     }
@@ -196,8 +197,16 @@ namespace FileSystemUWP
             BackgroundTaskDeferral deferral = args.TaskInstance.GetDeferral();
             BackgroundTaskHelper.Current.IsRunning = true;
 
+            if (!viewModel.IsLoaded)
+            {
+                System.Diagnostics.Debug.WriteLine($"on background1: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
+                await LoadViewModel();
+                System.Diagnostics.Debug.WriteLine($"on background1.1: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
+            }
+
             try
             {
+                System.Diagnostics.Debug.WriteLine($"on background2: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
                 //if (args.TaskInstance.Task.Name == BackgroundTaskHelper.TimerBackgroundTaskBuilderName)
                 //{
                 //    Settings.Current.SyncTimerTime = DateTime.Now;
@@ -205,6 +214,7 @@ namespace FileSystemUWP
                 //}
 
                 Queue<SyncPairHandler> syncs = BackgroundTaskHelper.Current.Queue;
+                System.Diagnostics.Debug.WriteLine($"on background3: {syncs.Count}");
                 while (syncs.Count > 0)
                 {
                     SyncPairHandler handler = syncs.Dequeue();
@@ -218,16 +228,19 @@ namespace FileSystemUWP
                         sync.Result = handler.NewResult.ToArray();
                     }
                 }
+                System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
             }
             catch (Exception e)
             {
+                System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count} | {e.Message}");
                 Settings.Current.OnSyncException(e);
             }
             finally
             {
+                System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
                 BackgroundTaskHelper.Current.IsRunning = false;
 
-                await SaveViewModel("sync finished");
+                await StoreViewModel("sync finished");
                 deferral.Complete();
             }
         }

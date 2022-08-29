@@ -1,5 +1,7 @@
 ﻿using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemUWP.API;
+using FileSystemUWP.Models;
 using StdOttStandard.Linq;
 using StdOttUwp;
 using System;
@@ -37,6 +39,15 @@ namespace FileSystemUWP.Picker
 
         public static readonly DependencyProperty CurrentFolderNamePathProperty = DependencyProperty.Register("CurrentFolderNamePath",
             typeof(string), typeof(PickerControl), new PropertyMetadata(null));
+
+        public static readonly DependencyProperty SortByProperty =
+            DependencyProperty.Register(nameof(SortBy), typeof(FileSystemItemSortBy), typeof(PickerControl),
+                new PropertyMetadata(default(FileSystemItemSortBy), OnSortByPropertyChanged));
+
+        private static async void OnSortByPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            await ((PickerControl)sender).UpdateContent();
+        }
 
         public static readonly DependencyProperty ApiProperty = DependencyProperty.Register("Api",
             typeof(Api), typeof(PickerControl), new PropertyMetadata(null, OnApiPropertyChanged));
@@ -86,6 +97,12 @@ namespace FileSystemUWP.Picker
         {
             get => (string)GetValue(CurrentFolderNamePathProperty);
             private set => SetValue(CurrentFolderNamePathProperty, value);
+        }
+
+        public FileSystemItemSortBy SortBy
+        {
+            get => (FileSystemItemSortBy)GetValue(SortByProperty);
+            set => SetValue(SortByProperty, value);
         }
 
         public Api Api
@@ -164,7 +181,7 @@ namespace FileSystemUWP.Picker
             return null;
         }
 
-        internal FileSystemItemName? GetCenteredFileSystemItemName()
+        internal FileSystemSortItem? GetCenteredFileSystemSortItem()
         {
             double scrolledFactor = svrItems.VerticalOffset / svrItems.ExtentHeight;
             int index = (int)Math.Floor(scrolledFactor * currentItems.Count);
@@ -172,12 +189,12 @@ namespace FileSystemUWP.Picker
             FileSystemItem item;
             if (currentItems.TryElementAt(index, out item))
             {
-                return new FileSystemItemName(item.IsFile, item.Name);
+                return new FileSystemSortItem(item.IsFile, item.SortKeys);
             }
             return null;
         }
 
-        internal void ScrollToFileItemName(FileSystemItemName itemName)
+        internal void ScrollToFileItemName(FileSystemSortItem itemName)
         {
             FileSystemItem? item = currentItems.GetNearestItem(itemName);
             if (item.HasValue) lvwItems.ScrollIntoView(item, ScrollIntoViewAlignment.Leading);
@@ -230,7 +247,8 @@ namespace FileSystemUWP.Picker
 
             if (!Type.HasFlag(FileSystemItemViewType.Folders) || api == null) return;
 
-            FolderContent content = api != null ? await api.FolderContent(path) : null;
+            FolderContent content = api != null ?
+                await api.FolderContent(path, SortBy.Type, SortBy.Direction) : null;
             if (path != currentUpdatePath) return;
 
             currentItems.SetFolders((content?.Folders).ToNotNull()

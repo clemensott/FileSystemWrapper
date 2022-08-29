@@ -13,6 +13,12 @@ namespace FileSystemCommon.Models.FileSystem.Folders
 
         public FolderItemPermission Permission { get; set; }
 
+        IFileSystemItemPermission IFileSystemItem.Permission
+        {
+            get => Permission;
+            set => Permission = (FolderItemPermission)value;
+        }
+
         public bool Deletable { get; set; }
 
         public int FileCount { get; set; }

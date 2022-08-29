@@ -129,7 +129,7 @@
     <Compile Include="Controls\BackgroundOperationsControl.xaml.cs">
       <DependentUpon>BackgroundOperationsControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="FileSystemItem.cs" />
+    <Compile Include="Models\FileSystemItem.cs" />
     <Compile Include="FileSystemItemInfoPage.xaml.cs">
       <DependentUpon>FileSystemItemInfoPage.xaml</DependentUpon>
     </Compile>
@@ -161,9 +161,12 @@
     </Compile>
     <Compile Include="Picker\ConflictType.cs" />
     <Compile Include="Picker\FileSystemItemCollection.cs" />
-    <Compile Include="Picker\FileSystemItemName.cs" />
+    <Compile Include="Picker\FileSystemSortItem.cs" />
     <Compile Include="Picker\FileSystemItemViewType.cs" />
     <Compile Include="Picker\FileSystemPickType.cs" />
+    <Compile Include="Picker\FileSystemSortSelector.xaml.cs">
+      <DependentUpon>FileSystemSortSelector.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Picker\FolderPicker.cs" />
     <Compile Include="Picker\FolderPicking.cs" />
     <Compile Include="Picker\NamePickerPage.xaml.cs">
@@ -181,8 +184,8 @@
       <DependentUpon>ServerExplorerPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="API\Server.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="SettingsStorage\FileSystemItemNameStore.cs" />
+    <Compile Include="Models\Settings.cs" />
+    <Compile Include="SettingsStorage\FileSystemSortItemStore.cs" />
     <Compile Include="SettingsStorage\ServerStore.cs" />
     <Compile Include="SettingsStorage\Store.cs" />
     <Compile Include="SettingsStorage\SyncPairStore.cs" />
@@ -219,12 +222,17 @@
       <DependentUpon>SyncPairsPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="UiUtils.cs" />
-    <Compile Include="ViewModel.cs" />
+    <Compile Include="Models\ViewModel.cs" />
+    <Compile Include="Util\FileSystemItemComparer.cs" />
+    <Compile Include="Util\FileSystemSortSelectorDialog.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+    <None Include="..\.editorconfig">
+      <Link>.editorconfig</Link>
+    </None>
     <None Include="FileSystemUWP_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
@@ -320,6 +328,10 @@
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Picker\FileSystemSortSelector.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Picker\NamePickerPage.xaml">
       <SubType>Designer</SubType>

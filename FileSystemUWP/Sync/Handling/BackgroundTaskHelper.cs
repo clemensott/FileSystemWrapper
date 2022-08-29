@@ -1,4 +1,5 @@
 ﻿using FileSystemUWP.API;
+using FileSystemUWP.Models;
 using FileSystemUWP.Sync.Definitions;
 using System;
 using System.Collections.Generic;

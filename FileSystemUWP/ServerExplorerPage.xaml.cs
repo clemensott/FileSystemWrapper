@@ -1,8 +1,11 @@
 ﻿using FileSystemCommon;
+using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemUWP.API;
 using FileSystemUWP.FileViewers;
+using FileSystemUWP.Models;
 using FileSystemUWP.Picker;
 using FileSystemUWP.Sync.Definitions;
+using FileSystemUWP.Util;
 using StdOttStandard.Linq;
 using StdOttUwp;
 using System;
@@ -49,7 +52,7 @@ namespace FileSystemUWP
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
             viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
-            viewModel.RestoreFileSystemItem = pcView.GetCenteredFileSystemItemName();
+            viewModel.RestoreFileSystemItem = pcView.GetCenteredFileSystemSortItem();
 
             Application.Current.EnteredBackground -= Application_EnteredBackground;
             Application.Current.LeavingBackground -= Application_LeavingBackground;
@@ -61,7 +64,7 @@ namespace FileSystemUWP
         private void Application_EnteredBackground(object sender, EnteredBackgroundEventArgs e)
         {
             viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
-            viewModel.RestoreFileSystemItem = pcView.GetCenteredFileSystemItemName();
+            viewModel.RestoreFileSystemItem = pcView.GetCenteredFileSystemSortItem();
         }
 
         private async void Application_LeavingBackground(object sender, LeavingBackgroundEventArgs e)
@@ -86,7 +89,8 @@ namespace FileSystemUWP
                     if (isAway) return false;
                     if (ping) return true;
 
-                    ContentDialogResult result = await DialogUtils.ShowContentAsync("Connecting to Server failed", null, "Back", "Retry", "Change Settings");
+                    ContentDialogResult result = await DialogUtils.ShowContentAsync("Connecting to Server failed",
+                        null, "Back", "Retry", "Change Settings");
 
                     if (isAway) return false;
                     if (result == ContentDialogResult.Primary) continue;
@@ -212,8 +216,11 @@ namespace FileSystemUWP
         {
             try
             {
-                FileSystemItemName? lastFolder = null;
-                if (pcView.CurrentFolder.HasValue) lastFolder = new FileSystemItemName(false, pcView.CurrentFolder.Value.Name);
+                FileSystemSortItem? lastFolder = null;
+                if (pcView.CurrentFolder.HasValue)
+                {
+                    lastFolder = new FileSystemSortItem(false, pcView.CurrentFolder.Value.SortKeys);
+                }
 
                 await pcView.SetParent();
                 if (lastFolder.HasValue)
@@ -289,16 +296,13 @@ namespace FileSystemUWP
             Frame.Navigate(typeof(SyncPairsPage), viewModel);
         }
 
-        private void AbbDetails_Loaded(object sender, RoutedEventArgs e)
+        private async void AbbChangeSorting_Click(object sender, RoutedEventArgs e)
         {
-            abbDetails.IsEnabled = pcView.CurrentFolder.HasValue;
-        }
-
-        private void AbbDetails_Click(object sender, RoutedEventArgs e)
-        {
-            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
-
-            Frame.Navigate(typeof(FileSystemItemInfoPage), (pcView.CurrentFolder.Value, viewModel.Api));
+            FileSystemItemSortBy? result = await FileSystemSortSelectorDialog.Start(viewModel.SortBy);
+            if (result.HasValue)
+            {
+                viewModel.SortBy = result.Value;
+            }
         }
 
         private async void AbbDeleteFolder_Click(object sender, RoutedEventArgs e)
@@ -360,6 +364,18 @@ namespace FileSystemUWP
                 () => viewModel.Api.UploadFile(path, srcFile),
                 viewModel.BackgroundOperations, "Uploading file...");
             await pcView.UpdateCurrentFolderItems();
+        }
+
+        private void AbbDetails_Loaded(object sender, RoutedEventArgs e)
+        {
+            abbDetails.IsEnabled = pcView.CurrentFolder.HasValue;
+        }
+
+        private void AbbDetails_Click(object sender, RoutedEventArgs e)
+        {
+            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
+
+            Frame.Navigate(typeof(FileSystemItemInfoPage), (pcView.CurrentFolder.Value, viewModel.Api));
         }
     }
 }

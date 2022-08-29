@@ -1,5 +1,6 @@
 ﻿using FileSystemUWP.API;
 using FileSystemUWP.Controls;
+using FileSystemUWP.Models;
 using FileSystemUWP.Picker;
 using FileSystemUWP.Sync.Definitions;
 using StdOttStandard;
@@ -44,6 +45,7 @@ namespace FileSystemUWP.SettingsStorage
                     Username = server.Username,
                     RawCookies = server.RawCookies,
                 },
+                SortBy = server.SortBy,
                 CurrentFolderPath = server.CurrentFolderPath,
                 RestoreFileSystemItem = CreateFileSystemItemName(server.RestoreFileSystemItem),
             };
@@ -65,11 +67,11 @@ namespace FileSystemUWP.SettingsStorage
             };
         }
 
-        private static FileSystemItemName? CreateFileSystemItemName(FileSystemItemNameStore? item)
+        private static FileSystemSortItem? CreateFileSystemItemName(FileSystemSortItemStore? item)
         {
             if (item.HasValue)
             {
-                return new FileSystemItemName(item.Value.IsFile, item.Value.Name);
+                return new FileSystemSortItem(item.Value.IsFile, item.Value.SortKeys?.ToList().AsReadOnly());
             }
             return null;
         }
@@ -106,6 +108,7 @@ namespace FileSystemUWP.SettingsStorage
                 Username = viewModel.Api.Username,
                 RawCookies = viewModel.Api.RawCookies,
                 CurrentFolderPath = viewModel.CurrentFolderPath,
+                SortBy = viewModel.SortBy,
                 RestoreFileSystemItem = CreateFileSystemItemNameStore(viewModel.RestoreFileSystemItem),
                 SyncPairs = viewModel.Syncs.Select(CreateSyncPairStore).ToArray(),
             };
@@ -128,14 +131,14 @@ namespace FileSystemUWP.SettingsStorage
             };
         }
 
-        private static FileSystemItemNameStore? CreateFileSystemItemNameStore(FileSystemItemName? item)
+        private static FileSystemSortItemStore? CreateFileSystemItemNameStore(FileSystemSortItem? item)
         {
             if (item.HasValue)
             {
-                return new FileSystemItemNameStore()
+                return new FileSystemSortItemStore()
                 {
                     IsFile = item.Value.IsFile,
-                    Name = item.Value.Name,
+                    SortKeys = item.Value.SortKeys?.ToArray(),
                 };
             }
             return null;

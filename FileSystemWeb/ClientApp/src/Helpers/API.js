@@ -76,9 +76,19 @@ export default class API {
         });
     }
 
-    static getFolderContent(path) {
+    static getFolderContent(path, sortType = undefined, sortDirection = undefined) {
         return this.fetch('/folders/content', {
             path,
+            query: [
+                {
+                    key: 'sortType',
+                    value: sortType,
+                },
+                {
+                    key: 'sortDirection',
+                    value: sortDirection,
+                }
+            ].filter(q => q.value),
         });
     }
 

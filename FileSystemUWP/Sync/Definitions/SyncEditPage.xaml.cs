@@ -1,5 +1,6 @@
 ﻿using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Folders;
 using StdOttStandard.Linq;
 using System;
@@ -118,12 +119,12 @@ namespace FileSystemUWP.Sync.Definitions
 
                 if (content?.Folders != null)
                 {
-                    foreach (FolderItem folder in content.Folders)
+                    foreach (FolderSortItem folder in content.Folders)
                     {
                         folderPaths[content.Path.GetChildPathParts(folder).GetNamePath().TrimEnd(Path.DirectorySeparatorChar)] = folder.Path;
                     }
 
-                    FolderItem currentFolder;
+                    FolderSortItem currentFolder;
                     if (folderName.Length == 0) edit.Sync.ServerPath = content.Path;
                     else if (content.Folders.TryFirst(f => f.Name == folderName, out currentFolder) ||
                         content.Folders.TrySingle(f => f.Name.ToLower() == searchKey, out currentFolder))
@@ -154,16 +155,6 @@ namespace FileSystemUWP.Sync.Definitions
 
             sender.Text = Utils.JoinPaths(parentPath, suggestion.Name) + '\\';
             sender.Focus(FocusState.Keyboard);
-        }
-
-        private async void TbxServerPath_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            sinServerPathValid.Symbol = Symbol.Help;
-
-            TextBox tbx = (TextBox)sender;
-            bool exists = await edit.Api.FolderExists(tbx.Text);
-
-            sinServerPathValid.Symbol = exists ? Symbol.Accept : Symbol.Dislike;
         }
 
         private async void IbnSelectLocalFolder_Click(object sender, RoutedEventArgs e)

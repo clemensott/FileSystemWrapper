@@ -1,4 +1,4 @@
-﻿using FileSystemUWP.Picker;
+﻿using FileSystemCommon.Models.FileSystem.Content;
 
 namespace FileSystemUWP.SettingsStorage
 {
@@ -14,7 +14,9 @@ namespace FileSystemUWP.SettingsStorage
 
         public string CurrentFolderPath { get; set; }
 
-        public FileSystemItemNameStore? RestoreFileSystemItem { get; set; }
+        public FileSystemItemSortBy SortBy { get; set; }
+
+        public FileSystemSortItemStore? RestoreFileSystemItem { get; set; }
 
         public SyncPairStore[] SyncPairs { get; set; }
     }

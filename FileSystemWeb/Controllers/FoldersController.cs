@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemWeb.Data;
@@ -50,7 +51,9 @@ namespace FileSystemWeb.Controllers
 
         [HttpGet("content")]
         [HttpGet("content/{encodedVirtualPath}")]
-        public async Task<ActionResult<FolderContent>> ListFolders(string encodedVirtualPath, [FromQuery] string path)
+        public async Task<ActionResult<FolderContent>> ListFolders(string encodedVirtualPath, [FromQuery] string path,
+            [FromQuery] FileSystemItemSortType sortType = FileSystemItemSortType.Name,
+            [FromQuery] FileSystemItemSortDirection sortDirection = FileSystemItemSortDirection.ASC)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path ?? string.Empty);
             if (virtualPath == null) return BadRequest("Path encoding error");
@@ -58,32 +61,7 @@ namespace FileSystemWeb.Controllers
 
             if (string.IsNullOrWhiteSpace(virtualPath))
             {
-                return new FolderContent()
-                {
-                    Path = new PathPart[0],
-                    Permission = new FileSystemCommon.Models.FileSystem.Folders.FolderItemPermission()
-                    {
-                        Read = false,
-                        List = true,
-                        Info = false,
-                        Hash = false,
-                        Write = false,
-                    },
-                    Folders = (await dbContext.ShareFolders
-                            .Where(f => f.IsListed && (f.UserId == null || f.UserId == userId))
-                            .Include(f => f.Permission)
-                            .ToArrayAsync())
-                        .Where(f => string.IsNullOrWhiteSpace(f.Path) || Directory.Exists(f.Path))
-                        .Select(f => f.ToFolderItem())
-                        .OrderBy(f => f.Name).ToArray(),
-                    Files = (await dbContext.ShareFiles
-                            .Where(f => f.IsListed && (f.UserId == null || f.UserId == userId))
-                            .Include(f => f.Permission)
-                            .ToArrayAsync())
-                        .Where(f => System.IO.File.Exists(f.Path))
-                        .Select(f => f.ToFileItem())
-                        .OrderBy(f => f.Name).ToArray(),
-                };
+                return await FolderContentHelper.FromRoot(dbContext, userId, sortType, sortDirection);
             }
 
             InternalFolder folder;
@@ -100,13 +78,7 @@ namespace FileSystemWeb.Controllers
 
             try
             {
-                return new FolderContent()
-                {
-                    Path = FileHelper.GetPathParts(folder),
-                    Permission = folder.Permission,
-                    Folders = GetFolders(folder).OrderBy(f => f.Name).ToArray(),
-                    Files = GetFiles(folder).OrderBy(f => f.Name).ToArray(),
-                };
+                return FolderContentHelper.FromFolder(folder, sortType, sortDirection);
             }
             catch (DirectoryNotFoundException)
             {

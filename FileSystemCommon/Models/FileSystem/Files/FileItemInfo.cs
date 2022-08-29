@@ -15,6 +15,12 @@ namespace FileSystemCommon.Models.FileSystem.Files
 
         public FileItemPermission Permission { get; set; }
 
+        IFileSystemItemPermission IFileSystemItem.Permission
+        {
+            get => Permission;
+            set => Permission = (FileItemPermission)value;
+        }
+
         public long Size { get; set; }
 
         public DateTime LastWriteTime { get; set; }

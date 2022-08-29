@@ -29,7 +29,8 @@
 
         <ctl:BackgroundOperationsControl Margin="5,2" Operations="{Binding BackgroundOperations}"/>
 
-        <pick:PickerControl Grid.Row="1" Grid.RowSpan="2" x:Name="pcView" Api="{Binding Api}"
+        <pick:PickerControl Grid.Row="1" Grid.RowSpan="2" x:Name="pcView"
+                            SortBy="{Binding SortBy}" Api="{Binding Api}"
                             Loaded="PcView_Loaded" FileSelected="PcView_FileSelected">
             <pick:PickerControl.FolderMenuFlyout>
                 <MenuFlyout>
@@ -75,8 +76,7 @@
                 <AppBarButton Icon="Up" Label="To parent" Click="AbbParent_Click"/>
                 <AppBarButton Icon="Refresh" Label="Refresh" Click="AbbRefesh_Click"
                               IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
-                <AppBarButton x:Name="abbDetails" Icon="List" Label="Details"
-                              Loaded="AbbDetails_Loaded" Click="AbbDetails_Click" />
+                <AppBarButton Icon="Sort" Label="Change Soring" Click="AbbChangeSorting_Click"/>
             </CommandBar.PrimaryCommands>
             <CommandBar.SecondaryCommands>
                 <AppBarButton Icon="Delete" Label="Delete" Click="AbbDeleteFolder_Click"
@@ -87,6 +87,9 @@
                               IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
                 <AppBarSeparator />
                 <AppBarButton Icon="Sync" Label="Open syncs" Click="AbbOpenSyncs_Click"/>
+                <AppBarSeparator />
+                <AppBarButton x:Name="abbDetails" Icon="List" Label="Details"
+                              Loaded="AbbDetails_Loaded" Click="AbbDetails_Click" />
             </CommandBar.SecondaryCommands>
         </CommandBar>
     </Page.BottomAppBar>

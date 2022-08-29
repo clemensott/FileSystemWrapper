@@ -1,14 +1,15 @@
 ﻿import React, { useEffect, useState, useRef } from 'react';
-import FSItem from './FSItem/FSItem'
-import { getParent, getName } from '../Helpers/Path'
+import FSItem from '../FSItem/FSItem'
+import { getParent, getName } from '../../Helpers/Path'
 import { Link } from 'react-router-dom';
-import Loading from './Loading/Loading';
-import { Button } from 'reactstrap';
-import FileActionsDropdown from './FSItem/FileActionsDropdown';
-import FolderActionsDropdown from './FSItem/FolderActionsDropdown';
-import deleteFileSystemItem from '../Helpers/deleteFileSystemItem';
-import UploadFileModal from './Modals/UploadFileModal'
-import API from '../Helpers/API';
+import Loading from '../Loading/Loading';
+import FileActionsDropdown from '../FSItem/FileActionsDropdown';
+import FolderActionsDropdown from '../FSItem/FolderActionsDropdown';
+import FolderSortButton from './FolderSortButton';
+import UploadFileButton from './UploadFileButton';
+import deleteFileSystemItem from '../../Helpers/deleteFileSystemItem';
+import API from '../../Helpers/API';
+import useSortByState from '../../Helpers/useSortByState';
 import './FolderViewer.css';
 
 const startMaxItemCount = 100;
@@ -17,6 +18,7 @@ const bottomAppendDistance = 1000;
 
 export default function ({ path, onFolderLoaded }) {
     const [state] = useState({ isUnmounted: false, loadIndex: 0 });
+    const [sortBy, setSortBy] = useSortByState('home-page');
     const [content, setContent] = useState(null);
     const [update, setUpdate] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -25,7 +27,6 @@ export default function ({ path, onFolderLoaded }) {
 
     const forceUpdate = () => setUpdate(!update);
 
-    const uploadFileModalRef = useRef();
     const headContainerRef = useRef();
 
     const renderPathParts = (parts) => {
@@ -58,24 +59,18 @@ export default function ({ path, onFolderLoaded }) {
                             <FSItem item={item} />
                         </Link>
                     ) : (
-                            <div>
-                                <FSItem item={item} />
-                            </div>
-                        )}
+                        <div>
+                            <FSItem item={item} />
+                        </div>
+                    )}
                 </div>
                 {item.isFile ? (
                     <FileActionsDropdown file={item}
-                        onDelete={() => deleteFileSystemItem(
-                            item,
-                            () => updateContent(true),
-                        )} />
+                        onDelete={() => deleteFileSystemItem(item, () => updateContent(true))} />
                 ) : (
-                        <FolderActionsDropdown folder={item}
-                            onDelete={() => deleteFileSystemItem(
-                                item,
-                                () => updateContent(true),
-                            )} />
-                    )}
+                    <FolderActionsDropdown folder={item}
+                        onDelete={() => deleteFileSystemItem(item, () => updateContent(true))} />
+                )}
             </div>
         );
     }
@@ -124,7 +119,7 @@ export default function ({ path, onFolderLoaded }) {
         let content = null;
         try {
             setIsLoading(true);
-            const response = await API.getFolderContent(path);
+            const response = await API.getFolderContent(path, sortBy.type, sortBy.direction);
             if (response.ok) {
                 content = await response.json();
                 content.folders.forEach(f => f.isFile = false);
@@ -143,7 +138,7 @@ export default function ({ path, onFolderLoaded }) {
 
     useEffect(() => {
         updateContent();
-    }, [path, update]);
+    }, [path, sortBy, update]);
 
     const parentPath = getParent(path);
     const parentUrl = `/?folder=${encodeURIComponent(parentPath)}`;
@@ -159,7 +154,6 @@ export default function ({ path, onFolderLoaded }) {
 
     return (
         <div>
-            <UploadFileModal ref={uploadFileModalRef} />
             <div ref={headContainerRef}
                 className={`folder-viewer-head-container ${isOnTop ? '' : 'folder-viewer-head-sticky container'}`}>
                 <div onClick={forceUpdate}>
@@ -171,12 +165,8 @@ export default function ({ path, onFolderLoaded }) {
                 <div className="path pl-2 folder-viewer-head-path">
                     {pathParts}
                 </div>
-                <div className="folder-viewer-upload-container">
-                    <Button color="dark" outline={true} disabled={isLoading || !(content && content.permission.write)}
-                        onClick={async () => (await uploadFileModalRef.current.show(path)) && forceUpdate()}>
-                        <i className="fa fa-upload" />
-                    </Button>
-                </div>
+                <FolderSortButton sortBy={sortBy} onSortByChange={setSortBy} />
+                <UploadFileButton path={path} disabled={isLoading || !(content && content.permission.write)} />
             </div>
             <div className="folder-viewer-list" style={{
                 paddingTop: `${!isOnTop && headContainerRef.current && headContainerRef.current.offsetHeight || 0}px`

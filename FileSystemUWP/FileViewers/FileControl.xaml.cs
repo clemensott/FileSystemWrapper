@@ -1,5 +1,6 @@
 ﻿using FileSystemCommon;
 using FileSystemUWP.API;
+using FileSystemUWP.Models;
 using System;
 using System.IO;
 using System.Threading.Tasks;

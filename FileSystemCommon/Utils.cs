@@ -189,5 +189,10 @@ namespace FileSystemCommon
 
             return builder.ToString();
         }
+
+        public static string FormatSizeSortable(long size)
+        {
+            return size.ToString().PadLeft(15, '0');
+        }
     }
 }

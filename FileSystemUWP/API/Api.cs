@@ -1,6 +1,6 @@
 ﻿using FileSystemCommon;
 using FileSystemCommon.Models.Auth;
-using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
 using Newtonsoft.Json;
@@ -91,9 +91,20 @@ namespace FileSystemUWP.API
             return Request<bool>(uri, HttpMethod.Get);
         }
 
-        public Task<FolderContent> FolderContent(string path)
+        public Task<FolderContent> FolderContent(string path,
+            FileSystemItemSortType? sortType = null, FileSystemItemSortDirection? sortDirection = null)
         {
-            Uri uri = GetUri("/api/folders/content", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            List<KeyValuePair<string, string>> values = new List<KeyValuePair<string, string>>();
+            values.Add(new KeyValuePair<string, string>("path", Utils.EncodePath(path)));
+            if (sortType.HasValue)
+            {
+                values.Add(new KeyValuePair<string, string>("sortType", sortType.Value.ToString()));
+            }
+            if (sortDirection.HasValue)
+            {
+                values.Add(new KeyValuePair<string, string>("sortDirection", sortDirection.Value.ToString()));
+            }
+            Uri uri = GetUri("/api/folders/content", values);
             return Request<FolderContent>(uri, HttpMethod.Get);
         }
 

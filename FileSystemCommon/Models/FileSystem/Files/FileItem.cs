@@ -13,5 +13,11 @@ namespace FileSystemCommon.Models.FileSystem.Files
         public Guid? SharedId { get; set; }
 
         public FileItemPermission Permission { get; set; }
+
+        IFileSystemItemPermission IFileSystemItem.Permission
+        {
+            get => Permission;
+            set => Permission = (FileItemPermission)value;
+        }
     }
 }

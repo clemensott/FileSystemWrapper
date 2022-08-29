@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {normalizeFolder, normalizeFile} from '../Helpers/Path';
-import FolderViewer from './FolderViewer';
+import { normalizeFolder, normalizeFile } from '../Helpers/Path';
+import FolderViewer from './FolderViewer/FolderViewer';
 import FileViewerOverlay from './FileViewerOverlay';
 import {generateQueryUrl} from '../Helpers/generateNavigationUrl';
 

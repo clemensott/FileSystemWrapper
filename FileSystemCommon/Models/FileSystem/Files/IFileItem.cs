@@ -1,9 +1,9 @@
 ﻿namespace FileSystemCommon.Models.FileSystem.Files
 {
-    public interface IFileItem : IPathItem
+    public interface IFileItem : IFileSystemItem
     {
         string Extension { get; }
-
-        FileItemPermission Permission { get; }
+        
+        new FileItemPermission Permission { get; }
     }
 }

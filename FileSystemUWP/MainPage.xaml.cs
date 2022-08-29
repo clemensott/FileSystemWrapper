@@ -1,4 +1,6 @@
-﻿using FileSystemUWP.API;
+﻿using FileSystemCommon.Models.FileSystem.Content;
+using FileSystemUWP.API;
+using FileSystemUWP.Models;
 using StdOttUwp;
 using StdOttUwp.ApplicationDataObjects;
 using System;
@@ -92,6 +94,11 @@ namespace FileSystemUWP
             {
                 Server server = new Server(viewModel.BackgroundOperations)
                 {
+                    SortBy = new FileSystemItemSortBy()
+                    {
+                        Type = FileSystemItemSortType.Name,
+                        Direction = FileSystemItemSortDirection.ASC,
+                    },
                     Api = newApi,
                 };
                 viewModel.Servers.Add(server);

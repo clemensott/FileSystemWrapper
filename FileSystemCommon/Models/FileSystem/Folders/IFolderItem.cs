@@ -1,8 +1,8 @@
 ﻿namespace FileSystemCommon.Models.FileSystem.Folders
 {
-    public interface IFolderItem : IPathItem
+    public interface IFolderItem : IFileSystemItem
     {
-        FolderItemPermission Permission { get; }
+        new FolderItemPermission Permission { get; }
 
         bool Deletable { get; }
     }

@@ -1,4 +1,6 @@
-﻿using StdOttStandard;
+﻿using FileSystemUWP.Models;
+using FileSystemUWP.Util;
+using StdOttStandard;
 using StdOttStandard.Linq;
 using System;
 using System.Collections.Generic;
@@ -14,11 +16,11 @@ namespace FileSystemUWP.Picker
         public void SetFolders(IEnumerable<FileSystemItem> folders)
         {
             int index = 0;
-            foreach (FileSystemItem folder in folders.OrderBy(f => f.Name))
+            foreach (FileSystemItem folder in folders)
             {
                 while (true)
                 {
-                    int compare = index < filesBeginIndex ? folder.FullPath.CompareTo(this[index].FullPath) : -1;
+                    int compare = index < filesBeginIndex ? Compare(folder, this[index]) : -1;
 
                     if (compare == 0)
                     {
@@ -28,24 +30,31 @@ namespace FileSystemUWP.Picker
                     }
                     if (compare < 0)
                     {
-                        base.InsertItem(index++, folder);
+                        base.InsertItem(index, folder);
+                        index++;
                         filesBeginIndex++;
                         break;
                     }
 
                     base.RemoveItem(index);
+                    filesBeginIndex--;
                 }
+            }
+
+            while (index < filesBeginIndex)
+            {
+                base.RemoveItem(--filesBeginIndex);
             }
         }
 
         public void SetFiles(IEnumerable<FileSystemItem> files)
         {
             int index = filesBeginIndex;
-            foreach (FileSystemItem file in files.OrderBy(f => f.Name))
+            foreach (FileSystemItem file in files)
             {
                 while (true)
                 {
-                    int compare = index < Count ? file.FullPath.CompareTo(this[index].FullPath) : -1;
+                    int compare = index < Count ? Compare(file, this[index]) : -1;
 
                     if (compare == 0)
                     {
@@ -62,6 +71,16 @@ namespace FileSystemUWP.Picker
                     base.RemoveItem(index);
                 }
             }
+
+            while (index < Count)
+            {
+                base.RemoveItem(Count - 1);
+            }
+        }
+
+        private static int Compare(FileSystemItem a, FileSystemItem b)
+        {
+            return a.FullPath == b.FullPath ? 0 : FileSystemItemComparer.Current.Compare(a.SortKeys, b.SortKeys);
         }
 
         private static bool Equals(FileSystemItem a, FileSystemItem b)
@@ -71,10 +90,11 @@ namespace FileSystemUWP.Picker
                 a.IsFolder == b.IsFolder &&
                 a.Name == b.Name &&
                 a.PathParts.BothNullOrSequenceEqual(b.PathParts) &&
-                Equals(a.Permission, b.Permission);
+                Equals(a.Permission, b.Permission) &&
+                a.SortKeys.BothNullOrSequenceEqual(b.SortKeys);
         }
 
-        public FileSystemItem? GetNearestItem(FileSystemItemName item)
+        public FileSystemItem? GetNearestItem(FileSystemSortItem item)
         {
             if (Count == 0) return null;
 
@@ -91,7 +111,10 @@ namespace FileSystemUWP.Picker
             }
 
             int index;
-            if (Search.BinarySearch(this, begin, end, f => f.Name.CompareTo(item.Name), out index) && index < Count)
+            bool found = Search.BinarySearch(this, begin, end,
+                f => FileSystemItemComparer.Current.Compare(f.SortKeys, item.SortKeys),
+                out index);
+            if (found && index < Count)
             {
                 return this[index];
             }
