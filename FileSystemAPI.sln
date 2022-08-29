@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.1000
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32630.194
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileSystemCommon", "FileSystemCommon\FileSystemCommon.csproj", "{3F6E0509-5273-48C5-BB7E-C4EE257CC0D3}"
 EndProject
@@ -12,6 +12,11 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StdOttStandardLib", "..\StdOttLib\StdOttStandardLib\StdOttStandardLib.csproj", "{06FCCEFA-E291-43F0-8F0D-E17D280F6EC4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileSystemWeb", "FileSystemWeb\FileSystemWeb.csproj", "{D088E5E2-841B-4C23-B9AB-0317A8B24ACB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{463499D6-3BD1-4A1A-A6A2-C3BD4C12EFCE}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

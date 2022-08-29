@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# IDE0011: Geschweifte Klammern hinzufügen
+csharp_prefer_braces = when_multiline
