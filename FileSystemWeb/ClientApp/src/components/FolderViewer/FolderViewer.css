@@ -28,6 +28,8 @@
 }
 
 .folder-viewer-head-path {
+    display: flex;
+    flex-wrap: wrap;
     flex-grow: 1;
     font-size: 1.5rem;
     font-weight: bold;
