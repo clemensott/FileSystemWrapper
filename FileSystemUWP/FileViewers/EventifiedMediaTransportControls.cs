@@ -48,7 +48,10 @@ namespace FileSystemUWP.FileViewers
             set
             {
                 isCastButtonVisable = value;
-                if (CastButton != null) CastButton.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+                if (CastButton != null)
+                {
+                    CastButton.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+                }
             }
         }
 
@@ -68,7 +71,10 @@ namespace FileSystemUWP.FileViewers
             set
             {
                 isBackToWindowButtonVisable = value;
-                if (BackToWindowButton != null) BackToWindowButton.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+                if (BackToWindowButton != null)
+                {
+                    BackToWindowButton.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+                }
             }
         }
 
@@ -121,7 +127,8 @@ namespace FileSystemUWP.FileViewers
             //    System.Diagnostics.Debug.WriteLine(string.Join("\n", array));
         }
 
-        private static IEnumerable<string> FindVisualChild<childItem>(DependencyObject obj, int depth = 0) where childItem : FrameworkElement
+        private static IEnumerable<string> FindVisualChild<childItem>(DependencyObject obj, int depth = 0)
+            where childItem : FrameworkElement
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
             {

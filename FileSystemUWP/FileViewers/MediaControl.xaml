@@ -8,25 +8,28 @@
     mc:Ignorable="d"
     d:DesignHeight="300"
     d:DesignWidth="400"
-    Loaded="OnLoaded" Unloaded="OnUnloaded">
+    Unloaded="OnUnloaded">
 
     <Grid>
         <TextBlock Name="tblError" VerticalAlignment="Center" HorizontalAlignment="Center"
                    TextAlignment="Center" Visibility="Collapsed"/>
         <ProgressRing Name="prgLoading" Width="100" Height="100" IsActive="True"/>
         <MediaPlayerElement Name="mpe" IsDoubleTapEnabled="True"
+                            AreTransportControlsEnabled="True"
                             DoubleTapped="Mpe_DoubleTapped">
             <MediaPlayerElement.TransportControls>
                 <local:EventifiedMediaTransportControls
-                    IsStopEnabled="True"
-                    IsStopButtonVisible="True"
+                    IsStopEnabled="False"
+                    IsStopButtonVisible="False"
                     IsSeekBarVisible="True"
                     IsSeekEnabled="True"
-                    IsCompact="True"
+                    IsCompact="False"
                     IsFastForwardButtonVisible="False"
                     IsFastRewindButtonVisible="False"
                     IsFullWindowButtonVisible="True"
-                    IsPlaybackRateButtonVisible="False"
+                    IsFullWindowEnabled="True"
+                    IsPlaybackRateButtonVisible="True"
+                    IsPlaybackRateEnabled="True"
                     IsSkipBackwardButtonVisible="False"
                     IsSkipForwardButtonVisible="False"
                     IsVolumeButtonVisible="False"
@@ -39,7 +42,9 @@
                     IsBackToWindowButtonVisable="True"
                     IsEnabled="True"
                     Visibility="Visible"
-                    BackToWindowClicked="Emtc_BackToWindowClicked"/>
+                    BackToWindowClicked="Emtc_BackToWindowClicked"
+                    FullWindowClicked="Emtc_FullWindowClicked"
+                    />
             </MediaPlayerElement.TransportControls>
         </MediaPlayerElement>
     </Grid>
