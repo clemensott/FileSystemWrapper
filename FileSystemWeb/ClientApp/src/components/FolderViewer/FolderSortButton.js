@@ -32,7 +32,7 @@ export default function FolderSortButton({ sortBy, onSortByChange }) {
                 }
                 {
                     renderDropdownItem({
-                        text: 'Name ASC',
+                        text: 'Name DESC',
                         value: { type: fileSystemItemSortType.NAME, direction: fileSystemItemSortDirection.DESC }
                     })
                 }
