@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import Login from './components/Login';
 import NavMenu from './components/NavMenu';
 import { Container } from 'reactstrap';
@@ -44,20 +44,20 @@ export default function () {
         <div>
             <NavMenu />
             <Container>
-                <Switch>
-                    <Route path='/login' component={Login} />
-                    <Route path='/logout' component={Logout} />
-                    <Route exact path='/file/view' component={FilePage} />
-                    <Route exact path='/share' component={SharesPage} />
-                    <Route exact path='/share/file/add' component={AddShareFileSystemItemPage} />
-                    <Route exact path='/share/folder/add' component={AddShareFileSystemItemPage} />
-                    <Route path='/share/file/edit/:id' component={EditShareFileSystemItemPage} />
-                    <Route path='/share/folder/edit/:id' component={EditShareFileSystemItemPage} />
-                    <Route exact path='/' component={Home} />
-                    <Route path='/api/' render={() => (
+                <Routes>
+                    <Route path='/login' element={<Login />} />
+                    <Route path='/logout' element={<Logout />} />
+                    <Route path='/file/view' element={<FilePage />} />
+                    <Route path='/share' element={<SharesPage />} />
+                    <Route path='/share/file/add' element={<AddShareFileSystemItemPage />} />
+                    <Route path='/share/folder/add' element={<AddShareFileSystemItemPage />} />
+                    <Route path='/share/file/edit/:id' element={<EditShareFileSystemItemPage />} />
+                    <Route path='/share/folder/edit/:id' element={<EditShareFileSystemItemPage />} />
+                    <Route path='/' element={<Home />} />
+                    <Route path='/api/*' element={
                         <h3>Please reload page without cache (Ctrl + F5)</h3>
-                    )} />
-                </Switch>
+                    } />
+                </Routes>
             </Container>
             <DeleteShareItemModal ref={allRefs.deleteShareItem} />
             <DeleteFileSystemItemModal ref={allRefs.deleteFSItemModal} />

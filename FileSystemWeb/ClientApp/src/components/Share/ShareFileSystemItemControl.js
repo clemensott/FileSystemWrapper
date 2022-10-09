@@ -1,11 +1,11 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ShareFileSystemItemForm from './ShareFileSystemItemForm';
 import Loading from '../Loading/Loading';
 import { closeLoadingModal, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
 import API from '../../Helpers/API';
 
-async function updateItem(path, isFile, force = false) {
+async function updateItem(path, isFile) {
     let item = null;
     let infoError = null;
     if (path) {
@@ -52,7 +52,7 @@ async function loadUsers() {
 export default function ({ path, isFile, defaultValues, onItemInfoLoaded }) {
     const [item, setItem] = useState(null);
     const [users, setUsers] = useState(null);
-    const history = useHistory();
+    const navigate = useNavigate();
 
     useEffect(() => {
         updateItem(path, isFile).then(i => {
@@ -65,40 +65,42 @@ export default function ({ path, isFile, defaultValues, onItemInfoLoaded }) {
         loadUsers().then(u => setUsers(u));
     }, []);
 
+    const submit = async body => {
+        let redirect = null;
+        let submitError = null;
+        try {
+            showLoadingModal();
+            const response = await API.createShareItem(body, isFile);
+            if (response.ok) {
+                const shareItem = await response.json();
+                redirect = isFile ?
+                    `/file/view?path=${encodeURIComponent(shareItem.path)}` :
+                    `/?folder=${encodeURIComponent(shareItem.path)}`;
+            } else if (response.status === 400) {
+                submitError = (await response.text()) || 'An error occured';
+            } else if (response.status === 404) {
+                submitError = `${isFile ? 'File' : 'Folder'} not found`;
+            } else if (response.status === 403) {
+                submitError = 'Forbidden. You may have not enough access rights';
+            } else if (response.status === 401) {
+                submitError = 'Unauthorized. It seems like your are not logged in';
+            } else {
+                submitError = 'An error occured';
+            }
+        } catch (e) {
+            console.log(e);
+            submitError = e.message;
+        } finally {
+            closeLoadingModal();
+        }
+
+        if (submitError) await showErrorModal(submitError);
+        if (redirect) navigate(redirect);
+    };
+
     return item ? (
         <ShareFileSystemItemForm item={item} isFile={isFile} users={users}
-            defaultValues={defaultValues} onSubmit={async body => {
-                let redirect = null;
-                let submitError = null;
-                try {
-                    showLoadingModal();
-                    const response = await API.createShareItem(body, isFile);
-                    if (response.ok) {
-                        const shareItem = await response.json();
-                        redirect = isFile ?
-                            `/file/view?path=${encodeURIComponent(shareItem.path)}` :
-                            `/?folder=${encodeURIComponent(shareItem.path)}`;
-                    } else if (response.status === 400) {
-                        submitError = (await response.text()) || 'An error occured';
-                    } else if (response.status === 404) {
-                        submitError = `${isFile ? 'File' : 'Folder'} not found`;
-                    } else if (response.status === 403) {
-                        submitError = 'Forbidden. You may have not enough access rights';
-                    } else if (response.status === 401) {
-                        submitError = 'Unauthorized. It seems like your are not logged in';
-                    } else {
-                        submitError = 'An error occured';
-                    }
-                } catch (e) {
-                    console.log(e);
-                    submitError = e.message;
-                } finally {
-                    closeLoadingModal();
-                }
-
-                if (submitError) await showErrorModal(submitError);
-                if (redirect) history.push(redirect);
-            }} />
+            defaultValues={defaultValues} onSubmit={submit} />
     ) : (
             <div className="center">
                 <Loading />

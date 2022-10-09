@@ -3,6 +3,7 @@ import { normalizeFolder, normalizeFile } from '../Helpers/Path';
 import FolderViewer from './FolderViewer/FolderViewer';
 import FileViewerOverlay from './FileViewerOverlay';
 import {generateQueryUrl} from '../Helpers/generateNavigationUrl';
+import { useLocation } from 'react-router-dom';
 
 function setDocumentTitle(folderContent, fileInfo) {
     let name = null;
@@ -16,7 +17,8 @@ function setDocumentTitle(folderContent, fileInfo) {
 }
 
 export default function () {
-    const query = new URLSearchParams(window.location.search);
+    const location = useLocation();
+    const query = new URLSearchParams(location.search);
     const folder = query.get('folder');
     const file = query.get('file');
     const folderNorm = folder && normalizeFolder(folder) || '';

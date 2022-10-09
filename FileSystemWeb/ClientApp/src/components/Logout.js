@@ -1,8 +1,8 @@
-﻿import React, {useEffect} from 'react';
-import {useHistory} from 'react-router-dom';
+﻿import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Loading from './Loading/Loading';
 import store from '../Helpers/store';
-import {showErrorModal} from '../Helpers/storeExtensions';
+import { showErrorModal } from '../Helpers/storeExtensions';
 import API from '../Helpers/API';
 
 async function logout() {
@@ -18,14 +18,14 @@ async function logout() {
 }
 
 export default function () {
-    const history = useHistory();
+    const navigate = useNavigate();
     useEffect(() => {
-        logout().then(() => history.push('/login'));
+        logout().then(() => navigate('/login'));
     }, []);
 
     return (
         <div className="center">
-            <Loading/>
+            <Loading />
         </div>
     );
 }

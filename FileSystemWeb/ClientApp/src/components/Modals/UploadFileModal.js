@@ -1,6 +1,6 @@
-import React, {forwardRef, useImperativeHandle, useRef, useState} from 'react'
-import {Button, Modal, ModalHeader, ModalFooter, ModalBody, Form} from 'reactstrap';
-import {closeLoadingModal, showErrorModal, showLoadingModal} from '../../Helpers/storeExtensions';
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import { Button, Modal, ModalHeader, ModalFooter, ModalBody, Form, FormGroup, Label, Input } from 'reactstrap';
+import { closeLoadingModal, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
 import formatFileSize from '../../Helpers/formatFileSize';
 import API from '../../Helpers/API';
 
@@ -44,7 +44,7 @@ const modal = forwardRef((props, ref) => {
                 await showErrorModal(
                     <div>
                         Status: {response.status}
-                        <br/>
+                        <br />
                         {text}
                     </div>
                 );
@@ -66,6 +66,17 @@ const modal = forwardRef((props, ref) => {
         close: closeUploadModal,
     }));
 
+    const onFileChange = e => {
+        if (e.target.files.length) {
+            setSuggestedName(e.target.files[0].name);
+            setFormattedFileName(formatFile(e.target.files[0]));
+            setIsFileInvalid(false);
+        } else {
+            setIsFileInvalid(true);
+            setFormattedFileName(null);
+        }
+    };
+
     return (
         <Modal isOpen={!!promise} toggle={closeUploadModal}>
             <ModalHeader toggle={closeUploadModal}>Upload file</ModalHeader>
@@ -74,30 +85,17 @@ const modal = forwardRef((props, ref) => {
                     e.preventDefault();
                     return submit();
                 }}>
-                    <div className="input-group">
-                        <div className="custom-file">
-                            <label>File</label>
-                            <input ref={fileInputRef} type="file"
-                                   className={`custom-file-input ${isFileInvalid ? 'is-invalid' : ''}`}
-                                   onChange={e => {
-                                       if (e.target.files.length) {
-                                           setSuggestedName(e.target.files[0].name);
-                                           setFormattedFileName(formatFile(e.target.files[0]));
-                                           setIsFileInvalid(false);
-                                       } else {
-                                           setIsFileInvalid(true);
-                                           setFormattedFileName(null);
-                                       }
-                                   }}/>
-                            <label className="custom-file-label">{formattedFileName || 'Choose file'}</label>
-                        </div>
-                    </div>
-                    <div className="form-group">
-                        <label>Name</label>
-                        <input ref={nameInputRef} type="text" defaultValue={suggestedName}
-                               className={`form-control ${isNameInvalid ? 'is-invalid' : ''}`}
-                               onChange={e => setIsNameInvalid(!e.target.value)}/>
-                    </div>
+                    <FormGroup>
+                        <Label>File</Label>
+                        <Input ref={fileInputRef} type="file"
+                            className={isFileInvalid ? 'is-invalid' : ''} onChange={onFileChange} />
+                    </FormGroup>
+                    <FormGroup>
+                        <Label>Name</Label>
+                        <Input ref={nameInputRef} type="text" defaultValue={suggestedName}
+                            className={`form-control ${isNameInvalid ? 'is-invalid' : ''}`}
+                            onChange={e => setIsNameInvalid(!e.target.value)} />
+                    </FormGroup>
                 </Form>
             </ModalBody>
             <ModalFooter>
@@ -108,4 +106,4 @@ const modal = forwardRef((props, ref) => {
     );
 });
 
-export default modal; 
+export default modal;

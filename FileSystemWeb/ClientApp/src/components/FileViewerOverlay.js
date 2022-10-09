@@ -1,11 +1,11 @@
 ﻿import React from 'react';
-import {useHistory} from 'react-router-dom';
-import {Link} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import FileViewer from './FileViewer/FileViewer';
 import './FileViewerOverlay.css';
 
-export default function ({closeUrl, previousItem, nextItem, ...rest}) {
-    const history = useHistory();
+export default function ({ closeUrl, previousItem, nextItem, ...rest }) {
+    const navigate = useNavigate();
 
     return (
         <div className="file-viewer-overlay" onClick={e => {
@@ -13,25 +13,25 @@ export default function ({closeUrl, previousItem, nextItem, ...rest}) {
                 e.target.classList.contains('file-viewer-overlay-container') ||
                 e.target.classList.contains('file-viewer-content') ||
                 e.target.classList.contains('image-container')) {
-                history.push(closeUrl);
+                navigate(closeUrl);
             }
         }}>
             <div className="file-viewer-overlay-container">
-                <FileViewer theme="dark" onClose={() => history.push(nextItem ? nextItem.url : closeUrl)} {...rest} />
+                <FileViewer theme="dark" onClose={() => navigate(nextItem ? nextItem.url : closeUrl)} {...rest} />
             </div>
             <Link to={closeUrl}>
-                <i className="fas fa-times-circle fa-3x file-viewer-overlay-close"/>
+                <i className="fas fa-times-circle fa-3x file-viewer-overlay-close" />
             </Link>
             {previousItem && (
                 <Link to={previousItem.url}>
                     <i className="fas fa-chevron-circle-left fa-3x file-viewer-overlay-previous"
-                       title={previousItem.title}/>
+                        title={previousItem.title} />
                 </Link>
             )}
             {nextItem && (
                 <Link to={nextItem.url}>
                     <i className="fas fa-chevron-circle-right fa-3x file-viewer-overlay-next"
-                       title={nextItem.title}/>
+                        title={nextItem.title} />
                 </Link>
             )}
         </div>

@@ -24,6 +24,14 @@ body {
     height: 100%;
 }
 
+a {
+    text-decoration: none;
+}
+
 .container {
     flex-grow: 1;
+}
+
+input[readonly] {
+    pointer-events: none;
 }

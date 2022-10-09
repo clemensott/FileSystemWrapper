@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Button, CustomInput, Input, Table } from 'reactstrap';
+import { Button, FormGroup, Input, Label, Table } from 'reactstrap';
 import './SharesPage.css'
 import deleteShareItem from "../../Helpers/deleteShareItem";
 import { Link } from "react-router-dom";
@@ -116,23 +116,32 @@ export default function () {
                     <i>PUBLIC</i>
                 )}</td>
                 <td className="shares-page-removable-column">
-                    <CustomInput type="checkbox" id="permission-info" className="share-page-permission-item"
-                        label="info" checked={item.permission.info} inline readOnly />
-                    <CustomInput type="checkbox" id="permission-info"
-                        className={item.isFile ? 'd-none' : '"share-page-permission-item"'}
-                        label="list" checked={item.permission.list} inline readOnly />
-                    <CustomInput type="checkbox" id="permission-hash" className="share-page-permission-item"
-                        label="hash" checked={item.permission.hash} inline readOnly />
-                    <CustomInput type="checkbox" id="permission-read" className="share-page-permission-item"
-                        label="read" checked={item.permission.read} inline readOnly />
-                    <CustomInput type="checkbox" id="permission-write" className="share-page-permission-item"
-                        label="write" checked={item.permission.write} inline readOnly />
+                    <FormGroup check inline className="share-page-permission-item">
+                        <Input type="checkbox" checked={item.permission.info} readOnly />
+                        <Label check>info</Label>
+                    </FormGroup>
+                    <FormGroup check inline className={item.isFile ? 'd-none' : 'share-page-permission-item'}>
+                        <Input type="checkbox" checked={item.permission.list} readOnly />
+                        <Label check>list</Label>
+                    </FormGroup>
+                    <FormGroup check inline className="share-page-permission-item">
+                        <Input type="checkbox" checked={item.permission.hash} readOnly />
+                        <Label check>hash</Label>
+                    </FormGroup>
+                    <FormGroup check inline className="share-page-permission-item">
+                        <Input type="checkbox" checked={item.permission.read} readOnly />
+                        <Label check>read</Label>
+                    </FormGroup>
+                    <FormGroup check inline className="share-page-permission-item">
+                        <Input type="checkbox" checked={item.permission.write} readOnly />
+                        <Label check>write</Label>
+                    </FormGroup>
                 </td>
                 <td className="text-center">
-                    <Button color="info" className="mb-2 mr-2" tag={Link} to={editLink}>
+                    <Button color="info" className="mb-2 me-2" tag={Link} to={editLink}>
                         <i className="fas fa-edit" />
                     </Button>
-                    <Button color="danger" className="mb-2 mr-2"
+                    <Button color="danger" className="mb-2 me-2"
                         onClick={() => deleteShareItem(item, () => setUpdateItems(updateItems + 1))}>
                         <i className="fas fa-trash" />
                     </Button>
@@ -152,7 +161,7 @@ export default function () {
                         <th className="shares-page-header-user">User</th>
                         <th className="shares-page-header-permissions shares-page-removable-column">
                             Permissions
-                    </th>
+                        </th>
                         <th className="shares-page-header-actions">Actions</th>
                     </tr>
                 </thead>
@@ -165,7 +174,7 @@ export default function () {
 
     return (
         <div id="shares-page-container">
-            <div className="float-right m-4" onClick={() => setUpdateItems(updateItems + 1)}>
+            <div className="float-end m-4" onClick={() => setUpdateItems(updateItems + 1)}>
                 <i className="folder-viewer-head-update-icon fa fa-retweet fa-2x" />
             </div>
             <h2>Share Items</h2>

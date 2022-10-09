@@ -23,7 +23,7 @@ export default function FolderSortButton({ sortBy, onSortByChange }) {
             <DropdownToggle>
                 <i className="fas fa-sort" />
             </DropdownToggle>
-            <DropdownMenu right>
+            <DropdownMenu end>
                 {
                     renderDropdownItem({
                         text: 'Name ASC',

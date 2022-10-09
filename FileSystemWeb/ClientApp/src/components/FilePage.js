@@ -1,6 +1,6 @@
 ﻿import React from 'react';
-import {useHistory} from 'react-router-dom';
-import {normalizeFile} from '../Helpers/Path';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { normalizeFile } from '../Helpers/Path';
 import FileViewer from './FileViewer/FileViewer';
 import './FilePage.css'
 
@@ -14,15 +14,16 @@ function setDocumentTitle(file) {
 }
 
 export default function () {
-    const query = new URLSearchParams(window.location.search);
+    const location = useLocation();
+    const query = new URLSearchParams(location.search);
     const path = normalizeFile(query.get('path'));
-    const history = useHistory();
+    const navigate = useNavigate();
 
     return (
         <div className="file-page-container">
             <FileViewer theme="light" path={path} hideOpenFileLinkAction={true}
-                        onFileInfoLoaded={setDocumentTitle}
-                        onClose={() => history.push('/')}/>
+                onFileInfoLoaded={setDocumentTitle}
+                onClose={() => navigate('/')} />
         </div>
     );
 }

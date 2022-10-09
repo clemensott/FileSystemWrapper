@@ -11,6 +11,7 @@ import deleteFileSystemItem from '../../Helpers/deleteFileSystemItem';
 import API from '../../Helpers/API';
 import useSortByState from '../../Helpers/useSortByState';
 import './FolderViewer.css';
+import sleep from '../../Helpers/sleep';
 
 const startMaxItemCount = 100;
 const maxItemStepSize = 150;
@@ -141,7 +142,7 @@ export default function ({ path, onFolderLoaded }) {
     }, [path, sortBy, update]);
 
     const parentPath = getParent(path);
-    const parentUrl = `/?folder=${encodeURIComponent(parentPath)}`;
+    const parentUrl = `/?folder=${encodeURIComponent(parentPath || '')}`;
     const pathParts = !isLoading && content && content.path ? renderPathParts(content.path) : [];
     const { items, all } = !isLoading && content ? renderItems(content, maxItemsCount) : {
         items: [],
@@ -160,9 +161,9 @@ export default function ({ path, onFolderLoaded }) {
                     <i className="folder-viewer-head-update-icon fa fa-retweet fa-2x" />
                 </div>
                 <Link to={parentUrl}>
-                    <i className={`pl-2 fa fa-arrow-up fa-2x ${parentPath === null ? 'd-none' : ''}`} />
+                    <i className={`ps-2 fa fa-arrow-up fa-2x ${parentPath === null ? 'd-none' : ''}`} />
                 </Link>
-                <div className="path pl-2 folder-viewer-head-path">
+                <div className="path ps-2 folder-viewer-head-path">
                     {pathParts}
                 </div>
                 <FolderSortButton sortBy={sortBy} onSortByChange={setSortBy} />
@@ -182,10 +183,13 @@ export default function ({ path, onFolderLoaded }) {
                 <h3 className="font-italic">&lt;Empty&gt;</h3>
             </div>
             <div className={`folder-viewer-to-top-container ${isOnTop ? 'd-none' : ''}`}>
-                <button className="btn btn-info" onClick={() => {
+                <button className="btn btn-info" onClick={async () => {
                     document.body.scrollTop = 0; // For Safari
                     document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
 
+                    while (document.body.scrollTop || document.documentElement.scrollTop) {
+                        await sleep(100);
+                    }
                     setMaxItemsCount(startMaxItemCount);
                 }}>
                     BACK TO TOP

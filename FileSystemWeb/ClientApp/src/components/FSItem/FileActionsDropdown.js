@@ -36,35 +36,35 @@ export default function ({ file, title, hideOpenFileLink, onDelete }) {
             <DropdownToggle caret>
                 {title || ''}
             </DropdownToggle>
-            <DropdownMenu right>
+            <DropdownMenu end>
                 {!hideOpenFileLink ? (
                     <DropdownLinkItem disabled={!file.permission.info} to={fileOpenFileLink}
                         target="_blank" rel="noopener noreferrer">
-                        <i className="mr-2 fas fa-external-link-square-alt" />
+                        <i className="me-2 fas fa-external-link-square-alt" />
                         Open file in new tab
                     </DropdownLinkItem>
                 ) : null}
                 <DropdownLinkItem disabled={!file.permission.read || !isSupportedFile} to={fileOpenContentLink}
                     target="_blank" rel="noopener noreferrer">
-                    <i className="mr-2 fas fa-external-link-square-alt" />
+                    <i className="me-2 fas fa-external-link-square-alt" />
                     Open content in new tab
                 </DropdownLinkItem>
                 <DropdownLinkItem disabled={!file.permission.read} to={fileDownloadLink}
                     download={file.name} target="_blank" rel="noopener noreferrer">
-                    <i className="mr-2 fas fa-download" />
+                    <i className="me-2 fas fa-download" />
                     Download {file.size ? `(${formatFileSize(file.size)})` : ''}
                 </DropdownLinkItem>
                 <DropdownItem divider />
                 {isLoggedIn ? (
                     <DropdownLinkItem disabled={!file.permission.info} to={fileShareFileLink}>
-                        <i className="mr-2 fas fa-share" />
+                        <i className="me-2 fas fa-share" />
                         Share
                     </DropdownLinkItem>
                 ) : null}
                 {onDelete ? (
                     <DropdownItem disabled={!file.permission.write}
                         onClick={() => onDelete(file)}>
-                        <i className="mr-2 fas fa-trash" />
+                        <i className="me-2 fas fa-trash" />
                         Delete
                     </DropdownItem>
                 ) : null}
