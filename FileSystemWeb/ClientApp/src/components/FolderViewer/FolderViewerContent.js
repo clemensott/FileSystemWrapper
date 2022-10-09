@@ -37,10 +37,11 @@ const FolderViewerContent = ({ content, maxItemsCount, paddingTop, onItemCountCh
             ]);
         } else if (currentCount > maxItemsCount) {
             setItemGroups(itemGroups.map(group => {
-                if (group.startIndex + group.items.length <= maxItemsCount) {
+                const { startIndex, items } = group;
+                if (startIndex + items.length <= maxItemsCount) {
                     return group;
                 }
-                if (group.startIndex >= maxItemsCount) {
+                if (startIndex >= maxItemsCount) {
                     return null;
                 }
                 return {
@@ -89,7 +90,7 @@ const FolderViewerContent = ({ content, maxItemsCount, paddingTop, onItemCountCh
                     </div>
                 ) : null}
             </div>
-            <div className={totalItemsCount ? 'd-none' : 'text-center'}>
+            <div className={!content || totalItemsCount ? 'd-none' : 'text-center'}>
                 <h3 className="font-italic">&lt;Empty&gt;</h3>
             </div>
         </>

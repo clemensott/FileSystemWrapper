@@ -24,8 +24,8 @@ export default function () {
             let isLoggedIn = false;
 
             try {
-                const { ok } = await API.isAuthorized()
-                isLoggedIn = ok;
+                const { ok, redirected } = await API.isAuthorized()
+                isLoggedIn = ok && !redirected;
             } catch (err) {
                 console.error('isAuthorized Error:', err);
             }

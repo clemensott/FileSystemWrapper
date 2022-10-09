@@ -16,7 +16,6 @@ const maxItemStepSize = 150;
 const bottomAppendDistance = 1000;
 
 const FolderViewer = ({ path, onFolderLoaded }) => {
-    console.log('folder viewer:', path);
     const [state] = useState({ isUnmounted: false, loadIndex: 0 });
     const [sortBy, setSortBy] = useSortByState('home-page');
     const [content, setContent] = useState(null);
