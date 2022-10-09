@@ -27,7 +27,7 @@ export default function (props) {
     return (
         <div className="fs-item-container">
             <i className={`${icon} fa-2x`} />
-            <div className="pl-2">
+            <div className="ps-2">
                 {props.item.name}
             </div>
         </div>

@@ -1,21 +1,21 @@
-﻿import React, {useRef, useState, useEffect} from 'react';
-import {Button, CustomInput, Form, FormGroup, Input, Label} from 'reactstrap';
+﻿import React, { useRef, useState, useEffect } from 'react';
+import { Button, Form, FormGroup, Input, Label } from 'reactstrap';
 import './ShareFileSystemItemForm.css'
 
 const invalidUserId = 'invalid';
 
 export default function ({
-                             users,
-                             item,
-                             isFile,
-                             isEdit = false,
-                             defaultValues: {
-                                 name: defaultName,
-                                 userId: defaultUserId,
-                                 isListed: defaultIsListed,
-                             } = {},
-                             onSubmit = null
-                         }) {
+    users,
+    item,
+    isFile,
+    isEdit = false,
+    defaultValues: {
+        name: defaultName,
+        userId: defaultUserId,
+        isListed: defaultIsListed,
+    } = {},
+    onSubmit = null
+}) {
     const [isFileNameInvalid, setIsFileNameInvalid] = useState(false);
     const [isUserSelectInvalid, setIsUserSelectInvalid] = useState(false);
     const [userId, setUserId] = useState(undefined);
@@ -85,18 +85,18 @@ export default function ({
                 <FormGroup>
                     <Label for="name">File name</Label>
                     <Input innerRef={nameRef} type="text" name="name" placeholder="File name"
-                           defaultValue={defaultName || item.name}
-                           invalid={isFileNameInvalid} onChange={e => setIsFileNameInvalid(!e.target.value)}/>
+                        defaultValue={defaultName || item.name}
+                        invalid={isFileNameInvalid} onChange={e => setIsFileNameInvalid(!e.target.value)} />
                 </FormGroup>
 
                 <FormGroup>
                     <Label for="userId">User</Label>
                     <Input innerRef={userIdRef} type="select" name="select" invalid={isUserSelectInvalid}
-                           value={userId}
-                           onChange={e => {
-                               setUserId(e.target.value);
-                               setIsUserSelectInvalid(e.target.value === invalidUserId);
-                           }}>
+                        value={userId}
+                        onChange={e => {
+                            setUserId(e.target.value);
+                            setIsUserSelectInvalid(e.target.value === invalidUserId);
+                        }}>
                         {userOptions}
                     </Input>
                 </FormGroup>
@@ -104,32 +104,47 @@ export default function ({
                 <FormGroup>
                     <Label for="permission">Permission</Label>
                     <div>
-                        <CustomInput innerRef={permissionInfoRef} type="checkbox" id="permission-info"
-                                     label="info" defaultChecked={true} disabled inline/>
-                        <CustomInput innerRef={permissionListRef} type="checkbox" id="permission-list" label="list"
-                                     className={isFile ? 'd-none' : ''} disabled={isEdit}
-                                     defaultChecked={isEdit && item.permission.list} inline />
-                        <CustomInput innerRef={permissionHashRef} type="checkbox"
-                                     id="permission-hash" label="hash" disabled={isEdit}
-                                     defaultChecked={isEdit && item.permission.hash} inline/>
-                        <CustomInput innerRef={permissionReadRef} type="checkbox"
-                                     id="permission-read" label="read" disabled={isEdit}
-                                     defaultChecked={isEdit && item.permission.read} inline/>
-                        <CustomInput innerRef={permissionWriteRef} type="checkbox"
-                                     id="permission-write" label="write" disabled={isEdit}
-                                     defaultChecked={isEdit && item.permission.write} inline/>
+                        <FormGroup check inline>
+                            <Input innerRef={permissionInfoRef} type="checkbox" id="permission-info"
+                                defaultChecked={true} disabled />
+                            <Label for="permission-info" check>info</Label>
+                        </FormGroup>
+                        <FormGroup className={isFile ? 'd-none' : ''} check inline>
+                            <Input innerRef={permissionListRef} type="checkbox" id="permission-list"
+                                defaultChecked={isEdit && item.permission.list} disabled={isEdit} />
+                            <Label for="permission-list" check>list</Label>
+                        </FormGroup>
+                        <FormGroup check inline>
+                            <Input innerRef={permissionHashRef} type="checkbox" id="permission-hash"
+                                defaultChecked={isEdit && item.permission.hash} disabled={isEdit} />
+                            <Label for="permission-hash" check>hash</Label>
+                        </FormGroup>
+                        <FormGroup check inline>
+                            <Input innerRef={permissionReadRef} type="checkbox" id="permission-read"
+                                defaultChecked={isEdit && item.permission.read} disabled={isEdit} />
+                            <Label for="permission-read" check>read</Label>
+                        </FormGroup>
+                        <FormGroup check inline>
+                            <Input innerRef={permissionWriteRef} type="checkbox" id="permission-write"
+                                disabled={isEdit} defaultChecked={isEdit && item.permission.write} />
+                            <Label for="permission-write" check>write</Label>
+                        </FormGroup>
                     </div>
                 </FormGroup>
 
                 <FormGroup>
                     <Label for="visibility">Visibility</Label>
                     <div>
-                        <CustomInput type="radio" id="is-link" name="is-listed" label="Link only"
-                                     defaultChecked={defaultIsListed !== undefined ? !defaultIsListed : true}
-                                     inline/>
-                        <CustomInput innerRef={isListedRef} type="radio" id="is-listed" name="is-listed" label="Listed"
-                                     defaultChecked={defaultIsListed !== undefined ? defaultIsListed : false}
-                                     inline/>
+                        <FormGroup check inline>
+                            <Input type="radio" id="is-link" name="is-listed"
+                                defaultChecked={defaultIsListed !== undefined ? !defaultIsListed : true} />
+                            <Label for="is-link" check>Link only</Label>
+                        </FormGroup>
+                        <FormGroup check inline>
+                            <Input innerRef={isListedRef} type="radio" id="is-listed" name="is-listed"
+                                defaultChecked={defaultIsListed !== undefined ? defaultIsListed : false} />
+                            <Label for="is-listed" check>Listed</Label>
+                        </FormGroup>
                     </div>
                 </FormGroup>
 

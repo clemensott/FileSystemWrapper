@@ -179,6 +179,9 @@
     <Compile Include="Picker\PickerPage.xaml.cs">
       <DependentUpon>PickerPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Picker\PickerPathViewer.xaml.cs">
+      <DependentUpon>PickerPathViewer.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerExplorerPage.xaml.cs">
       <DependentUpon>ServerExplorerPage.xaml</DependentUpon>
@@ -342,6 +345,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Picker\PickerPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Picker\PickerPathViewer.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

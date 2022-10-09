@@ -1,4 +1,5 @@
 ﻿import React, {useEffect} from 'react';
+import { useLocation } from 'react-router-dom';
 import {normalizeFile, normalizeFolder} from '../../Helpers/Path';
 import ShareFileSystemItemControl from "./ShareFileSystemItemControl";
 
@@ -12,8 +13,9 @@ function setDocumentTitle(item) {
 }
 
 export default function () {
-    const isFile = window.location.pathname.startsWith('/share/file/add');
-    const query = new URLSearchParams(window.location.search);
+    const location = useLocation();
+    const isFile = location.pathname.startsWith('/share/file/add');
+    const query = new URLSearchParams(location.search);
     const path = isFile ? normalizeFile(query.get('path')) : normalizeFolder(query.get('path'));
 
     useEffect(() => {

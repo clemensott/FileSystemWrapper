@@ -1,10 +1,10 @@
-﻿import React, {useState, useEffect} from 'react';
-import {useParams, useHistory} from 'react-router-dom';
-import {Button} from 'reactstrap';
+﻿import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from 'reactstrap';
 import ShareFileSystemItemForm from './ShareFileSystemItemForm';
 import Loading from '../Loading/Loading';
 import deleteShareItem from '../../Helpers/deleteShareItem'
-import {closeLoadingModal, showErrorModal, showLoadingModal} from '../../Helpers/storeExtensions';
+import { closeLoadingModal, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
 import API from '../../Helpers/API';
 
 function setDocumentTitle(shareItem) {
@@ -60,11 +60,11 @@ async function loadUsers() {
 }
 
 export default function () {
-    const {id} = useParams();
+    const { id } = useParams();
     const decodedId = decodeURIComponent(id);
     const isFile = window.location.pathname.startsWith('/share/file/edit/');
 
-    const history = useHistory();
+    const navigate = useNavigate();
     const [shareItem, setShareItem] = useState(null);
     const [users, setUsers] = useState(null);
 
@@ -74,7 +74,7 @@ export default function () {
             if (item) {
                 setShareItem(item);
                 setDocumentTitle(item)
-            } else history.push('/');
+            } else navigate('/');
         });
     }, [decodedId]);
 
@@ -82,50 +82,52 @@ export default function () {
         loadUsers().then(u => setUsers(u));
     }, []);
 
+    const submit = async body => {
+        let redirect = null;
+        let submitError = null;
+        try {
+            showLoadingModal();
+            const response = await API.putShareItem(id, body, isFile);
+            if (response.ok) {
+                const shareItem = await response.json();
+                redirect = isFile ?
+                    `/file/view?path=${encodeURIComponent(shareItem.path)}` :
+                    `/?folder=${encodeURIComponent(shareItem.path)}`;
+            } else if (response.status === 400) {
+                submitError = (await response.text()) || 'An error occured';
+            } else if (response.status === 404) {
+                submitError = `${isFile ? 'File' : 'Folder'} not found`;
+            } else if (response.status === 403) {
+                submitError = 'Forbidden. You may have not enough access rights';
+            } else if (response.status === 401) {
+                submitError = 'Unauthorized. It seems like your are not logged in';
+            } else {
+                submitError = 'An error occured';
+            }
+        } catch (e) {
+            console.log(e);
+            submitError = e.message;
+        } finally {
+            closeLoadingModal();
+        }
+
+        if (submitError) await showErrorModal(submitError);
+        if (redirect) navigate(redirect);
+    };
+
     return shareItem ? (
         <div>
             <ShareFileSystemItemForm item={shareItem} isFile={shareItem.isFile} users={users}
-                                     isEdit={true} defaultValues={shareItem} onSubmit={async body => {
-                let redirect = null;
-                let submitError = null;
-                try {
-                    showLoadingModal();
-                    const response = await API.putShareItem(id, body, isFile);
-                    if (response.ok) {
-                        const shareItem = await response.json();
-                        redirect = isFile ?
-                            `/file/view?path=${encodeURIComponent(shareItem.path)}` :
-                            `/?folder=${encodeURIComponent(shareItem.path)}`;
-                    } else if (response.status === 400) {
-                        submitError = (await response.text()) || 'An error occured';
-                    } else if (response.status === 404) {
-                        submitError = `${isFile ? 'File' : 'Folder'} not found`;
-                    } else if (response.status === 403) {
-                        submitError = 'Forbidden. You may have not enough access rights';
-                    } else if (response.status === 401) {
-                        submitError = 'Unauthorized. It seems like your are not logged in';
-                    } else {
-                        submitError = 'An error occured';
-                    }
-                } catch (e) {
-                    console.log(e);
-                    submitError = e.message;
-                } finally {
-                    closeLoadingModal();
-                }
+                isEdit={true} defaultValues={shareItem} onSubmit={submit} />
 
-                if (submitError) await showErrorModal(submitError);
-                if (redirect) history.push(redirect);
-            }}/>
-
-            <Button color="danger" className="float-right"
-                    onClick={() => deleteShareItem(shareItem, () => history.push('/'))}>
+            <Button color="danger" className="float-end"
+                onClick={() => deleteShareItem(shareItem, () => navigate('/'))}>
                 Delete
             </Button>
         </div>
     ) : (
         <div className="center">
-            <Loading/>
+            <Loading />
         </div>
     );
 }

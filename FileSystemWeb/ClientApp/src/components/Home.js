@@ -1,8 +1,9 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { normalizeFolder, normalizeFile } from '../Helpers/Path';
 import FolderViewer from './FolderViewer/FolderViewer';
 import FileViewerOverlay from './FileViewerOverlay';
-import {generateQueryUrl} from '../Helpers/generateNavigationUrl';
+import { generateQueryUrl } from '../Helpers/generateNavigationUrl';
+import { useLocation } from 'react-router-dom';
 
 function setDocumentTitle(folderContent, fileInfo) {
     let name = null;
@@ -16,13 +17,14 @@ function setDocumentTitle(folderContent, fileInfo) {
 }
 
 export default function () {
-    const query = new URLSearchParams(window.location.search);
+    const location = useLocation();
+    const query = new URLSearchParams(location.search);
     const folder = query.get('folder');
     const file = query.get('file');
     const folderNorm = folder && normalizeFolder(folder) || '';
     const fileNameDecoded = file && normalizeFile(file);
     const fileNorm = fileNameDecoded && (folderNorm + fileNameDecoded);
-    const closeFileOverlayUrl = generateQueryUrl({file: null});
+    const closeFileOverlayUrl = generateQueryUrl({ file: null });
 
     const [folderContent, setFolderContent] = useState(null);
     const [fileInfo, setFileInfo] = useState(null);
@@ -51,18 +53,18 @@ export default function () {
 
     return (
         <div>
-            <FolderViewer path={folderNorm} onFolderLoaded={setFolderContent}/>
+            <FolderViewer path={folderNorm} onFolderLoaded={setFolderContent} />
             {fileNorm && (
                 <FileViewerOverlay path={fileNorm} closeUrl={closeFileOverlayUrl}
-                                   previousItem={previousFile && ({
-                                       url: generateQueryUrl({file: previousFile.name}),
-                                       title: previousFile.name,
-                                   })}
-                                   nextItem={nextFile && ({
-                                       url: generateQueryUrl({file: nextFile.name}),
-                                       title: nextFile.name,
-                                   })}
-                                   onFileInfoLoaded={setFileInfo}/>
+                    previousItem={previousFile && ({
+                        url: generateQueryUrl({ file: previousFile.name }),
+                        title: previousFile.name,
+                    })}
+                    nextItem={nextFile && ({
+                        url: generateQueryUrl({ file: nextFile.name }),
+                        title: nextFile.name,
+                    })}
+                    onFileInfoLoaded={setFileInfo} />
             )}
         </div>
     );

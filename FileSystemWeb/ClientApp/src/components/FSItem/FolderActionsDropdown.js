@@ -27,17 +27,17 @@ export default function ({folder, title, onDelete}) {
             <DropdownToggle caret>
                 {title || ''}
             </DropdownToggle>
-            <DropdownMenu right>
+            <DropdownMenu end>
                 {isLoggedIn ? (
                     <DropdownLinkItem disabled={!folder.permission.info} to={shareFolderLink}>
-                        <i className="mr-2 fas fa-share"/>
+                        <i className="me-2 fas fa-share"/>
                         Share
                     </DropdownLinkItem>
                 ) : null}
                 {onDelete ? (
                     <DropdownItem disabled={!folder.permission.write || !folder.deletable}
                                   onClick={() => onDelete(folder)}>
-                        <i className="mr-2 fas fa-trash"/>
+                        <i className="me-2 fas fa-trash"/>
                         Delete
                     </DropdownItem>
                 ) : null}

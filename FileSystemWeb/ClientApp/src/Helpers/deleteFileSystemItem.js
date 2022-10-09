@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import API from './API';
+import sleep from './sleep';
 import { closeLoadingModal, getAllRefs, showErrorModal, showLoadingModal } from './storeExtensions';
 
 export default async function (item, callback = null) {
@@ -8,11 +9,13 @@ export default async function (item, callback = null) {
     if (!deleteItem) return;
 
     try {
+        const promise = API.deleteFileSystemItem(item.path, item.isFile);
+        await sleep(200);
         showLoadingModal();
-        const response = await API.deleteFileSystemItem(item.path, item.isFile);
+        const response = await promise;
         closeLoadingModal();
 
-        if (response.ok) await callback && callback();
+        if (response.ok) callback && await callback();
         else {
             const text = await response.text();
             await showErrorModal(

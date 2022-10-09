@@ -1,11 +1,11 @@
-﻿import React, {useEffect, useRef, useState} from 'react';
-import {useHistory} from 'react-router-dom';
+﻿import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API from '../Helpers/API';
 import store from '../Helpers/store';
-import {closeLoadingModal, showErrorModal, showLoadingModal} from '../Helpers/storeExtensions';
+import { closeLoadingModal, showErrorModal, showLoadingModal } from '../Helpers/storeExtensions';
 
 export default function () {
-    const history = useHistory();
+    const navigate = useNavigate();
 
     const [isUsernameInvalid, setIsUsernameInvalid] = useState(false);
     const [isPasswordInvalid, setIsPasswordInvalid] = useState(false);
@@ -36,7 +36,7 @@ export default function () {
 
             closeLoadingModal();
             if (response.ok) {
-                history.push('/');
+                navigate('/');
                 store.set('isLoggedIn', true);
             } else if (response.status === 400) {
                 setError('Please enter a correct Username and password');
@@ -45,7 +45,7 @@ export default function () {
                 await showErrorModal(
                     <div>
                         Status: {response.status}
-                        <br/>
+                        <br />
                         {text}
                     </div>
                 );
@@ -65,19 +65,19 @@ export default function () {
                 <div className="form-group">
                     <label>Username</label>
                     <input ref={usernameInputRef} type="text"
-                           className={`form-control ${isUsernameInvalid ? 'is-invalid' : ''}`}
-                           onChange={e => setIsUsernameInvalid(!e.target.value)}/>
+                        className={`form-control ${isUsernameInvalid ? 'is-invalid' : ''}`}
+                        onChange={e => setIsUsernameInvalid(!e.target.value)} />
                 </div>
                 <div className="form-group">
                     <label>Password</label>
                     <input ref={passwordInputRef} type="password"
-                           className={`form-control ${isPasswordInvalid ? 'is-invalid' : ''}`}
-                           onChange={e => setIsPasswordInvalid(!e.target.value)}/>
+                        className={`form-control ${isPasswordInvalid ? 'is-invalid' : ''}`}
+                        onChange={e => setIsPasswordInvalid(!e.target.value)} />
                 </div>
 
                 <div className={`form-group form-check  ${error ? '' : 'd-none'}`}>
                     <label className="form-check-label">
-                        <input className="is-invalid d-none"/>
+                        <input className="is-invalid d-none" />
                         <div className="invalid-feedback">{error}</div>
                     </label>
                 </div>
@@ -88,4 +88,4 @@ export default function () {
             </form>
         </div>
     );
-} 
+}

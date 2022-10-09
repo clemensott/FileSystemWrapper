@@ -12,6 +12,8 @@ namespace FileSystemUWP.FileViewers
 {
     public sealed partial class MediaControl : UserControl
     {
+        private readonly EventifiedMediaTransportControls mtc;
+
         public event EventHandler<IsFullScreenChangedEventArgs> IsFullScreenChanged;
         public event EventHandler MinimizePlayerClicked;
 
@@ -19,36 +21,14 @@ namespace FileSystemUWP.FileViewers
         {
             this.InitializeComponent();
 
+            mtc = (EventifiedMediaTransportControls)mpe.TransportControls;
             SetPlayer(player);
-        }
-
-        private void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            mpe.TransportControls.IsEnabled =
-                mpe.TransportControls.IsSeekBarVisible =
-                mpe.TransportControls.IsCompact =
-                mpe.TransportControls.IsSeekEnabled = true;
-
-            mpe.TransportControls.IsFastForwardButtonVisible =
-                mpe.TransportControls.IsFastRewindButtonVisible =
-                mpe.TransportControls.IsFullWindowButtonVisible =
-                mpe.TransportControls.IsPlaybackRateButtonVisible =
-                mpe.TransportControls.IsSkipBackwardButtonVisible =
-                mpe.TransportControls.IsSkipForwardButtonVisible =
-                mpe.TransportControls.IsStopButtonVisible =
-                mpe.TransportControls.IsVolumeButtonVisible =
-                mpe.TransportControls.IsZoomButtonVisible =
-                mpe.TransportControls.IsNextTrackButtonVisible =
-                mpe.TransportControls.IsPreviousTrackButtonVisible = false;
-
-            mpe.TransportControls.Visibility = Visibility.Visible;
-            mpe.AreTransportControlsEnabled = true;
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             SetPlayer(null);
-            SetIsFullWindow(false);
+            SetIsFullScreen(false);
         }
 
         private void SetPlayer(MediaPlayer player)
@@ -118,22 +98,33 @@ namespace FileSystemUWP.FileViewers
 
         private void Mpe_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
-            if(mpe.MediaPlayer.PlaybackSession.NaturalVideoHeight > 0)
+            if (mpe.MediaPlayer.PlaybackSession.NaturalVideoHeight > 0)
             {
-                SetIsFullWindow(!mpe.IsFullWindow);
+                SetIsFullScreen(!mpe.IsFullWindow);
             }
         }
 
-        private void SetIsFullWindow(bool isFullWindow)
+        private void SetIsFullScreen(bool isFullWindow)
         {
             mpe.IsFullWindow = isFullWindow;
+            UpdateIsFullScreen(isFullWindow);
+        }
+
+        private void UpdateIsFullScreen(bool isFullWindow)
+        {
+            mtc.IsBackToWindowButtonVisable = !isFullWindow;
             IsFullScreenChanged?.Invoke(this, new IsFullScreenChangedEventArgs(isFullWindow));
         }
 
         private void Emtc_BackToWindowClicked(object sender, EventArgs e)
         {
             MinimizePlayerClicked?.Invoke(this, EventArgs.Empty);
-            SetIsFullWindow(false);
+            SetIsFullScreen(false);
+        }
+
+        private void Emtc_FullWindowClicked(object sender, EventArgs e)
+        {
+            UpdateIsFullScreen(!mpe.IsFullWindow);
         }
     }
 }
