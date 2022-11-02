@@ -8,8 +8,8 @@ export default function ({ path, disabled, onUploaded }) {
     const uploadFileModalRef = useRef();
 
     const upload = async () => {
-        await uploadFileModalRef.current.show(path)
-        if (typeof onUploaded === 'function') {
+        const uploaded = await uploadFileModalRef.current.show(path);
+        if (uploaded && typeof onUploaded === 'function') {
             onUploaded();
         }
     };

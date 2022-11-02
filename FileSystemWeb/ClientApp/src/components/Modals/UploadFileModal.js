@@ -3,6 +3,7 @@ import { Button, Modal, ModalHeader, ModalFooter, ModalBody, Form, FormGroup, La
 import { closeLoadingModal, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
 import formatFileSize from '../../Helpers/formatFileSize';
 import API from '../../Helpers/API';
+import sleep from '../../Helpers/sleep'
 
 function formatFile(file) {
     return `${file.name} (${formatFileSize(file.size)})`
@@ -18,12 +19,15 @@ const modal = forwardRef((props, ref) => {
     const fileInputRef = useRef();
     const nameInputRef = useRef();
 
-    const closeUploadModal = () => {
-        promise.resolve();
+    const closeUploadModal = (uploaded = false) => {
+        promise.resolve(uploaded);
         setPromise(null);
     };
 
+    const cancelUploadModal = () => closeUploadModal(false);
+
     const submit = async () => {
+        console.log('submit upload file:', fileInputRef, nameInputRef)
         const file = fileInputRef.current.files.length && fileInputRef.current.files[0];
         const name = nameInputRef.current.value;
 
@@ -36,9 +40,10 @@ const modal = forwardRef((props, ref) => {
             showLoadingModal();
             const response = await API.createFile(promise.folderPath + name, file);
             closeLoadingModal();
+            await sleep(300);
 
             if (response.ok) {
-                closeUploadModal();
+                closeUploadModal(true);
             } else {
                 const text = await response.text();
                 await showErrorModal(
@@ -63,7 +68,7 @@ const modal = forwardRef((props, ref) => {
                 folderPath
             }));
         },
-        close: closeUploadModal,
+        close: cancelUploadModal,
     }));
 
     const onFileChange = e => {
@@ -78,8 +83,8 @@ const modal = forwardRef((props, ref) => {
     };
 
     return (
-        <Modal isOpen={!!promise} toggle={closeUploadModal}>
-            <ModalHeader toggle={closeUploadModal}>Upload file</ModalHeader>
+        <Modal isOpen={!!promise} toggle={cancelUploadModal}>
+            <ModalHeader toggle={cancelUploadModal}>Upload file</ModalHeader>
             <ModalBody>
                 <Form onSubmit={e => {
                     e.preventDefault();
@@ -87,12 +92,12 @@ const modal = forwardRef((props, ref) => {
                 }}>
                     <FormGroup>
                         <Label>File</Label>
-                        <Input ref={fileInputRef} type="file"
+                        <Input innerRef={fileInputRef} type="file"
                             className={isFileInvalid ? 'is-invalid' : ''} onChange={onFileChange} />
                     </FormGroup>
                     <FormGroup>
                         <Label>Name</Label>
-                        <Input ref={nameInputRef} type="text" defaultValue={suggestedName}
+                        <Input innerRef={nameInputRef} type="text" defaultValue={suggestedName}
                             className={`form-control ${isNameInvalid ? 'is-invalid' : ''}`}
                             onChange={e => setIsNameInvalid(!e.target.value)} />
                     </FormGroup>
@@ -100,7 +105,7 @@ const modal = forwardRef((props, ref) => {
             </ModalBody>
             <ModalFooter>
                 <Button color="primary" onClick={submit}>Upload</Button>{' '}
-                <Button color="secondary" onClick={closeUploadModal}>Cancel</Button>
+                <Button color="secondary" onClick={cancelUploadModal}>Cancel</Button>
             </ModalFooter>
         </Modal>
     );

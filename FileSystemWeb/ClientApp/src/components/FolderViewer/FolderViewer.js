@@ -129,7 +129,11 @@ const FolderViewer = ({ path, onFolderLoaded }) => {
                     {pathParts}
                 </div>
                 <FolderSortButton sortBy={sortBy} onSortByChange={setSortBy} />
-                <UploadFileButton path={path} disabled={isLoading || !(content && content.permission.write)} />
+                <UploadFileButton
+                    path={path}
+                    disabled={isLoading || !(content && content.permission.write)}
+                    onUploaded={forceUpdate}
+                />
             </div>
             <FolderViewerContent
                 content={isLoading ? null : content}
