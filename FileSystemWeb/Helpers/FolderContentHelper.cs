@@ -75,7 +75,7 @@ namespace FileSystemWeb.Helpers
                      if (!dir.Exists) return (FolderSortItem?)null;
 
                      FolderItem folder = f.ToFolderItem();
-                     return FolderSortItem.FromItem(folder, GetDirectorySortKey(dir, sortType), folder.Name);
+                     return FolderSortItem.FromItem(folder, GetDirectorySortKey(dir, sortType));
                  })
                  .Where(f => f.HasValue)
                  .Cast<FolderSortItem>();
@@ -99,7 +99,7 @@ namespace FileSystemWeb.Helpers
                      if (!file.Exists) return (FileSortItem?)null;
 
                      FileItem fileItem = f.ToFileItem();
-                     return FileSortItem.FromItem(fileItem, GetFileSortKey(file, sortType), fileItem.Name);
+                     return FileSortItem.FromItem(fileItem, GetFileSortKey(file, sortType));
                  })
                  .Where(f => f.HasValue)
                  .Cast<FileSortItem>();
@@ -117,7 +117,6 @@ namespace FileSystemWeb.Helpers
                 Permission = folder.Permission,
                 SortKeys = new string[] {
                     GetDirectorySortKey(folder, sortType),
-                    folder.Name,
                 },
                 Folders = FileSystemSortItemComparer.Current.Sort(folders, sortDirection).ToArray(),
                 Files = FileSystemSortItemComparer.Current.Sort(files, sortDirection).ToArray(),
@@ -141,7 +140,6 @@ namespace FileSystemWeb.Helpers
                         Deletable = false,
                         SortKeys = new string[] {
                             GetDirectorySortKey(d.Name, sortType),
-                            d.Name,
                         },
                     });
             }
@@ -172,7 +170,6 @@ namespace FileSystemWeb.Helpers
                 Deletable = true,
                 SortKeys = new string[] {
                     GetDirectorySortKey(d, sortType),
-                    d.Name,
                 },
             });
         }

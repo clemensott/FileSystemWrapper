@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace FileSystemUWP.Models
 {
-    public struct FileSystemItem
+    public struct FileSystemItem : ISortableFileSystemItem
     {
         public bool IsFile { get; }
 

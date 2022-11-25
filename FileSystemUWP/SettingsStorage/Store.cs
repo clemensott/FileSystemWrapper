@@ -71,7 +71,7 @@ namespace FileSystemUWP.SettingsStorage
         {
             if (item.HasValue)
             {
-                return new FileSystemSortItem(item.Value.IsFile, item.Value.SortKeys?.ToList().AsReadOnly());
+                return new FileSystemSortItem(item.Value.IsFile, item.Value.Name, item.Value.SortKeys?.ToList().AsReadOnly());
             }
             return null;
         }
@@ -138,6 +138,7 @@ namespace FileSystemUWP.SettingsStorage
                 return new FileSystemSortItemStore()
                 {
                     IsFile = item.Value.IsFile,
+                    Name = item.Value.Name,
                     SortKeys = item.Value.SortKeys?.ToArray(),
                 };
             }

@@ -189,7 +189,7 @@ namespace FileSystemUWP.Picker
             FileSystemItem item;
             if (currentItems.TryElementAt(index, out item))
             {
-                return new FileSystemSortItem(item.IsFile, item.SortKeys);
+                return FileSystemSortItem.FromItem(item);
             }
             return null;
         }

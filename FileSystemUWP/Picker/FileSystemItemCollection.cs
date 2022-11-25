@@ -80,7 +80,7 @@ namespace FileSystemUWP.Picker
 
         private static int Compare(FileSystemItem a, FileSystemItem b)
         {
-            return a.FullPath == b.FullPath ? 0 : FileSystemItemComparer.Current.Compare(a.SortKeys, b.SortKeys);
+            return a.FullPath == b.FullPath ? 0 : FileSystemItemComparer.Current.Compare(a, b);
         }
 
         private static bool Equals(FileSystemItem a, FileSystemItem b)
@@ -112,9 +112,9 @@ namespace FileSystemUWP.Picker
 
             int index;
             bool found = Search.BinarySearch(this, begin, end,
-                f => FileSystemItemComparer.Current.Compare(f.SortKeys, item.SortKeys),
+                f => FileSystemItemComparer.Current.Compare(f, item),
                 out index);
-            if (found && index < Count)
+            if (index < Count)
             {
                 return this[index];
             }

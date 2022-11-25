@@ -159,6 +159,7 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Models\ISortableFileSystemItem.cs" />
     <Compile Include="Picker\ConflictType.cs" />
     <Compile Include="Picker\FileSystemItemCollection.cs" />
     <Compile Include="Picker\FileSystemSortItem.cs" />
