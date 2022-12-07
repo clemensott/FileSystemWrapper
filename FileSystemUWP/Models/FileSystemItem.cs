@@ -54,7 +54,7 @@ namespace FileSystemUWP.Models
 
         public static FileSystemItem FromFolderContent(FolderContent folder)
         {
-            return new FileSystemItem(false, folder.Path.LastOrDefault().Name, null,
+            return new FileSystemItem(false, folder.Path.ToName(), null,
                 folder.Path.ToPath(), folder.Path, folder.Permission, folder.SortKeys);
         }
     }
