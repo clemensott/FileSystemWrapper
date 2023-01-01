@@ -378,11 +378,11 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\StdOttLib\StdOttStandardLib\StdOttStandardLib.csproj">
+    <ProjectReference Include="..\StdOttLib\StdOttStandardLib\StdOttStandardLib.csproj">
       <Project>{06fccefa-e291-43f0-8f0d-e17d280f6ec4}</Project>
       <Name>StdOttStandardLib</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\StdOttLib\StdOttUwpLib\StdOttUwpLib.csproj">
+    <ProjectReference Include="..\StdOttLib\StdOttUwpLib\StdOttUwpLib.csproj">
       <Project>{ccf443c5-95a3-4dcd-8468-b71ce49d0206}</Project>
       <Name>StdOttUwpLib</Name>
     </ProjectReference>

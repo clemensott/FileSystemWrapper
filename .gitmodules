@@ -1,0 +1,3 @@
+[submodule "StdOttLib"]
+	path = StdOttLib
+	url = https://github.com/clemensott/StdOttLib

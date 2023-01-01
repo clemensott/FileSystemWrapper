@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileSystemCommon", "FileSys
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileSystemUWP", "FileSystemUWP\FileSystemUWP.csproj", "{6351C7FC-87CE-4DAC-A0F4-92B22E8C6AB8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StdOttUwpLib", "..\StdOttLib\StdOttUwpLib\StdOttUwpLib.csproj", "{CCF443C5-95A3-4DCD-8468-B71CE49D0206}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StdOttUwpLib", "StdOttLib\StdOttUwpLib\StdOttUwpLib.csproj", "{CCF443C5-95A3-4DCD-8468-B71CE49D0206}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StdOttStandardLib", "..\StdOttLib\StdOttStandardLib\StdOttStandardLib.csproj", "{06FCCEFA-E291-43F0-8F0D-E17D280F6EC4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StdOttStandardLib", "StdOttLib\StdOttStandardLib\StdOttStandardLib.csproj", "{06FCCEFA-E291-43F0-8F0D-E17D280F6EC4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileSystemWeb", "FileSystemWeb\FileSystemWeb.csproj", "{D088E5E2-841B-4C23-B9AB-0317A8B24ACB}"
 EndProject

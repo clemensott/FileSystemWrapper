@@ -1,5 +1,4 @@
 using System.IO;
-using System.Security.Claims;
 using FileSystemWeb.Constants;
 using FileSystemWeb.Data;
 using FileSystemWeb.Models;
