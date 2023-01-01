@@ -38,9 +38,9 @@ namespace FileSystemUWP
             }
         }
 
-        public static string GetNamePath(this IEnumerable<PathPart> parts)
+        public static string GetNamePath(this IEnumerable<PathPart> parts, char separator)
         {
-            return parts?.Select(p => p.Name).Join("\\") ?? string.Empty;
+            return parts?.Select(p => p.Name).Join(separator.ToString()) ?? string.Empty;
         }
 
         public static async Task<bool> TryAgain(string dialogMessage, string dialogTitle, Func<Task<bool>> func,

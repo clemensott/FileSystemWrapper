@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.Configuration;
 
 namespace FileSystemCommon
 {
@@ -136,34 +137,32 @@ namespace FileSystemCommon
             return parts?.LastOrDefault().Path ?? string.Empty;
         }
 
-        public static string JoinPaths(params string[] paths)
+        public static string JoinPaths(this Config config, params string[] paths)
         {
-            return JoinPaths((IEnumerable<string>)paths);
+            return JoinPaths(config, (IEnumerable<string>)paths);
         }
 
-        public static string JoinPaths(IEnumerable<string> paths)
+        public static string JoinPaths(this Config config, IEnumerable<string> paths)
         {
             IEnumerable<string> parts = paths?.Select(TrimPath).Where(p => !string.IsNullOrEmpty(p));
             return parts == null
                 ? string.Empty
-                : string.Join(Path.DirectorySeparatorChar.ToString(), parts);
+                : string.Join(config.DirectorySeparatorChar.ToString(), parts);
 
             string TrimPath(string path)
             {
-                return path?.Trim(' ', Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                return path?.Trim(' ', config.DirectorySeparatorChar, config.AltDirectorySeparatorChar);
             }
         }
 
-        public static string[] SplitPath(string path)
+        public static string[] SplitVirtualPath(this Config config, string path)
         {
-            return path
-                .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
-                .Split(Path.DirectorySeparatorChar);
+            return path.Split(new char[] { config.DirectorySeparatorChar, config.AltDirectorySeparatorChar }, 2);
         }
 
-        public static string GetParentPath(string path)
+        public static string GetParentPath(this Config config, string path)
         {
-            int index = path.LastIndexOf(Path.DirectorySeparatorChar);
+            int index = path.LastIndexOf(config.DirectorySeparatorChar);
             return index == -1 ? string.Empty : path.Substring(0, index + 1);
         }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Login from './components/Login';
 import NavMenu from './components/NavMenu';
@@ -16,21 +16,27 @@ import ErrorModal from './components/Modals/ErrorModal';
 import store from './Helpers/store'
 import { getAllRefs } from './Helpers/storeExtensions';
 import API from './Helpers/API';
+import Loading from './components/Loading/Loading';
 import './App.css';
 
 export default function () {
+    const [isLoaded, setLoaded] = useState();
+
     useEffect(() => {
         (async () => {
             let isLoggedIn = false;
 
             try {
-                const { ok, redirected } = await API.isAuthorized()
+                const { ok, redirected } = await API.isAuthorized();
                 isLoggedIn = ok && !redirected;
             } catch (err) {
                 console.error('isAuthorized Error:', err);
             }
 
-            store.set('isLoggedIn', isLoggedIn)
+            store.set('isLoggedIn', isLoggedIn);
+
+            await API.loadConfig();
+            setLoaded(true);
         })();
     }, []);
 
@@ -40,7 +46,7 @@ export default function () {
     allRefs.loadingModal = useRef();
     allRefs.errorModal = useRef();
 
-    return (
+    return isLoaded ? (
         <div>
             <NavMenu />
             <Container>
@@ -64,5 +70,9 @@ export default function () {
             <LoadingModal ref={allRefs.loadingModal} />
             <ErrorModal ref={allRefs.errorModal} />
         </div>
-    );
+    ) : (
+            <div className="center-root">
+                <Loading />
+            </div>
+        );
 }

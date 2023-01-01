@@ -5,6 +5,12 @@
     transform: translate(-50%, -50%);
 }
 
+.center-root {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 a:visited, a:hover, a:active, a:focus {
     text-decoration: none !important;
     outline: none !important;

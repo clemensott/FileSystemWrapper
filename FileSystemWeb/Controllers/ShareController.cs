@@ -71,11 +71,7 @@ namespace FileSystemWeb.Controllers
                 .Include(f => f.Permission)
                 .ToArrayAsync();
 
-            return shareFiles.Select(f =>
-            {
-                bool exists = string.IsNullOrWhiteSpace(f.Path) || System.IO.File.Exists(f.Path);
-                return f.ToShareItem(exists);
-            }).ToArray();
+            return shareFiles.Select(f => f.ToShareItem(f.GetExists())).ToArray();
         }
 
         [HttpGet("file/{uuid}")]
@@ -87,8 +83,7 @@ namespace FileSystemWeb.Controllers
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
             if (shareFile == null) return NotFound("Share file not found");
 
-            bool exists = string.IsNullOrWhiteSpace(shareFile.Path) || System.IO.File.Exists(shareFile.Path);
-            return shareFile.ToShareItem(exists);
+            return shareFile.ToShareItem(shareFile.GetExists());
         }
 
         [HttpPut("file/{uuid}")]
@@ -225,11 +220,7 @@ namespace FileSystemWeb.Controllers
                 .Include(f => f.Permission)
                 .ToArrayAsync();
 
-            return shareFolders.Select(f =>
-            {
-                bool exists = string.IsNullOrWhiteSpace(f.Path) || System.IO.Directory.Exists(f.Path);
-                return f.ToShareItem(exists);
-            }).ToArray();
+            return shareFolders.Select(f => f.ToShareItem(f.GetExists())).ToArray();
         }
 
         [HttpGet("folder/{uuid}")]
@@ -241,8 +232,7 @@ namespace FileSystemWeb.Controllers
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
             if (shareFolder == null) return NotFound("Share folder not found");
 
-            bool exists = string.IsNullOrWhiteSpace(shareFolder.Path) || System.IO.Directory.Exists(shareFolder.Path);
-            return shareFolder.ToShareItem(exists);
+            return shareFolder.ToShareItem(shareFolder.GetExists());
         }
 
         [HttpPut("folder/{uuid}")]

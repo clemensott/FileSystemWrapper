@@ -37,7 +37,7 @@ const FolderViewer = ({ path, onFolderLoaded }) => {
             } else {
                 const link = `/?folder=${encodeURIComponent(part.path)}`
                 renderParts.push(<Link key={part.path} to={link}>{part.name}</Link>);
-                renderParts.push('\\');
+                renderParts.push(API.config.directorySeparatorChar);
             }
         });
         return renderParts;

@@ -69,7 +69,7 @@ namespace FileSystemUWP.Sync.Definitions
 
         private object ServerPathConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
         {
-            return ((PathPart[])value).GetNamePath();
+            return ((PathPart[])value).GetNamePath(viewModel.Api.Config.DirectorySeparatorChar);
         }
 
         private void GidSyncPair_Holding(object sender, HoldingRoutedEventArgs e)

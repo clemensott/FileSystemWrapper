@@ -17,7 +17,7 @@ namespace FileSystemWeb.Helpers
         public static async Task<InternalFile> GetFileItem(string virtualPath, AppDbContext dbContext, string userId,
             ControllerBase controller)
         {
-            string[] parts = Utils.SplitPath(virtualPath);
+            string[] parts = ConfigHelper.Config.SplitVirtualPath(virtualPath);
             if (!Guid.TryParse(parts[0], out Guid uuid))
             {
                 throw (HttpResultException)controller.BadRequest("Can't parse uuid");
@@ -53,8 +53,8 @@ namespace FileSystemWeb.Helpers
                 throw (HttpResultException)controller.NotFound("Share folder not found.");
             }
 
-            IEnumerable<string> allPhysicalPathParts = new string[] {folder?.Path}.Concat(parts[1..]);
-            string physicalPath = FileHelper.ToFilePath(allPhysicalPathParts.ToArray());
+            IEnumerable<string> allPhysicalPathParts = new string[] { folder.GetPath() }.Concat(parts[1..]);
+            string physicalPath = FileHelper.ToFilePath(allPhysicalPathParts);
             if (!FileHelper.IsPathAllowed(physicalPath))
             {
                 throw (HttpResultException)controller.BadRequest("Path is not fully qualified");

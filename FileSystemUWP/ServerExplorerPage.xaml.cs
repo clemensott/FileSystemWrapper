@@ -108,7 +108,8 @@ namespace FileSystemUWP
         private static async Task<bool> Ping(Api api)
         {
             return !string.IsNullOrWhiteSpace(api.BaseUrl) &&
-                await api.IsAuthorized();
+                await api.IsAuthorized() &&
+                await api.LoadConfig();
         }
 
         private async void CallApiSettingsPage()
@@ -336,7 +337,7 @@ namespace FileSystemUWP
                 name = tbx.Text.Trim();
                 if (name.Length == 0 || name.Any(c => Path.GetInvalidFileNameChars().Contains(c))) continue;
 
-                string path = Utils.JoinPaths(pcView.CurrentFolder.Value.FullPath, name);
+                string path = viewModel.Api.Config.JoinPaths(pcView.CurrentFolder.Value.FullPath, name);
 
                 await UiUtils.TryAgain("Try again?", "Create folder error",
                     () => viewModel.Api.CreateFolder(path),
@@ -358,7 +359,7 @@ namespace FileSystemUWP
             picker.FileTypeFilter.Add("*");
 
             StorageFile srcFile = await picker.PickSingleFileAsync();
-            string path = Utils.JoinPaths(pcView.CurrentFolder.Value.FullPath, srcFile.Name);
+            string path = viewModel.Api.Config.JoinPaths(pcView.CurrentFolder.Value.FullPath, srcFile.Name);
 
             await UiUtils.TryAgain("Try again?", "Uplaod file error",
                 () => viewModel.Api.UploadFile(path, srcFile),

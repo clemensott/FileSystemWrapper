@@ -1,5 +1,6 @@
 ﻿using FileSystemCommon;
 using FileSystemCommon.Models.Auth;
+using FileSystemCommon.Models.Configuration;
 using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
@@ -28,8 +29,15 @@ namespace FileSystemUWP.API
 
         public string[] RawCookies { get; set; }
 
+        public Config Config { get; private set; }
+
         public Api()
         {
+            Config = new Config()
+            {
+                DirectorySeparatorChar = '/',
+                AltDirectorySeparatorChar = '/',
+            };
         }
 
         internal Api Clone()
@@ -40,6 +48,11 @@ namespace FileSystemUWP.API
                 BaseUrl = BaseUrl,
                 Username = Username,
                 RawCookies = RawCookies?.ToArray(),
+                Config = new Config()
+                {
+                    DirectorySeparatorChar = Config?.DirectorySeparatorChar ?? '/',
+                    AltDirectorySeparatorChar = Config?.AltDirectorySeparatorChar ?? '/',
+                },
             };
         }
 
@@ -81,6 +94,13 @@ namespace FileSystemUWP.API
                 System.Diagnostics.Debug.WriteLine(e);
                 return false;
             }
+        }
+
+        public async Task<bool> LoadConfig()
+        {
+            Uri uri = GetUri("/api/config");
+            Config = await Request<Config>(uri, HttpMethod.Get);
+            return Config != null;
         }
 
         public Task<bool> FolderExists(string path)

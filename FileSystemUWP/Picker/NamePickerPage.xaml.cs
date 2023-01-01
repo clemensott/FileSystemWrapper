@@ -51,7 +51,7 @@ namespace FileSystemUWP.Picker
             prgLoading.IsActive = true;
             abbAccept.IsEnabled = false;
 
-            string path = Utils.JoinPaths(picking.FolderPath, name);
+            string path = picking.Api.Config.JoinPaths(picking.FolderPath, name);
             Task<bool> fileExistsTask = picking.Api.FileExists(path);
             Task<bool> folderExistsTask = picking.Api.FolderExists(path);
             bool fileExists = await fileExistsTask;

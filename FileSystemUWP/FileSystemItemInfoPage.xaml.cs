@@ -56,7 +56,7 @@ namespace FileSystemUWP
 
         private object PathConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
         {
-            return ((PathPart[])value).Select(p => p.Name).Join("\\");
+            return ((PathPart[])value).Select(p => p.Name).Join(api.Config.DirectorySeparatorChar.ToString());
         }
 
         private object SizeCon_ConvertEvent(object value, Type targetType, object parameter, string language)

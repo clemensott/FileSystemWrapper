@@ -218,7 +218,8 @@ namespace FileSystemUWP
                 while (syncs.Count > 0)
                 {
                     SyncPairHandler handler = syncs.Dequeue();
-                    if (!await handler.Api.IsAuthorized()) continue;
+                    if (!await handler.Api.IsAuthorized() && await handler.Api.LoadConfig()) continue;
+
                     await handler.Start();
 
                     SyncPair sync;

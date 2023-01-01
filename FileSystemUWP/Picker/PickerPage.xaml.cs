@@ -78,7 +78,7 @@ namespace FileSystemUWP.Picker
 
                     if (!namePicking.Task.IsCompleted) return;
 
-                    string path = Utils.JoinPaths(pcView.CurrentFolder?.FullPath, name);
+                    string path = picking.Api.Config.JoinPaths(pcView.CurrentFolder?.FullPath, name);
                     picking.SetResult(path);
                     Frame.GoBack();
                     break;

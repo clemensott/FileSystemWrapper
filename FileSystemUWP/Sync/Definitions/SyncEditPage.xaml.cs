@@ -1,4 +1,5 @@
 ﻿using FileSystemCommon;
+using FileSystemCommon.Models.Configuration;
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Folders;
@@ -63,19 +64,23 @@ namespace FileSystemUWP.Sync.Definitions
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             edit = (SyncPairEdit)e.Parameter;
+            char directorySeparatorChar = edit.Api.Config.DirectorySeparatorChar;
 
             PathPart[] serverPath = edit.Sync.ServerPath;
             if (serverPath != null)
             {
                 for (int i = 0; i < serverPath.Length; i++)
                 {
-                    folderPaths[serverPath.Take(i + 1).GetNamePath().TrimEnd('\\')] = serverPath[i].Path;
+                    string path = serverPath
+                        .Take(i + 1)
+                        .GetNamePath(directorySeparatorChar);
+                    folderPaths[path] = serverPath[i].Path;
                 }
             }
 
             tblTitlePrefix.Text = edit.IsAdd ? "Add" : "Edit";
             DataContext = edit.Sync;
-            asbServerPath.Text = edit.Sync.ServerPath.GetNamePath();
+            asbServerPath.Text = edit.Sync.ServerPath.GetNamePath(directorySeparatorChar);
 
             base.OnNavigatedTo(e);
         }
@@ -103,6 +108,7 @@ namespace FileSystemUWP.Sync.Definitions
 
         private async void AsbServerPath_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
         {
+            Config config = edit.Api.Config;
             sinServerPathValid.Symbol = Symbol.Help;
 
             if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput ||
@@ -113,7 +119,7 @@ namespace FileSystemUWP.Sync.Definitions
                     string.Empty : Path.GetFileName(sender.Text);
                 string searchKey = folderName.ToLower();
                 string parentPath = string.IsNullOrWhiteSpace(sender.Text) ?
-                    string.Empty : Utils.GetParentPath(sender.Text).TrimEnd(Path.DirectorySeparatorChar);
+                    string.Empty : config.GetParentPath(sender.Text).TrimEnd(config.DirectorySeparatorChar);
                 FolderContent content = folderPaths.TryGetValue(parentPath, out actualParentPath) ?
                     await edit.Api.FolderContent(folderPaths[parentPath]) : null;
 
@@ -121,7 +127,10 @@ namespace FileSystemUWP.Sync.Definitions
                 {
                     foreach (FolderSortItem folder in content.Folders)
                     {
-                        folderPaths[content.Path.GetChildPathParts(folder).GetNamePath().TrimEnd(Path.DirectorySeparatorChar)] = folder.Path;
+                        string path = content.Path
+                            .GetChildPathParts(folder)
+                            .GetNamePath(config.DirectorySeparatorChar);
+                        folderPaths[path] = folder.Path;
                     }
 
                     FolderSortItem currentFolder;
@@ -143,17 +152,18 @@ namespace FileSystemUWP.Sync.Definitions
             }
 
             string actualPath;
-            string namePath = sender.Text.TrimEnd(Path.DirectorySeparatorChar);
+            string namePath = sender.Text.TrimEnd(config.DirectorySeparatorChar);
             bool exists = folderPaths.TryGetValue(namePath, out actualPath) && await edit.Api.FolderExists(actualPath);
             sinServerPathValid.Symbol = exists ? Symbol.Accept : Symbol.Dislike;
         }
 
         private void AsbServerPath_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
+            Config config = edit.Api.Config;
             FolderItem suggestion = args.ChosenSuggestion is FolderItem ? (FolderItem)args.ChosenSuggestion : (FolderItem)sender.Items[0];
-            string parentPath = Utils.GetParentPath(sender.Text);
+            string parentPath = config.GetParentPath(sender.Text);
 
-            sender.Text = Utils.JoinPaths(parentPath, suggestion.Name) + '\\';
+            sender.Text = config.JoinPaths(parentPath, suggestion.Name) + config.DirectorySeparatorChar;
             sender.Focus(FocusState.Keyboard);
         }
 

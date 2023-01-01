@@ -1,6 +1,8 @@
 ﻿import formatUrl from './formatUrl';
 
 export default class API {
+    static config = null;
+
     static fetch(resource, { path, query, method, body, headers, ...options } = {}) {
         const contentType = (method && method !== 'GET' && body) ? 'application/json;charset=utf-8' : undefined;
         return window.fetch(`/api${formatUrl({ resource, path, query })}`, {
@@ -34,6 +36,13 @@ export default class API {
 
     static isAuthorized() {
         return this.fetch('/ping/auth');
+    }
+
+    static async loadConfig() {
+        const response = await this.fetch('/config');
+        if (response.ok) {
+            API.config = await response.json();
+        }
     }
 
     static getAllUsers() {

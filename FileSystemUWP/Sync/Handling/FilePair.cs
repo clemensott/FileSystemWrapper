@@ -20,13 +20,13 @@ namespace FileSystemUWP.Sync.Handling
 
         public object LocalCompareValue { get; set; }
 
-        public FilePair(string serverBasePath, string relPath, StorageFile localFile, bool serverFileExists)
+        public FilePair(string name, string relativePath, string serverFullPath, bool serverFileExists, StorageFile localFile)
         {
-            RelativePath = relPath.Trim('\\');
-            ServerFullPath = Utils.JoinPaths(serverBasePath, relPath);
-            Name = Path.GetFileName(ServerFullPath);
-            LocalFile = localFile;
+            Name = name;
+            RelativePath = relativePath;
+            ServerFullPath = serverFullPath;
             ServerFileExists = serverFileExists;
+            LocalFile = localFile;
         }
     }
 }

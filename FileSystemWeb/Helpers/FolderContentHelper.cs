@@ -57,7 +57,7 @@ namespace FileSystemWeb.Helpers
             if (sortType == FileSystemItemSortType.Name)
             {
                 return shareFolders
-                    .Where(f => string.IsNullOrWhiteSpace(f.Path) || Directory.Exists(f.Path))
+                    .Where(f => f.GetExists())
                     .Select(f => f.ToFolderItem())
                     .Select(f => FolderSortItem.FromItem(f, f.Name));
             }
@@ -65,12 +65,13 @@ namespace FileSystemWeb.Helpers
             return shareFolders
                  .Select(f =>
                  {
-                     if (string.IsNullOrWhiteSpace(f.Path))
+                     string path = f.GetPath();
+                     if (string.IsNullOrWhiteSpace(path))
                      {
                          return FolderSortItem.FromItem(f.ToFolderItem(), "0");
                      }
 
-                     DirectoryInfo dir = new DirectoryInfo(f.Path);
+                     DirectoryInfo dir = new DirectoryInfo(path);
                      if (!dir.Exists) return (FolderSortItem?)null;
 
                      FolderItem folder = f.ToFolderItem();
@@ -126,6 +127,7 @@ namespace FileSystemWeb.Helpers
         private static IEnumerable<FolderSortItem> GetFolders(InternalFolder folder,
               FileSystemItemSortType sortType)
         {
+            char directorySeparatorChar = ConfigHelper.Config.DirectorySeparatorChar;
             if (string.IsNullOrWhiteSpace(folder.PhysicalPath))
             {
                 return DriveInfo.GetDrives()
@@ -133,7 +135,7 @@ namespace FileSystemWeb.Helpers
                     .Select(d => new FolderSortItem()
                     {
                         Name = d.Name,
-                        Path = Path.Join(folder.VirtualPath, d.Name),
+                        Path = $"{folder.VirtualPath}{directorySeparatorChar}{d.Name}",
                         SharedId = null,
                         Permission = folder.Permission,
                         Deletable = false,
@@ -152,7 +154,7 @@ namespace FileSystemWeb.Helpers
                     return new FolderSortItem()
                     {
                         Name = name,
-                        Path = Path.Join(folder.VirtualPath, name),
+                        Path = $"{folder.VirtualPath}{directorySeparatorChar}{name}",
                         SharedId = null,
                         Permission = folder.Permission,
                         Deletable = true,

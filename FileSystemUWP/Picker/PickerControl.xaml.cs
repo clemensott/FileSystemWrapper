@@ -34,7 +34,7 @@ namespace FileSystemUWP.Picker
             PickerControl s = (PickerControl)sender;
             FileSystemItem? value = (FileSystemItem?)e.NewValue;
 
-            s.CurrentFolderNamePath = value?.PathParts.GetNamePath();
+            s.CurrentFolderNamePath = value?.PathParts.GetNamePath(s.Api.Config.DirectorySeparatorChar);
         }
 
         public static readonly DependencyProperty CurrentFolderNamePathProperty = DependencyProperty.Register("CurrentFolderNamePath",

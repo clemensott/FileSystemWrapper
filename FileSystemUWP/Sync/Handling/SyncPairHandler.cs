@@ -309,7 +309,7 @@ namespace FileSystemUWP.Sync.Handling
             Token = token;
             WithSubfolders = withSubfolders;
             Name = name;
-            ServerNamePath = serverPath.GetNamePath();
+            ServerNamePath = serverPath.GetNamePath(api.Config.DirectorySeparatorChar);
             ServerPath = serverPath?.LastOrDefault().Path;
             LocalFolder = localFolder;
             FileComparer = fileComparer;
@@ -375,6 +375,14 @@ namespace FileSystemUWP.Sync.Handling
             throw new ArgumentException("Value not Implemented:" + type, nameof(type));
         }
 
+        private FilePair CreateFilePair(string serverBasePath, string relPath, StorageFile localFile, bool serverFileExists)
+        {
+            string relativePath = relPath.Trim(Api.Config.DirectorySeparatorChar);
+            string serverFullPath = Api.Config.JoinPaths(serverBasePath, relPath);
+            string name = Path.GetFileName(serverFullPath);
+            return new FilePair(name, relativePath, serverFullPath, serverFileExists, localFile);
+        }
+
         private async Task QueryFiles()
         {
             try
@@ -402,7 +410,7 @@ namespace FileSystemUWP.Sync.Handling
                 CurrentQueryFolderRelPath = relPath;
 
                 int addedFilesCount = 0;
-                string serverFolderPath = Utils.JoinPaths(ServerPath, relPath);
+                string serverFolderPath = Api.Config.JoinPaths(ServerPath, relPath);
 
                 Task<FolderContent> serverFolderContentTask = Api.FolderContent(serverFolderPath);
                 IAsyncOperation<IReadOnlyList<StorageFile>> localFilesTask = localFolder?.GetFilesAsync();
@@ -419,7 +427,7 @@ namespace FileSystemUWP.Sync.Handling
                     if (!CheckWhitelistAndBlacklist(serverFile.Path)) continue;
 
                     int index;
-                    string relFilePath = Utils.JoinPaths(relPath, serverFile.Name);
+                    string relFilePath = Api.Config.JoinPaths(relPath, serverFile.Name);
                     StorageFile localFile;
 
                     if (localFiles.TryIndexOf(f => string.Equals(f.Name, serverFile.Name, StringComparison.OrdinalIgnoreCase), out index))
@@ -427,20 +435,20 @@ namespace FileSystemUWP.Sync.Handling
                         localFile = localFiles[index];
                         localFiles.RemoveAt(index);
 
-                        await bothFiles.Enqueue(new FilePair(ServerPath, relFilePath, localFile, true));
+                        await bothFiles.Enqueue(CreateFilePair(ServerPath, relFilePath, localFile, true));
                     }
-                    else await singleFiles.Enqueue(new FilePair(ServerPath, relFilePath, null, true));
+                    else await singleFiles.Enqueue(CreateFilePair(ServerPath, relFilePath, null, true));
                     addedFilesCount++;
                 }
 
                 foreach (StorageFile localFile in localFiles)
                 {
-                    string relFilePath = Utils.JoinPaths(relPath, localFile.Name);
-                    string serverFilePath = Utils.JoinPaths(ServerPath, relFilePath);
+                    string relFilePath = Api.Config.JoinPaths(relPath, localFile.Name);
+                    string serverFilePath = Api.Config.JoinPaths(ServerPath, relFilePath);
 
                     if (!CheckWhitelistAndBlacklist(serverFilePath)) continue;
 
-                    await singleFiles.Enqueue(new FilePair(ServerPath, relFilePath, localFile, false));
+                    await singleFiles.Enqueue(CreateFilePair(ServerPath, relFilePath, localFile, false));
                     addedFilesCount++;
                 }
 
@@ -457,7 +465,7 @@ namespace FileSystemUWP.Sync.Handling
                 foreach (FolderSortItem serverSubFolder in serverSubFolders)
                 {
                     int index;
-                    string relSubFolderPath = Utils.JoinPaths(relPath, serverSubFolder.Name);
+                    string relSubFolderPath = Api.Config.JoinPaths(relPath, serverSubFolder.Name);
                     StorageFolder localSubFolder = null;
 
                     if (localSubFolders.TryIndexOf(f => string.Equals(f.Name, serverSubFolder.Name, StringComparison.OrdinalIgnoreCase), out index))
@@ -646,9 +654,9 @@ namespace FileSystemUWP.Sync.Handling
             System.Diagnostics.Debug.WriteLine($"To Local ended!!!!!!!!!!!!!");
         }
 
-        private static async Task<(StorageFolder folder, string fileName)> TryCreateLocalFolder(string relPath, StorageFolder localBaseFolder)
+        private async Task<(StorageFolder folder, string fileName)> TryCreateLocalFolder(string relPath, StorageFolder localBaseFolder)
         {
-            string[] parts = relPath.Split('\\');
+            string[] parts = relPath.Split(Api.Config.DirectorySeparatorChar);
             StorageFolder preFolder = localBaseFolder;
 
             for (int i = 0; i < parts.Length - 1; i++)
@@ -704,14 +712,14 @@ namespace FileSystemUWP.Sync.Handling
 
         private async Task<bool> TryCreateServerFolder(string serverFilePath)
         {
-            if (await Api.FolderExists(Utils.GetParentPath(serverFilePath))) return true;
+            if (await Api.FolderExists(Api.Config.GetParentPath(serverFilePath))) return true;
 
-            string[] parts = serverFilePath.Split('\\');
+            string[] parts = serverFilePath.Split(Api.Config.DirectorySeparatorChar);
             string currentFolderPath = string.Empty;
 
             for (int i = 0; i < parts.Length - 1; i++)
             {
-                currentFolderPath = Utils.JoinPaths(currentFolderPath, parts[i]);
+                currentFolderPath = Api.Config.JoinPaths(currentFolderPath, parts[i]);
 
                 if (await Api.FolderExists(currentFolderPath)) continue;
                 if (i == 0 || !await Api.CreateFolder(currentFolderPath)) return false;

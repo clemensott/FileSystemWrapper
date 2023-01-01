@@ -1,29 +1,35 @@
-﻿// replaces / and | with \ and removes last \
+﻿import API from './API';
+
+
+// replaces / and | with \ and removes last \
 export function normalizeFile(path) {
-    return path && path.split(/[\/\\|]/).filter(Boolean).join('\\');
+    return path && path
+        .replace(/^[\/\\|]+/, '')
+        .replace(/[\/\\|]+$/, '')
+        .replace(/[\/\\|]/, API.config.directorySeparatorChar);
 }
 
 // replaces / and | with \ and adds last \
 export function normalizeFolder(path) {
-    return path && (normalizeFile(path) + '\\');
+    return path && (normalizeFile(path) + API.config.directorySeparatorChar);
 }
 
 export function getName(path) {
     const normal = normalizeFile(path);
-    return normal && normal.substr(normal.lastIndexOf('\\') + 1);
+    return normal && normal.substr(normal.lastIndexOf(API.config.directorySeparatorChar) + 1);
 }
 
 export function getParent(path) {
     if (!path) return null;
 
     const normal = normalizeFile(path);
-    const index = normal.lastIndexOf('\\');
+    const index = normal.lastIndexOf(API.config.directorySeparatorChar);
     return index >= 0 ? normal.substr(0, index) : '';
 }
 
 function toUnicode(char) {
     const code = char.charCodeAt(0);
-    return String.fromCharCode(code % 256) + String.fromCharCode(code / 256);
+    return String.fromCharCode(code % 256, code / 256);
 }
 
 export function encodeBase64UnicodeCustom(path) {

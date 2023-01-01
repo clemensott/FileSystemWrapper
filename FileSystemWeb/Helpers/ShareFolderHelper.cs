@@ -18,7 +18,7 @@ namespace FileSystemWeb.Helpers
         public static async Task<InternalFolder> GetFolderItem(string virtualPath, AppDbContext dbContext,
             string userId, ControllerBase controller)
         {
-            string[] parts = Utils.SplitPath(virtualPath);
+            string[] parts = ConfigHelper.Config.SplitVirtualPath(virtualPath);
             if (!Guid.TryParse(parts[0], out Guid uuid))
             {
                 throw (HttpResultException)controller.BadRequest("Can't parse uuid");
@@ -33,27 +33,25 @@ namespace FileSystemWeb.Helpers
             }
 
             Guid? sharedId = null;
-            IEnumerable<string> allPhysicalPathParts = new string[] {folder.Path}.Concat(parts[1..]);
-            string physicalPath = FileHelper.ToPhysicalFolderPath(allPhysicalPathParts.ToArray());
+            IEnumerable<string> allPhysicalPathParts = new string[] { folder.GetPath() }.Concat(parts[1..]);
+            string physicalPath = FileHelper.ToPhysicalFolderPath(allPhysicalPathParts);
             var permission = folder.Permission.ToFolderItemPermission();
 
-            if (physicalPath.Length > 0)
-            {
-                if (!FileHelper.IsPathAllowed(physicalPath))
-                {
-                    throw (HttpResultException)controller.BadRequest("Path is not fully qualified");
-                }
-            }
-            else
+            if (physicalPath.Length == 0)
             {
                 permission.Write = false;
                 sharedId = folder.Uuid;
+            }
+            else if (!FileHelper.IsPathAllowed(physicalPath))
+            {
+                throw (HttpResultException)controller.BadRequest("Path is not fully qualified");
             }
 
             return new InternalFolder()
             {
                 BaseName = folder.Name,
-                Name = parts.Length == 1 ? folder.Name : Path.GetFileName(physicalPath.TrimEnd(Path.DirectorySeparatorChar)),
+                Name = parts.Length == 1 ?
+                    folder.Name : Path.GetFileName(physicalPath.TrimEnd(ConfigHelper.Config.DirectorySeparatorChar)),
                 PhysicalPath = physicalPath,
                 VirtualPath = virtualPath,
                 SharedId = sharedId,

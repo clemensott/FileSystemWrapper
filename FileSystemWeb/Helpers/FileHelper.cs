@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
@@ -127,7 +128,7 @@ namespace FileSystemWeb.Helpers
 
         private static void GetFileCountAndSize(DirectoryInfo dir, out int count, out long size)
         {
-            GetFileCountAndSize(new DirectoryInfo[] {dir}, out count, out size);
+            GetFileCountAndSize(new DirectoryInfo[] { dir }, out count, out size);
         }
 
         private static void GetFileCountAndSize(IEnumerable<DirectoryInfo> dirs, out int count, out long size)
@@ -163,7 +164,8 @@ namespace FileSystemWeb.Helpers
 
         public static PathPart[] GetPathParts(string virtualPath, string baseName)
         {
-            string[] parts = virtualPath.TrimEnd(Path.DirectorySeparatorChar).Split(Path.DirectorySeparatorChar);
+            char directorySeparatorChar = ConfigHelper.Config.DirectorySeparatorChar;
+            string[] parts = virtualPath.TrimEnd(directorySeparatorChar).Split(directorySeparatorChar);
             return parts.Select((p, i) => new PathPart()
             {
                 Name = i == 0 ? baseName : p,
@@ -178,7 +180,7 @@ namespace FileSystemWeb.Helpers
 
         public static string ToFilePath(string path)
         {
-            return path?.TrimEnd(Path.DirectorySeparatorChar);
+            return path?.TrimEnd(ConfigHelper.Config.DirectorySeparatorChar);
         }
 
         public static string ToPhysicalFolderPath(IEnumerable<string> paths)
@@ -189,15 +191,35 @@ namespace FileSystemWeb.Helpers
         public static string ToPhysicalFolderPath(string path)
         {
             if (path == null) return null;
+            if (path.Length == 0) return string.Empty;
 
-            path = path.TrimEnd(Path.DirectorySeparatorChar);
-            return path.Length > 0 ? path + Path.DirectorySeparatorChar : string.Empty;
+            path = path.TrimEnd(ConfigHelper.Config.DirectorySeparatorChar);
+            return path + ConfigHelper.Config.DirectorySeparatorChar;
         }
 
         public static bool IsPathAllowed(string path)
         {
             return Path.IsPathFullyQualified(path) &&
-                   !path.Contains($"{Path.DirectorySeparatorChar}..{Path.DirectorySeparatorChar}");
+                   !path.Contains($"{ConfigHelper.Config.DirectorySeparatorChar}..{ConfigHelper.Config.DirectorySeparatorChar}");
+        }
+
+        public static string GetPath(this ShareFolder folder)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return folder.Path;
+
+            return string.IsNullOrWhiteSpace(folder.Path) ? ConfigHelper.Config.DirectorySeparatorChar.ToString() : folder.Path;
+        }
+
+        public static bool GetExists(this ShareFolder folder)
+        {
+            string path = folder.GetPath();
+            return string.IsNullOrWhiteSpace(path) || Directory.Exists(path);
+        }
+
+        public static bool GetExists(this ShareFile file)
+        {
+            string path = file.Path;
+            return string.IsNullOrWhiteSpace(path) || File.Exists(path);
         }
     }
 }
