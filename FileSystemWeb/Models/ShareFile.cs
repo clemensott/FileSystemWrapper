@@ -11,9 +11,9 @@ namespace FileSystemWeb.Models
 
         public Guid Uuid { get; set; } = Guid.NewGuid();
 
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        public string Path { get; set; }
+        public string Path { get; set; } = string.Empty;
 
         public bool IsListed { get; set; }
 
@@ -38,13 +38,14 @@ namespace FileSystemWeb.Models
             };
         }
 
-        public ShareItem ToShareItem()
+        public ShareItem ToShareItem(bool exists)
         {
             return new ShareItem()
             {
                 Id = Uuid,
                 Name = Name,
                 IsListed = IsListed,
+                Exists = exists,
                 UserId = UserId,
                 IsFile = true,
                 Permission = Permission.ToFolderItemPermission(),

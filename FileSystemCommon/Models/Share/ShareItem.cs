@@ -13,6 +13,8 @@ namespace FileSystemCommon.Models.Share
 
         public bool IsListed { get; set; }
 
+        public bool Exists { get; set; }
+
         public bool IsFile { get; set; }
 
         public FolderItemPermission Permission { get; set; }

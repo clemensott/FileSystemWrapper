@@ -37,10 +37,6 @@ export default function () {
     const [updateItems, setUpdateItems] = useState(0);
     const [shareFiles, setShareFiles] = useState(null);
     const [shareFolders, setShareFolders] = useState(null);
-    const [shareItemsExists, setShareItemsExists] = useState({
-        files: {},
-        folders: {},
-    });
     const [users, setUsers] = useState(null);
 
     state.updateItems = updateItems;
@@ -70,32 +66,12 @@ export default function () {
         });
     }, [updateItems]);
 
-    useEffect(() => {
-        if (!shareFolders) return;
-        shareFolders.forEach(folder => load(API.getFolderExists(folder.id)).then(e => {
-            if (!state.isUnmounted && state.updateItems === updateItems) {
-                shareItemsExists.folders[folder.id] = e;
-                setShareItemsExists({ ...shareItemsExists });
-            }
-        }));
-    }, [shareFolders]);
-
-    useEffect(() => {
-        if (!shareFiles) return;
-        shareFiles.forEach(file => load(API.getFileExists(file.id)).then(e => {
-            if (!state.isUnmounted && state.updateItems === updateItems) {
-                shareItemsExists.files[file.id] = e;
-                setShareItemsExists({ ...shareItemsExists });
-            }
-        }));
-    }, [shareFiles]);
-
     function renderShareItem(item) {
         const user = item.userId && users && users.find(u => u.id === item.userId);
         const itemLink = item.isFile ?
             `/file/view?path=${encodeURIComponent(item.id)}` :
             `/?folder=${encodeURIComponent(item.id)}`;
-        const exists = (item.isFile ? shareItemsExists.files : shareItemsExists.folders)[item.id];
+        const exists = item.exists;
         const editLink = item.isFile ? `/share/file/edit/${item.id}` : `/share/folder/edit/${item.id}`
 
         return (
@@ -104,10 +80,7 @@ export default function () {
                     <Link to={itemLink}>{item.name}</Link>
                 </td>
                 <td className="text-center">
-                    {exists !== undefined ? (
-                        <Input type="checkbox" className="share-page-exists-item"
-                            checked={exists} readOnly />
-                    ) : null}
+                    <Input type="checkbox" className="share-page-exists-item" checked={item.exists} readOnly />
                 </td>
                 <td className="text-center">
                     <Input type="checkbox" checked={item.isListed} readOnly />
