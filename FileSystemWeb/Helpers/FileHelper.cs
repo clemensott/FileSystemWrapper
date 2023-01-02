@@ -164,7 +164,7 @@ namespace FileSystemWeb.Helpers
 
         public static PathPart[] GetPathParts(string virtualPath, string baseName)
         {
-            char directorySeparatorChar = ConfigHelper.Config.DirectorySeparatorChar;
+            char directorySeparatorChar = ConfigHelper.Public.DirectorySeparatorChar;
             string[] parts = virtualPath.TrimEnd(directorySeparatorChar).Split(directorySeparatorChar);
             return parts.Select((p, i) => new PathPart()
             {
@@ -180,7 +180,7 @@ namespace FileSystemWeb.Helpers
 
         public static string ToFilePath(string path)
         {
-            return path?.TrimEnd(ConfigHelper.Config.DirectorySeparatorChar);
+            return path?.TrimEnd(ConfigHelper.Public.DirectorySeparatorChar);
         }
 
         public static string ToPhysicalFolderPath(IEnumerable<string> paths)
@@ -193,21 +193,19 @@ namespace FileSystemWeb.Helpers
             if (path == null) return null;
             if (path.Length == 0) return string.Empty;
 
-            path = path.TrimEnd(ConfigHelper.Config.DirectorySeparatorChar);
-            return path + ConfigHelper.Config.DirectorySeparatorChar;
+            path = path.TrimEnd(ConfigHelper.Public.DirectorySeparatorChar);
+            return path + ConfigHelper.Public.DirectorySeparatorChar;
         }
 
         public static bool IsPathAllowed(string path)
         {
             return Path.IsPathFullyQualified(path) &&
-                   !path.Contains($"{ConfigHelper.Config.DirectorySeparatorChar}..{ConfigHelper.Config.DirectorySeparatorChar}");
+                   !path.Contains($"{ConfigHelper.Public.DirectorySeparatorChar}..{ConfigHelper.Public.DirectorySeparatorChar}");
         }
 
         public static string GetPath(this ShareFolder folder)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return folder.Path;
-
-            return string.IsNullOrWhiteSpace(folder.Path) ? ConfigHelper.Config.DirectorySeparatorChar.ToString() : folder.Path;
+            return string.IsNullOrWhiteSpace(folder.Path) ? ConfigHelper.RootPath : folder.Path;
         }
 
         public static bool GetExists(this ShareFolder folder)

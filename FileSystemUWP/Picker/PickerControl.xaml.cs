@@ -141,7 +141,7 @@ namespace FileSystemUWP.Picker
             string path = (string)value;
 
             if (path == null) return string.Empty;
-            return string.IsNullOrWhiteSpace(path) ? "Root" : path;
+            return string.IsNullOrWhiteSpace(path) ? "Home" : path;
         }
 
         private object SymConverter_ConvertEvent(object value, Type targetType, object parameter, string language)

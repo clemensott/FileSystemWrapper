@@ -1,6 +1,7 @@
 using System.IO;
 using FileSystemWeb.Constants;
 using FileSystemWeb.Data;
+using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,7 +29,7 @@ namespace FileSystemWeb
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<AppDbContext>(config => { config.UseSqlite(@"Data Source=.\auth.db;"); });
+            services.AddDbContext<AppDbContext>(config => config.UseSqlite(ConfigHelper.ConnectionString));
 
             services.AddIdentity<AppUser, IdentityRole>()
                 .AddEntityFrameworkStores<AppDbContext>()

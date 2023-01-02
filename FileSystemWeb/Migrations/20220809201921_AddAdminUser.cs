@@ -18,7 +18,7 @@ namespace FileSystemWeb.Migrations
                 VALUES (1, 1, 1, 1, 'FolderItemPermission', 1);
 
                 INSERT INTO ShareFolders (Uuid, Name, Path, IsListed, PermissionId, UserId)
-                VALUES ('{shareFolderUuid}', 'Drives', '', 1, last_insert_rowid(), 'FAA6421E-6E8B-4B38-B963-28851886F08A');
+                VALUES ('{shareFolderUuid}', 'Root', '', 1, last_insert_rowid(), 'FAA6421E-6E8B-4B38-B963-28851886F08A');
             ");
         }
 

@@ -18,7 +18,7 @@ namespace FileSystemWeb.Helpers
         public static async Task<InternalFolder> GetFolderItem(string virtualPath, AppDbContext dbContext,
             string userId, ControllerBase controller)
         {
-            string[] parts = ConfigHelper.Config.SplitVirtualPath(virtualPath);
+            string[] parts = ConfigHelper.Public.SplitVirtualPath(virtualPath);
             if (!Guid.TryParse(parts[0], out Guid uuid))
             {
                 throw (HttpResultException)controller.BadRequest("Can't parse uuid");
@@ -51,7 +51,7 @@ namespace FileSystemWeb.Helpers
             {
                 BaseName = folder.Name,
                 Name = parts.Length == 1 ?
-                    folder.Name : Path.GetFileName(physicalPath.TrimEnd(ConfigHelper.Config.DirectorySeparatorChar)),
+                    folder.Name : Path.GetFileName(physicalPath.TrimEnd(ConfigHelper.Public.DirectorySeparatorChar)),
                 PhysicalPath = physicalPath,
                 VirtualPath = virtualPath,
                 SharedId = sharedId,

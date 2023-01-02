@@ -10,7 +10,7 @@ namespace FileSystemWeb.Controllers
         [HttpGet]
         public ActionResult<Config> GetIsAuthorized()
         {
-            return ConfigHelper.Config;
+            return ConfigHelper.Public;
         }
     }
 }

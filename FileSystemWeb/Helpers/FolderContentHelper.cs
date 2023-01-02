@@ -127,7 +127,7 @@ namespace FileSystemWeb.Helpers
         private static IEnumerable<FolderSortItem> GetFolders(InternalFolder folder,
               FileSystemItemSortType sortType)
         {
-            char directorySeparatorChar = ConfigHelper.Config.DirectorySeparatorChar;
+            char directorySeparatorChar = ConfigHelper.Public.DirectorySeparatorChar;
             if (string.IsNullOrWhiteSpace(folder.PhysicalPath))
             {
                 return DriveInfo.GetDrives()

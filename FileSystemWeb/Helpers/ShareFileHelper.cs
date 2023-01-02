@@ -17,7 +17,7 @@ namespace FileSystemWeb.Helpers
         public static async Task<InternalFile> GetFileItem(string virtualPath, AppDbContext dbContext, string userId,
             ControllerBase controller)
         {
-            string[] parts = ConfigHelper.Config.SplitVirtualPath(virtualPath);
+            string[] parts = ConfigHelper.Public.SplitVirtualPath(virtualPath);
             if (!Guid.TryParse(parts[0], out Guid uuid))
             {
                 throw (HttpResultException)controller.BadRequest("Can't parse uuid");
