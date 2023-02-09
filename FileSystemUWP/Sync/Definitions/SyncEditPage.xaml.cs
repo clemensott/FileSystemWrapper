@@ -160,7 +160,7 @@ namespace FileSystemUWP.Sync.Definitions
         private void AsbServerPath_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
             Config config = edit.Api.Config;
-            FolderItem suggestion = args.ChosenSuggestion is FolderItem ? (FolderItem)args.ChosenSuggestion : (FolderItem)sender.Items[0];
+            FolderSortItem suggestion = args.ChosenSuggestion is FolderSortItem ? (FolderSortItem)args.ChosenSuggestion : (FolderSortItem)sender.Items[0];
             string parentPath = config.GetParentPath(sender.Text);
 
             sender.Text = config.JoinPaths(parentPath, suggestion.Name) + config.DirectorySeparatorChar;
