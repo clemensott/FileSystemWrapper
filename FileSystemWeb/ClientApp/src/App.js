@@ -11,6 +11,7 @@ import EditShareFileSystemItemPage from './components/Share/EditShareFileSystemI
 import Home from './components/Home';
 import DeleteShareItemModal from './components/Modals/DeleteShareItemModal';
 import DeleteFileSystemItemModal from './components/Modals/DeleteFileSystemItemModal';
+import OverrideFileModal from './components/Modals/OverrideFileModal';
 import LoadingModal from './components/Modals/LoadingModal';
 import ErrorModal from './components/Modals/ErrorModal';
 import store from './Helpers/store'
@@ -43,6 +44,7 @@ export default function () {
     const allRefs = getAllRefs();
     allRefs.deleteShareItem = useRef();
     allRefs.deleteFSItemModal = useRef();
+    allRefs.overrideFileModal = useRef();
     allRefs.loadingModal = useRef();
     allRefs.errorModal = useRef();
 
@@ -67,6 +69,7 @@ export default function () {
             </Container>
             <DeleteShareItemModal ref={allRefs.deleteShareItem} />
             <DeleteFileSystemItemModal ref={allRefs.deleteFSItemModal} />
+            <OverrideFileModal ref={allRefs.overrideFileModal} />
             <LoadingModal ref={allRefs.loadingModal} />
             <ErrorModal ref={allRefs.errorModal} />
         </div>

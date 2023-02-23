@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { Button, Modal, ModalHeader, ModalFooter, ModalBody, Form, FormGroup, Label, Input } from 'reactstrap';
-import { closeLoadingModal, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
+import { closeLoadingModal, getAllRefs, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
 import formatFileSize from '../../Helpers/formatFileSize';
 import API from '../../Helpers/API';
 import sleep from '../../Helpers/sleep'
@@ -10,6 +10,7 @@ function formatFile(file) {
 }
 
 const modal = forwardRef((props, ref) => {
+    const allRefs = getAllRefs();
     const [promise, setPromise] = useState(null);
     const [suggestedName, setSuggestedName] = useState('');
     const [formattedFileName, setFormattedFileName] = useState(null);
@@ -36,6 +37,11 @@ const modal = forwardRef((props, ref) => {
         if (!file || !name) return;
 
         try {
+            const filePath = promise.folderPath + name;
+            if (await API.getFileExists(filePath) && !await allRefs.overrideFileModal.current.show({ name })) {
+                return;
+            }
+
             showLoadingModal();
             const response = await API.createFile(promise.folderPath + name, file);
             closeLoadingModal();
