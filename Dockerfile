@@ -5,7 +5,7 @@ COPY ./FileSystemWeb/ClientApp .
 RUN npm install
 RUN npm run build
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0 as builder
+FROM mcr.microsoft.com/dotnet/sdk:6.0 as builder
 
 WORKDIR /app
 COPY ./StdOttLib ./StdOttLib
@@ -25,7 +25,7 @@ RUN dotnet publish "FileSystemWeb.csproj" -p:BuildClientApp=false -c Release -o 
 RUN cp ./template.db /app/publish/auth.db
 
 
-FROM mcr.microsoft.com/dotnet/aspnet:5.0 as runner
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 as runner
 
 WORKDIR /app
 COPY --from=builder /app/publish .
