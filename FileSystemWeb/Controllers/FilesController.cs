@@ -9,7 +9,10 @@ using FileSystemWeb.Data;
 using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
+using FileSystemWeb.Models.RequestBodies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal;
 using Microsoft.Net.Http.Headers;
 
 namespace FileSystemWeb.Controllers
@@ -238,12 +241,13 @@ namespace FileSystemWeb.Controllers
         }
 
         [DisableRequestSizeLimit]
-        [HttpPost("")]
+        [HttpPost]
         [HttpPost("{encodedVirtualPath}")]
-        public async Task<ActionResult> Write(string encodedVirtualPath, [FromQuery] string path)
+        public async Task<ActionResult> Write(string encodedVirtualPath, [FromQuery] string path, [FromForm] WriteFileBody form)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
+            if (form?.FileContent == null) return BadRequest("Missing file content");
 
             InternalFile file;
             try
@@ -263,16 +267,17 @@ namespace FileSystemWeb.Controllers
 
             try
             {
-                byte[] buffer = new byte[100000];
-                await using (Stream src = Request.Body)
+                //byte[] buffer = new byte[100000];
+                //await using (Stream src = form.FileContent.OpenReadStream())
                 await using (FileStream dest = System.IO.File.Create(tmpPath))
                 {
-                    int size;
-                    do
-                    {
-                        size = await src.ReadAsync(buffer, 0, buffer.Length);
-                        await dest.WriteAsync(buffer, 0, size);
-                    } while (size > 0);
+                    //int size;
+                    //do
+                    //{
+                    //    size = await src.ReadAsync(buffer, 0, buffer.Length);
+                    //    await dest.WriteAsync(buffer, 0, size);
+                    //} while (size > 0);
+                    await form.FileContent.CopyToAsync(dest);
                 }
 
                 if (tmpPath != physicalPath)

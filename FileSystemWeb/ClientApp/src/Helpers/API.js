@@ -4,7 +4,8 @@ export default class API {
     static config = null;
 
     static fetch(resource, { path, query, method, body, headers, ...options } = {}) {
-        const contentType = (method && method !== 'GET' && body) ? 'application/json;charset=utf-8' : undefined;
+        const isFormData = body instanceof FormData;
+        const contentType = (!isFormData && method && method !== 'GET' && body) ? 'application/json;charset=utf-8' : undefined;
         return window.fetch(`/api${formatUrl({ resource, path, query })}`, {
             credentials: 'include',
             method,
@@ -12,7 +13,7 @@ export default class API {
                 ...(contentType ? { 'Content-Type': contentType } : null),
                 ...headers,
             },
-            body: body ? JSON.stringify(body) : undefined,
+            body: body && !isFormData ? JSON.stringify(body) : body,
             ...options,
         });
     }
@@ -68,13 +69,12 @@ export default class API {
     }
 
     static createFile(path, file) {
+        const formData = new FormData();
+        formData.append('FileContent', file);
         return this.fetch('/files', {
             path,
             method: 'POST',
-            body: file,
-            headers: {
-                'Content-Type': undefined,
-            },
+            body: formData,
         });
     }
 

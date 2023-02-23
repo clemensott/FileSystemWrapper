@@ -27,7 +27,6 @@ const modal = forwardRef((props, ref) => {
     const cancelUploadModal = () => closeUploadModal(false);
 
     const submit = async () => {
-        console.log('submit upload file:', fileInputRef, nameInputRef)
         const file = fileInputRef.current.files.length && fileInputRef.current.files[0];
         const name = nameInputRef.current.value;
 
