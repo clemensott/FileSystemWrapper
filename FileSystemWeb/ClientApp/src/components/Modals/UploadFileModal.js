@@ -38,7 +38,9 @@ const modal = forwardRef((props, ref) => {
 
         try {
             const filePath = promise.folderPath + name;
-            if (await API.getFileExists(filePath) && !await allRefs.overrideFileModal.current.show({ name })) {
+            const fileExistsResponse = await API.getFileExists(filePath);
+            const fileExists = fileExistsResponse.ok && await fileExistsResponse.json();
+            if (fileExists && !await allRefs.overrideFileModal.current.show({ name })) {
                 return;
             }
 
