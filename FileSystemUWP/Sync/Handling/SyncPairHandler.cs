@@ -692,14 +692,16 @@ namespace FileSystemUWP.Sync.Handling
 
                 try
                 {
-                    if (await Api.UploadFile(pair.ServerFullPath, pair.LocalFile))
+                    if (!await Api.UploadFile(pair.ServerFullPath, pair.LocalFile))
                     {
-                        if (pair.LocalCompareValue == null) pair.LocalCompareValue = await FileComparer.GetLocalCompareValue(pair.LocalFile);
-                        pair.ServerCompareValue = await FileComparer.GetServerCompareValue(pair.ServerFullPath, Api);
-
-                        await CopiedServerFile(pair);
+                        await ErrorFile(pair, "Uploading file to server failed");
                         continue;
                     }
+
+                    if (pair.LocalCompareValue == null) pair.LocalCompareValue = await FileComparer.GetLocalCompareValue(pair.LocalFile);
+                    pair.ServerCompareValue = await FileComparer.GetServerCompareValue(pair.ServerFullPath, Api);
+
+                    await CopiedServerFile(pair);
                 }
                 catch (Exception e)
                 {

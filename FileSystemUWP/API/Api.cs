@@ -187,10 +187,14 @@ namespace FileSystemUWP.API
             return Request(GetUri("/api/files/move", values), HttpMethod.Post);
         }
 
-        public Task<bool> UploadFile(string path, IInputStream stream)
+        public async Task<bool> UploadFile(string path, IInputStream stream)
         {
             Uri uri = GetUri("/api/files", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
-            return Request(uri, HttpMethod.Post, stream);
+            using (HttpMultipartFormDataContent content = new HttpMultipartFormDataContent())
+            {
+                content.Add(new HttpStreamContent(stream), "FileContent", "file");
+                return await Request(uri, HttpMethod.Post, content);
+            }
         }
 
         public Task<bool> DeleteFile(string path)
@@ -300,7 +304,7 @@ namespace FileSystemUWP.API
             }
         }
 
-        private async Task<bool> Request(Uri uri, HttpMethod method, IInputStream body = null)
+        private async Task<bool> Request(Uri uri, HttpMethod method, IHttpContent content = null)
         {
             if (uri == null) return false;
 
@@ -310,7 +314,7 @@ namespace FileSystemUWP.API
                 {
                     using (HttpRequestMessage request = new HttpRequestMessage(method, uri))
                     {
-                        if (body != null) request.Content = new HttpStreamContent(body);
+                        if (content != null) request.Content = content;
 
                         using (HttpResponseMessage response = await client.SendRequestAsync(request))
                         {
