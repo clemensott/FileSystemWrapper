@@ -267,16 +267,8 @@ namespace FileSystemWeb.Controllers
 
             try
             {
-                //byte[] buffer = new byte[100000];
-                //await using (Stream src = form.FileContent.OpenReadStream())
                 await using (FileStream dest = System.IO.File.Create(tmpPath))
                 {
-                    //int size;
-                    //do
-                    //{
-                    //    size = await src.ReadAsync(buffer, 0, buffer.Length);
-                    //    await dest.WriteAsync(buffer, 0, size);
-                    //} while (size > 0);
                     await form.FileContent.CopyToAsync(dest);
                 }
 
