@@ -132,6 +132,11 @@ namespace FileSystemCommon
             return "application/octet-stream";
         }
 
+        public static string ToName(this IEnumerable<PathPart> parts)
+        {
+            return parts?.LastOrDefault().Name ?? string.Empty;
+        }
+
         public static string ToPath(this IEnumerable<PathPart> parts)
         {
             return parts?.LastOrDefault().Path ?? string.Empty;

@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace FileSystemUWP.Models
 {
-    public struct FileSystemItem
+    public struct FileSystemItem : ISortableFileSystemItem
     {
         public bool IsFile { get; }
 
@@ -54,7 +54,7 @@ namespace FileSystemUWP.Models
 
         public static FileSystemItem FromFolderContent(FolderContent folder)
         {
-            return new FileSystemItem(false, folder.Path.LastOrDefault().Name, null,
+            return new FileSystemItem(false, folder.Path.ToName(), null,
                 folder.Path.ToPath(), folder.Path, folder.Permission, folder.SortKeys);
         }
     }

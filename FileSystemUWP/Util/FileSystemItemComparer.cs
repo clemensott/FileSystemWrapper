@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace FileSystemUWP.Util
 {
-    class FileSystemItemComparer : IComparer<IReadOnlyList<string>>
+    class FileSystemItemComparer : IComparer<ISortableFileSystemItem>
     {
         private static FileSystemItemComparer instance;
 
@@ -23,23 +23,28 @@ namespace FileSystemUWP.Util
         }
 
 
-        public int Compare(IReadOnlyList<string> x, IReadOnlyList<string> y)
+        public int Compare(ISortableFileSystemItem x, ISortableFileSystemItem y)
         {
-            if (x == null) x = new string[0];
-            if (y == null) y = new string[0];
+            IReadOnlyList<string> xSortKeys = x.SortKeys ?? new string[0];
+            IReadOnlyList<string> ySortKeys = y.SortKeys ?? new string[0];
 
-            for (int i = 0; i < x.Count && i < y.Count; i++)
+            for (int i = 0; i < xSortKeys.Count && i < ySortKeys.Count; i++)
             {
-                int result = string.Compare(x[i], y[i]);
+                int result = string.Compare(xSortKeys[i], ySortKeys[i]);
                 if (result != 0) return result;
             }
 
-            return x.Count.CompareTo(y.Count);
+            if (xSortKeys.Count != ySortKeys.Count)
+            {
+                return xSortKeys.Count.CompareTo(ySortKeys.Count);
+            }
+
+            return x.Name.CompareTo(y.Name);
         }
 
-        public IEnumerable<FileSystemItem> Sort(IEnumerable<FileSystemItem> src)
+        public IEnumerable<T> Sort<T>(IEnumerable<T> src) where T : ISortableFileSystemItem
         {
-            return src.OrderBy(f => f.SortKeys, this);
+            return src.OrderBy(f => f, this);
         }
     }
 }

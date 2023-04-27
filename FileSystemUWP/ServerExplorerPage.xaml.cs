@@ -205,7 +205,7 @@ namespace FileSystemUWP
                     viewModel.BackgroundOperations, "Delete folder...");
             }
 
-            await pcView.UpdateContent();
+            await pcView.UpdateCurrentFolderItems();
         }
 
         private void AbbToServers_Click(object sender, RoutedEventArgs e)
@@ -217,16 +217,17 @@ namespace FileSystemUWP
         {
             try
             {
-                FileSystemSortItem? lastFolder = null;
-                if (pcView.CurrentFolder.HasValue)
+                FileSystemItem? lastFolder = pcView.CurrentFolder;
+                FileSystemSortItem? lastSortFolder = null;
+                if (lastFolder.HasValue)
                 {
-                    lastFolder = new FileSystemSortItem(false, pcView.CurrentFolder.Value.SortKeys);
+                    lastSortFolder = FileSystemSortItem.FromItem(lastFolder.Value);
                 }
 
                 await pcView.SetParent();
-                if (lastFolder.HasValue)
+                if (lastSortFolder.HasValue)
                 {
-                    pcView.ScrollToFileItemName(lastFolder.Value);
+                    pcView.ScrollToFileItemName(lastSortFolder.Value);
                 }
             }
             catch { }
