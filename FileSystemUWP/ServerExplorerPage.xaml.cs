@@ -205,7 +205,7 @@ namespace FileSystemUWP
                     viewModel.BackgroundOperations, "Delete folder...");
             }
 
-            await pcView.UpdateContent();
+            await pcView.UpdateCurrentFolderItems();
         }
 
         private void AbbToServers_Click(object sender, RoutedEventArgs e)

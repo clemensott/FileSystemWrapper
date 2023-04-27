@@ -46,7 +46,7 @@ namespace FileSystemUWP.Picker
 
         private static async void OnSortByPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
-            await ((PickerControl)sender).UpdateContent();
+            await ((PickerControl)sender).UpdateCurrentFolderItems();
         }
 
         public static readonly DependencyProperty ApiProperty = DependencyProperty.Register("Api",
@@ -206,40 +206,56 @@ namespace FileSystemUWP.Picker
             if (currentPath == null || currentPath.Length == 0) return Task.CompletedTask;
 
             string newPath = currentPath.Length == 1 ? string.Empty : currentPath[currentPath.Length - 2].Path;
-            return SetCurrentFolder(newPath);
+            string newFolderNamePath = currentPath.Take(currentPath.Length - 1).GetNamePath();
+            return SetCurrentFolder(newPath, newFolderNamePath);
         }
 
-        public Task SetCurrentFolder(string path)
+        public Task UpdateCurrentFolderItems()
         {
-            if (string.IsNullOrWhiteSpace(path)) path = string.Empty;
-
-            return UpdateCurrentFolderItems(path, true);
+            return UpdateCurrentFolderItems(false);
         }
 
-        public Task UpdateCurrentFolderItems(bool clearItems = false)
+        private Task UpdateCurrentFolderItems(bool clearItems)
         {
-            return UpdateCurrentFolderItems(CurrentFolder?.FullPath, clearItems);
+            FileSystemItem? currentFolder = CurrentFolder;
+            if (!currentFolder.HasValue) return Task.CompletedTask;
+
+            return SetCurrentFolder(currentFolder.Value, clearItems);
         }
 
-        private async Task UpdateCurrentFolderItems(string path, bool clearItems)
+        public Task SetCurrentFolder(FileSystemItem folder)
+        {
+            return SetCurrentFolder(folder, true);
+        }
+
+        private Task SetCurrentFolder(FileSystemItem folder, bool clearItems)
+        {
+            return SetCurrentFolder(folder.Name, folder.PathParts.GetNamePath(), clearItems);
+        }
+
+        public Task SetCurrentFolder(string path, string folderNamePath = null)
+        {
+            return SetCurrentFolder(path, folderNamePath, true);
+        }
+
+        private async Task SetCurrentFolder(string path, string folderNamePath, bool clearItems)
         {
             long currentCount = ++updateCount;
 
             if (clearItems) currentItems.Clear();
 
             IsUpdating = true;
+            if (!string.IsNullOrWhiteSpace(folderNamePath))
+            {
+                CurrentFolderNamePath = folderNamePath;
+            }
 
             await UpdateContent(path);
 
             if (currentCount == updateCount) IsUpdating = false;
         }
 
-        public Task UpdateContent()
-        {
-            return UpdateContent(CurrentFolder?.FullPath);
-        }
-
-        public async Task UpdateContent(string path)
+        private async Task UpdateContent(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) path = string.Empty;
             currentUpdatePath = path;
@@ -247,8 +263,7 @@ namespace FileSystemUWP.Picker
 
             if (!Type.HasFlag(FileSystemItemViewType.Folders) || api == null) return;
 
-            FolderContent content = api != null ?
-                await api.FolderContent(path, SortBy.Type, SortBy.Direction) : null;
+            FolderContent content = await api.FolderContent(path, SortBy.Type, SortBy.Direction);
             if (path != currentUpdatePath) return;
 
             currentItems.SetFolders((content?.Folders).ToNotNull()
@@ -267,7 +282,7 @@ namespace FileSystemUWP.Picker
             FileSystemItem item = (FileSystemItem)lbx.SelectedItem;
             lbx.SelectedItem = null;
 
-            if (item.IsFolder) await SetCurrentFolder(item.FullPath);
+            if (item.IsFolder) await SetCurrentFolder(item);
             else if (item.IsFile) FileSelected?.Invoke(this, item);
         }
 
