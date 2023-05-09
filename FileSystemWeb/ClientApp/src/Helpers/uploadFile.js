@@ -4,7 +4,6 @@ const bigFileSize = 30 * 1024 * 1024; // 30 MB
 const bigFileChunckSize = 5 * 1024 * 1024; // 5 MB
 
 export default async function uploadFile(path, file) {
-    console.log('uploadfile2:', file.size, bigFileSize)
     if (file.size <= bigFileSize) {
         return API.createFile(path, file);
     }
