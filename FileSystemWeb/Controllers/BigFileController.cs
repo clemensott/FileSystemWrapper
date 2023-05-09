@@ -3,10 +3,12 @@ using FileSystemWeb.Data;
 using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
+using FileSystemWeb.Models.RequestBodies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -79,10 +81,14 @@ namespace FileSystemWeb.Controllers
 
 
         [HttpPost("{uuid}/append")]
-        public async Task<ActionResult> AppendUpload(Guid uuid, [FromForm] byte[] data)
+        public async Task<ActionResult> AppendUpload(Guid uuid, [FromForm] AppendBigFileBody form)
         {
-            BigFileUpload upload;
+            if (form?.Data == null)
+            {
+                return BadRequest("No data");
+            }
 
+            BigFileUpload upload;
             try
             {
                 string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -93,8 +99,8 @@ namespace FileSystemWeb.Controllers
                 return exc.Result;
             }
 
-            using FileStream stream = System.IO.File.OpenWrite(upload.TempPath);
-            await stream.WriteAsync(data);
+            await using FileStream dest = System.IO.File.Open(upload.TempPath, FileMode.Append);
+            await form.Data.CopyToAsync(dest);
 
             upload.LastActivity = DateTime.UtcNow;
             await dbContext.SaveChangesAsync();

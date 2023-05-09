@@ -17,7 +17,7 @@ export default async function uploadFile(path, file) {
         uploadUuid = await startResponse.text();
 
         for (let i = 0; i < file.size; i += bigFileChunckSize) {
-            const chuck = file.slice(i, bigFileChunckSize);
+            const chuck = file.slice(i, i + bigFileChunckSize);
             const chuckResponse = await API.appendBigFileUpload(uploadUuid, chuck);
 
             if (!chuckResponse.ok) {
