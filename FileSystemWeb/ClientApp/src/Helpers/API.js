@@ -176,6 +176,34 @@ export default class API {
         });
     }
 
+    static startBigFileUpload(path) {
+        return this.fetch('/bigFile/start', {
+            method: 'POST',
+            path,
+        });
+    }
+
+    static appendBigFileUpload(uuid, data) {
+        const formData = new FormData();
+        formData.append('data', data);
+        return this.fetch(`/bigFile/${uuid}/append`, {
+            method: 'POST',
+            body: formData,
+        });
+    }
+
+    static finshBigFileUpload(uuid) {
+        return this.fetch(`/bigFile/${uuid}/finish`, {
+            method: 'PUT',
+        });
+    }
+
+    static cancelBigFileUpload(uuid) {
+        return this.fetch(`/bigFile/${uuid}`, {
+            method: 'DELETE',
+        });
+    }
+
 
     static getFileSystemItemInfo(path, isFile) {
         return isFile ? this.getFileInfo(path) : this.getFolderInfo(path);

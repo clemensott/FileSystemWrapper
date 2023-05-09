@@ -3,6 +3,7 @@ import { Button, Modal, ModalHeader, ModalFooter, ModalBody, Form, FormGroup, La
 import { closeLoadingModal, getAllRefs, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
 import formatFileSize from '../../Helpers/formatFileSize';
 import API from '../../Helpers/API';
+import uploadFile from '../../Helpers/uploadFile';
 import sleep from '../../Helpers/sleep'
 
 function formatFile(file) {
@@ -23,6 +24,7 @@ const modal = forwardRef((props, ref) => {
     const closeUploadModal = (uploaded = false) => {
         promise.resolve(uploaded);
         setPromise(null);
+        setSuggestedName('');
     };
 
     const cancelUploadModal = () => closeUploadModal(false);
@@ -45,7 +47,7 @@ const modal = forwardRef((props, ref) => {
             }
 
             showLoadingModal();
-            const response = await API.createFile(promise.folderPath + name, file);
+            const response = await uploadFile(promise.folderPath + name, file);
             closeLoadingModal();
             await sleep(300);
 
