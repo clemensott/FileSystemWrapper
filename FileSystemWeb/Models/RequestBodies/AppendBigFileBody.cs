@@ -4,6 +4,8 @@ namespace FileSystemWeb.Models.RequestBodies
 {
     public class AppendBigFileBody
     {
-        public IFormFile Data { get; set; }
+        public IFormFile File { get; set; }
+
+        public byte[] Data { get; set; }
     }
 }
