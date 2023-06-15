@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Diagnostics.Tracing;
 using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -50,7 +49,7 @@ namespace FileSystemWeb.Controllers
             BigFileUpload upload = new BigFileUpload()
             {
                 DestinationPath = file.PhysicalPath,
-                TempPath = Path.GetTempFileName(),
+                TempPath = FileHelper.GenerateUniqueFileName(file.PhysicalPath),
                 UserId = userId,
                 LastActivity = DateTime.UtcNow,
             };
@@ -58,10 +57,12 @@ namespace FileSystemWeb.Controllers
             await dbContext.BigFileUploads.AddAsync(upload);
             await dbContext.SaveChangesAsync();
 
+            await System.IO.File.WriteAllBytesAsync(upload.TempPath, new byte[0]);
+
             return upload.Uuid.ToString();
         }
 
-        private async Task<BigFileUpload> GetValidBigFileUpload(Guid uuid, string userId)
+        private async Task<BigFileUpload> GetValidBigFileUpload(Guid uuid, string userId, bool validateFileExists = true)
         {
             BigFileUpload upload = await dbContext.BigFileUploads
               .FirstOrDefaultAsync(u => u.Uuid == uuid && u.UserId == userId);
@@ -71,7 +72,7 @@ namespace FileSystemWeb.Controllers
                 throw (HttpResultException)NotFound("Upload not found.");
             }
 
-            if (!System.IO.File.Exists(upload.TempPath))
+            if (validateFileExists && !System.IO.File.Exists(upload.TempPath))
             {
                 throw (HttpResultException)NotFound("Temporary file not found.");
             }
@@ -123,7 +124,10 @@ namespace FileSystemWeb.Controllers
                 return exc.Result;
             }
 
-            System.IO.File.Move(upload.TempPath, upload.DestinationPath, true);
+            if (upload.TempPath != upload.DestinationPath)
+            {
+                System.IO.File.Move(upload.TempPath, upload.DestinationPath, true);
+            }
 
             dbContext.BigFileUploads.Remove(upload);
             await dbContext.SaveChangesAsync();
@@ -140,7 +144,7 @@ namespace FileSystemWeb.Controllers
             try
             {
                 string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                upload = await GetValidBigFileUpload(uuid, userId);
+                upload = await GetValidBigFileUpload(uuid, userId, false);
             }
             catch (HttpResultException exc)
             {
