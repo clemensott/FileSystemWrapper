@@ -300,8 +300,7 @@ namespace FileSystemWeb.Controllers
 
                 if (tmpPath != physicalPath)
                 {
-                    if (System.IO.File.Exists(physicalPath)) System.IO.File.Delete(physicalPath);
-                    System.IO.File.Move(tmpPath, physicalPath);
+                    System.IO.File.Move(tmpPath, physicalPath, true);
                 }
             }
             catch (Exception)

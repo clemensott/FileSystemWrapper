@@ -233,6 +233,34 @@ namespace FileSystemUWP.API
             }
         }
 
+        public Task<string> StartBigFileUpload(string path)
+        {
+            Uri uri = GetUri("/api/bigFile/start", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            return RequestString(uri, HttpMethod.Post);
+        }
+
+        public async Task<bool> AppendBigFileUpload(string uuid, IBuffer buffer)
+        {
+            Uri uri = GetUri($"/api/bigFile/{uuid}/append");
+            using (HttpMultipartFormDataContent content = new HttpMultipartFormDataContent())
+            {
+                content.Add(new HttpBufferContent(buffer), "Data");
+                return await Request(uri, HttpMethod.Post, content);
+            }
+        }
+
+        public Task<bool> FinishBigFileUpload(string uuid)
+        {
+            Uri uri = GetUri($"/api/bigFile/{uuid}/finsih");
+            return Request(uri, HttpMethod.Put);
+        }
+
+        public Task<bool> CancelBigFileUpload(string uuid)
+        {
+            Uri uri = GetUri($"/api/bigFile/{uuid}");
+            return Request(uri, HttpMethod.Delete);
+        }
+
         private async Task<TData> Request<TData>(Uri uri, HttpMethod method)
         {
             string responseText;

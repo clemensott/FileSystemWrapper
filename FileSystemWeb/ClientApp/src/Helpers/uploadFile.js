@@ -1,10 +1,10 @@
 ﻿import API from './API';
 
-const bigFileSize = 30 * 1024 * 1024; // 30 MB
+const BIG_FILE_SIZE = 30 * 1024 * 1024; // 30 MB
 const bigFileChunckSize = 5 * 1024 * 1024; // 5 MB
 
 export default async function uploadFile(path, file) {
-    if (file.size <= bigFileSize) {
+    if (file.size <= BIG_FILE_SIZE) {
         return API.createFile(path, file);
     }
 
