@@ -37,7 +37,7 @@ namespace FileSystemUWP.API
                         System.Diagnostics.Debug.WriteLine($"Upload big file3: {result.Length}");
                         if (result.Length == 0) break;
 
-                        await api.AppendBigFileUpload(uploadUuid, result);
+                        if (!await api.AppendBigFileUpload(uploadUuid, result)) return false;
                     }
                 }
 

@@ -244,7 +244,7 @@ namespace FileSystemUWP.API
             Uri uri = GetUri($"/api/bigFile/{uuid}/append");
             using (HttpMultipartFormDataContent content = new HttpMultipartFormDataContent())
             {
-                content.Add(new HttpBufferContent(buffer), "Data");
+                content.Add(new HttpBufferContent(buffer), "PartialFile", "file.part");
                 return await Request(uri, HttpMethod.Post, content);
             }
         }

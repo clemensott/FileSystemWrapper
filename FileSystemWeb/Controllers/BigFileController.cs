@@ -84,7 +84,7 @@ namespace FileSystemWeb.Controllers
         [HttpPost("{uuid}/append")]
         public async Task<ActionResult> AppendUpload(Guid uuid, [FromForm] AppendBigFileBody form)
         {
-            if (form?.Data == null && form.File == null) return BadRequest("No data or file");
+            if (form.PartialFile == null) return BadRequest("No data or file");
 
             BigFileUpload upload;
             try
@@ -98,9 +98,7 @@ namespace FileSystemWeb.Controllers
             }
 
             await using FileStream dest = System.IO.File.Open(upload.TempPath, FileMode.Append);
-
-            if (form.Data != null) await dest.WriteAsync(form.Data.AsMemory(0, form.Data.Length));
-            else await form.File.CopyToAsync(dest);
+            await form.PartialFile.CopyToAsync(dest);
 
             upload.LastActivity = DateTime.UtcNow;
             await dbContext.SaveChangesAsync();

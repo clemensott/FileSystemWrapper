@@ -185,7 +185,7 @@ export default class API {
 
     static appendBigFileUpload(uuid, blob) {
         const formData = new FormData();
-        formData.append('file', blob);
+        formData.append('partialFile', blob);
         return this.fetch(`/bigFile/${uuid}/append`, {
             method: 'POST',
             body: formData,
