@@ -206,7 +206,7 @@ namespace FileSystemUWP.Picker
             if (currentPath == null || currentPath.Length == 0) return Task.CompletedTask;
 
             string newPath = currentPath.Length == 1 ? string.Empty : currentPath[currentPath.Length - 2].Path;
-            string newFolderNamePath = currentPath.Take(currentPath.Length - 1).GetNamePath();
+            string newFolderNamePath = currentPath.Take(currentPath.Length - 1).GetNamePath(Api.Config.DirectorySeparatorChar);
             return SetCurrentFolder(newPath, newFolderNamePath);
         }
 
@@ -230,7 +230,7 @@ namespace FileSystemUWP.Picker
 
         private Task SetCurrentFolder(FileSystemItem folder, bool clearItems)
         {
-            return SetCurrentFolder(folder.Name, folder.PathParts.GetNamePath(), clearItems);
+            return SetCurrentFolder(folder.FullPath, folder.PathParts.GetNamePath(Api.Config.DirectorySeparatorChar), clearItems);
         }
 
         public Task SetCurrentFolder(string path, string folderNamePath = null)
