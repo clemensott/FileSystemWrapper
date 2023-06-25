@@ -167,9 +167,17 @@ namespace FileSystemUWP.API
             return Request<FileItemInfo>(uri, HttpMethod.Get);
         }
 
-        public Task<string> GetFileHash(string path)
+        public Task<string> GetFileHash(string path, int? partialSize = null)
         {
-            Uri uri = GetUri("/api/files/hash", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
+            List<KeyValuePair<string, string>> values = new List<KeyValuePair<string, string>>();
+            values.Add(new KeyValuePair<string, string>("path", Utils.EncodePath(path)));
+
+            if (partialSize.HasValue)
+            {
+                values.Add(new KeyValuePair<string, string>("partialSize", partialSize.ToString()));
+            }
+
+            Uri uri = GetUri("/api/files/hash", values);
             return RequestString(uri, HttpMethod.Get);
         }
 
@@ -251,7 +259,7 @@ namespace FileSystemUWP.API
 
         public Task<bool> FinishBigFileUpload(string uuid)
         {
-            Uri uri = GetUri($"/api/bigFile/{uuid}/finsih");
+            Uri uri = GetUri($"/api/bigFile/{uuid}/finish");
             return Request(uri, HttpMethod.Put);
         }
 

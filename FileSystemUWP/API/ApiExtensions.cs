@@ -41,7 +41,7 @@ namespace FileSystemUWP.API
                     }
                 }
 
-                await api.FinishBigFileUpload(uploadUuid);
+                if (!await api.FinishBigFileUpload(uploadUuid)) return false;
                 uploadUuid = null;
                 return true;
             }
