@@ -5,5 +5,6 @@
         Exists,
         Size,
         Hash,
+        PartialHash,
     }
 }

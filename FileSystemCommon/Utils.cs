@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.Configuration;
+using System.Threading.Tasks;
 
 namespace FileSystemCommon
 {
@@ -197,6 +198,24 @@ namespace FileSystemCommon
         public static string FormatSizeSortable(long size)
         {
             return size.ToString().PadLeft(15, '0');
+        }
+
+        /// <summary>
+        /// Retruns partial data from front and end of file stream.
+        /// </summary>
+        /// <param name="stream">File stream</param>
+        /// <param name="size">Amount of bytes to take from front and end of file. Max Value is file length. Returned byte is double this size.</param>
+        /// <returns></returns>
+        public static async Task<byte[]> GetPartialBinary(Stream stream, int size)
+        {
+            int useSize = (int)Math.Min(size, stream.Length);
+            byte[] data = new byte[useSize * 2];
+
+            await stream.ReadAsync(data, 0, useSize);
+            stream.Seek(-useSize, SeekOrigin.End);
+            await stream.ReadAsync(data, useSize, useSize);
+
+            return data;
         }
     }
 }

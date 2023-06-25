@@ -61,8 +61,8 @@ namespace FileSystemUWP.Sync.Handling
         {
             switch (value)
             {
-                case HashComparer _:
-                    return "SHA1 Hash";
+                case HashComparer hashComparer:
+                    return hashComparer.IsPartial ? "Partial SHA1 Hash" : "SHA1 Hash";
 
                 case SizeComparer _:
                     return "Size";

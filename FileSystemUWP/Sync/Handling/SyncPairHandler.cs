@@ -26,6 +26,8 @@ namespace FileSystemUWP.Sync.Handling
 {
     class SyncPairHandler : INotifyPropertyChanged
     {
+        private const int partialHashSize = 10 * 1024; // 10 kB
+
         private SyncPairHandlerState state;
         private int currentCount, totalCount;
         private string currentQueryFolderRelPath;
@@ -370,6 +372,9 @@ namespace FileSystemUWP.Sync.Handling
 
                 case SyncCompareType.Hash:
                     return new HashComparer();
+
+                case SyncCompareType.PartialHash:
+                    return new HashComparer(partialHashSize);
             }
 
             throw new ArgumentException("Value not Implemented:" + type, nameof(type));

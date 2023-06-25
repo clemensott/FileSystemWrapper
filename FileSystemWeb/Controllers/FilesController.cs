@@ -133,27 +133,9 @@ namespace FileSystemWeb.Controllers
             }
         }
 
-        /// <summary>
-        /// Retruns partial data from front and end of file stream.
-        /// </summary>
-        /// <param name="stream">File stream</param>
-        /// <param name="size">Amount of bytes to take from front and end of file. Max Value is file length. Returned byte is double this size.</param>
-        /// <returns></returns>
-        private static async Task<byte[]> GetPartialBinary(FileStream stream, int size)
-        {
-            int useSize = (int)Math.Min(size, stream.Length);
-            byte[] data = new byte[useSize * 2];
-
-            await stream.ReadAsync(data, 0, useSize);
-            stream.Seek(-useSize, SeekOrigin.End);
-            await stream.ReadAsync(data, useSize, useSize);
-
-            return data;
-        }
-
         [HttpGet("hash")]
         [HttpGet("{encodedVirtualPath}/hash")]
-        public async Task<ActionResult<string>> GetHash(string encodedVirtualPath, [FromQuery] string path, [FromQuery] int partailSize)
+        public async Task<ActionResult<string>> GetHash(string encodedVirtualPath, [FromQuery] string path, [FromQuery] int partialSize)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) return BadRequest("Path encoding error");
@@ -177,9 +159,9 @@ namespace FileSystemWeb.Controllers
                 using FileStream stream = System.IO.File.OpenRead(file.PhysicalPath);
 
                 byte[] hashBytes;
-                if (partailSize > 0)
+                if (partialSize > 0)
                 {
-                    byte[] partialData = await GetPartialBinary(stream, partailSize);
+                    byte[] partialData = await Utils.GetPartialBinary(stream, partialSize);
                     hashBytes = hasher.ComputeHash(partialData);
                 }
                 else hashBytes = await hasher.ComputeHashAsync(stream);

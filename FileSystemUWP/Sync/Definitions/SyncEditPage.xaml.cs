@@ -51,6 +51,7 @@ namespace FileSystemUWP.Sync.Definitions
                 [SyncCompareType.Exists] = "Exists",
                 [SyncCompareType.Size] = "Size",
                 [SyncCompareType.Hash] = "SHA1 hash",
+                [SyncCompareType.PartialHash] = "Partial SHA1 hash",
             };
 
             ecbConflictHandlingType.Names = new Dictionary<object, string>()
@@ -116,12 +117,12 @@ namespace FileSystemUWP.Sync.Definitions
             {
                 string actualParentPath;
                 string folderName = string.IsNullOrWhiteSpace(sender.Text) ?
-                    string.Empty : Path.GetFileName(sender.Text);
+                    string.Empty : sender.Text.Split(config.DirectorySeparatorChar, config.AltDirectorySeparatorChar).Last();
                 string searchKey = folderName.ToLower();
                 string parentPath = string.IsNullOrWhiteSpace(sender.Text) ?
-                    string.Empty : config.GetParentPath(sender.Text).TrimEnd(config.DirectorySeparatorChar);
+                    string.Empty : config.GetParentPath(sender.Text).TrimEnd(config.DirectorySeparatorChar, config.AltDirectorySeparatorChar);
                 FolderContent content = folderPaths.TryGetValue(parentPath, out actualParentPath) ?
-                    await edit.Api.FolderContent(folderPaths[parentPath]) : null;
+                    await edit.Api.FolderContent(actualParentPath) : null;
 
                 if (content?.Folders != null)
                 {
@@ -129,7 +130,8 @@ namespace FileSystemUWP.Sync.Definitions
                     {
                         string path = content.Path
                             .GetChildPathParts(folder)
-                            .GetNamePath(config.DirectorySeparatorChar);
+                            .GetNamePath(config.DirectorySeparatorChar)
+                            .TrimEnd(config.DirectorySeparatorChar, config.AltDirectorySeparatorChar);
                         folderPaths[path] = folder.Path;
                     }
 
