@@ -1,11 +1,11 @@
 ﻿using FileSystemCommon.Models.FileSystem.Content;
-using FileSystemUWP.API;
+using FileSystemCommonUWP.API;
 using FileSystemUWP.Controls;
 using FileSystemUWP.FileViewers;
 using FileSystemUWP.Picker;
-using FileSystemUWP.Sync.Definitions;
 using System.Collections.Generic;
 using System.ComponentModel;
+using FileSystemCommonUWP.Sync.Definitions;
 
 namespace FileSystemUWP
 {

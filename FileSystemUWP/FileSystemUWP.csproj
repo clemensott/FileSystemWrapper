@@ -116,9 +116,7 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="API\Api.cs" />
     <Compile Include="API\ApiEdit.cs" />
-    <Compile Include="API\ApiExtensions.cs" />
     <Compile Include="API\AuthPage.xaml.cs">
       <DependentUpon>AuthPage.xaml</DependentUpon>
     </Compile>
@@ -155,7 +153,6 @@
     <Compile Include="FileViewers\TextControl.xaml.cs">
       <DependentUpon>TextControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="HttpRandomAccessStream.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
@@ -193,35 +190,17 @@
     <Compile Include="SettingsStorage\ServerStore.cs" />
     <Compile Include="SettingsStorage\Store.cs" />
     <Compile Include="SettingsStorage\SyncPairStore.cs" />
-    <Compile Include="Sync\Definitions\SyncCompareType.cs" />
-    <Compile Include="Sync\Definitions\SyncConflictHandlingType.cs" />
-    <Compile Include="Sync\Definitions\SyncMode.cs" />
+    <Compile Include="Sync\Definitions\SyncPairPageSyncViewModel.cs" />
+    <Compile Include="Sync\Definitions\SyncPairsPageViewModel.cs" />
     <Compile Include="Sync\Handling\BackgroundTaskHelper.cs" />
-    <Compile Include="Sync\Handling\CompareType\ExistsComparer.cs" />
-    <Compile Include="Sync\Handling\CompareType\SizeComparer.cs" />
-    <Compile Include="Sync\Handling\CompareType\HashComparer.cs" />
-    <Compile Include="Sync\Handling\ErrorFilePair.cs" />
-    <Compile Include="Sync\Handling\FilePair.cs" />
-    <Compile Include="Sync\Handling\CompareType\ISyncFileComparer.cs" />
-    <Compile Include="Sync\Handling\Mode\LocalToServerModeHandler.cs" />
-    <Compile Include="Sync\Handling\Mode\ServerToLocalModeHandler.cs" />
-    <Compile Include="Sync\Handling\Mode\LocalToServerCreateOnlyModeHandler.cs" />
-    <Compile Include="Sync\Handling\Mode\SyncModeHandler.cs" />
-    <Compile Include="Sync\Handling\Mode\TwoWayModeHandler.cs" />
-    <Compile Include="Sync\Handling\Mode\ServerToLocalCreateOnlyModeHandler.cs" />
-    <Compile Include="Sync\Handling\Mode\SyncActionType.cs" />
-    <Compile Include="Sync\Handling\SyncPairHandlerState.cs" />
+    <Compile Include="Sync\Handling\SyncPairCommunicator.cs" />
     <Compile Include="Sync\Handling\SyncPairHandlingPage.xaml.cs">
       <DependentUpon>SyncPairHandlingPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Sync\Result\SyncedItem.cs" />
     <Compile Include="Sync\Definitions\SyncEditPage.xaml.cs">
       <DependentUpon>SyncEditPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Sync\Definitions\SyncPair.cs" />
     <Compile Include="Sync\Definitions\SyncPairEdit.cs" />
-    <Compile Include="Sync\Handling\SyncPairHandler.cs" />
-    <Compile Include="Sync\Definitions\SyncPairs.cs" />
     <Compile Include="Sync\Definitions\SyncPairsPage.xaml.cs">
       <DependentUpon>SyncPairsPage.xaml</DependentUpon>
     </Compile>
@@ -372,13 +351,21 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.10</Version>
+      <Version>6.2.14</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>13.0.2</Version>
+      <Version>13.0.3</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\FileSystemBackgroundUWP\FileSystemBackgroundUWP.csproj">
+      <Project>{f0340c34-ba05-44b1-ab25-3d259386248c}</Project>
+      <Name>FileSystemBackgroundUWP</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FileSystemCommenUWP\FileSystemCommenUWP.csproj">
+      <Project>{f880724e-ec43-48b8-b9ed-78972e64cd99}</Project>
+      <Name>FileSystemCommenUWP</Name>
+    </ProjectReference>
     <ProjectReference Include="..\StdOttLib\StdOttStandardLib\StdOttStandardLib.csproj">
       <Project>{06fccefa-e291-43f0-8f0d-e17d280f6ec4}</Project>
       <Name>StdOttStandardLib</Name>

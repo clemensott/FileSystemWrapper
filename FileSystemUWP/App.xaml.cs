@@ -1,4 +1,7 @@
-﻿using FileSystemUWP.Models;
+﻿using FileSystemCommonUWP.Sync.Definitions;
+using FileSystemCommonUWP.Sync.Handling;
+using FileSystemCommonUWP.Sync.Handling.Communication;
+using FileSystemUWP.Models;
 using FileSystemUWP.SettingsStorage;
 using FileSystemUWP.Sync.Definitions;
 using FileSystemUWP.Sync.Handling;
@@ -192,58 +195,59 @@ namespace FileSystemUWP
             return Path.Combine(ApplicationData.Current.LocalFolder.Path, fileName);
         }
 
-        protected override async void OnBackgroundActivated(BackgroundActivatedEventArgs args)
-        {
-            BackgroundTaskDeferral deferral = args.TaskInstance.GetDeferral();
-            BackgroundTaskHelper.Current.IsRunning = true;
+        //protected override async void OnBackgroundActivated(BackgroundActivatedEventArgs args)
+        //{
+        //    BackgroundTaskDeferral deferral = args.TaskInstance.GetDeferral();
+        //    BackgroundTaskHelper.Current.IsRunning = true;
 
-            if (!viewModel.IsLoaded)
-            {
-                System.Diagnostics.Debug.WriteLine($"on background1: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
-                await LoadViewModel();
-                System.Diagnostics.Debug.WriteLine($"on background1.1: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
-            }
+        //    if (!viewModel.IsLoaded)
+        //    {
+        //        System.Diagnostics.Debug.WriteLine($"on background1: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
+        //        await LoadViewModel();
+        //        System.Diagnostics.Debug.WriteLine($"on background1.1: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
+        //    }
 
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"on background2: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
-                //if (args.TaskInstance.Task.Name == BackgroundTaskHelper.TimerBackgroundTaskBuilderName)
-                //{
-                //    Settings.Current.SyncTimerTime = DateTime.Now;
-                //    await BackgroundTaskHelper.Current.Start(viewModel.Syncs, viewModel.Api);
-                //}
+        //    try
+        //    {
+        //        System.Diagnostics.Debug.WriteLine($"on background2: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
+        //        //if (args.TaskInstance.Task.Name == BackgroundTaskHelper.TimerBackgroundTaskBuilderName)
+        //        //{
+        //        //    Settings.Current.SyncTimerTime = DateTime.Now;
+        //        //    await BackgroundTaskHelper.Current.Start(viewModel.Syncs, viewModel.Api);
+        //        //}
 
-                Queue<SyncPairHandler> syncs = BackgroundTaskHelper.Current.Queue;
-                System.Diagnostics.Debug.WriteLine($"on background3: {syncs.Count}");
-                while (syncs.Count > 0)
-                {
-                    SyncPairHandler handler = syncs.Dequeue();
-                    if (!await handler.Api.IsAuthorized() && await handler.Api.LoadConfig()) continue;
+        //        Queue<SyncPairCommunicator> syncs = BackgroundTaskHelper.Current.Queue;
+        //        System.Diagnostics.Debug.WriteLine($"on background3: {syncs.Count}");
+        //        while (syncs.Count > 0)
+        //        {
+        //            SyncPairCommunicator communicator = syncs.Dequeue();
+        //            if (!await communicator.Api.IsAuthorized() && await communicator.Api.LoadConfig()) continue;
 
-                    await handler.Start();
+        //            await communicator.Start();
 
-                    SyncPair sync;
-                    if (!handler.IsTestRun && handler.State == SyncPairHandlerState.Finished &&
-                        viewModel.Servers.SelectMany(s => s.Syncs).TryFirst(s => s.Token == handler.Token, out sync))
-                    {
-                        sync.Result = handler.NewResult.ToArray();
-                    }
-                }
-                System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count} | {e.Message}");
-                Settings.Current.OnSyncException(e);
-            }
-            finally
-            {
-                System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
-                BackgroundTaskHelper.Current.IsRunning = false;
+        //            SyncPair sync;
+        //            if (!communicator.Request.IsTestRun && communicator.Sync.State == SyncPairHandlerState.Finished &&
+        //                viewModel.Servers.SelectMany(s => s.Syncs).TryFirst(s => s.Token == communicator.Request.Token, out sync))
+        //            {
+        //                throw new Exception("Implement saving result");
+        //                //sync.Result = communicator.NewResult.ToArray();
+        //            }
+        //        }
+        //        System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count} | {e.Message}");
+        //        Settings.Current.OnSyncException(e);
+        //    }
+        //    finally
+        //    {
+        //        System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
+        //        BackgroundTaskHelper.Current.IsRunning = false;
 
-                await StoreViewModel("sync finished");
-                deferral.Complete();
-            }
-        }
+        //        await StoreViewModel("sync finished");
+        //        deferral.Complete();
+        //    }
+        //}
     }
 }

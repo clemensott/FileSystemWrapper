@@ -1,4 +1,5 @@
-﻿using FileSystemCommon.Models.FileSystem.Content;
+﻿using FileSystemCommonUWP.API;
+using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemUWP.API;
 using FileSystemUWP.Models;
 using StdOttUwp;

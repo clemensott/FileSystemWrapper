@@ -1,6 +1,7 @@
-﻿using FileSystemUWP.API;
+﻿using FileSystemCommonUWP.API;
+using FileSystemCommonUWP.Sync.Definitions;
+using FileSystemCommonUWP.Sync.Handling.Communication;
 using FileSystemUWP.Models;
-using FileSystemUWP.Sync.Definitions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -27,23 +28,14 @@ namespace FileSystemUWP.Sync.Handling
 
         private ApplicationTrigger appTrigger;
         private TimeTrigger timeTrigger;
-        private readonly Dictionary<string, SyncPairHandler> handlers;
-
-        public event EventHandler<SyncPairHandler> AddedHandler;
 
         public bool IsRunning { get; set; }
 
-        public Queue<SyncPairHandler> Queue { get; }
+        public SyncPairCommunicator Communicator { get; }
 
         private BackgroundTaskHelper()
         {
-            handlers = new Dictionary<string, SyncPairHandler>();
-            Queue = new Queue<SyncPairHandler>();
-        }
-
-        public bool TryGetHandler(string token, out SyncPairHandler handler)
-        {
-            return handlers.TryGetValue(token, out handler);
+            Communicator = new SyncPairCommunicator();
         }
 
         public Task Start(SyncPair sync, Api api, bool isTestRun = false, SyncMode? mode = null)
@@ -53,27 +45,14 @@ namespace FileSystemUWP.Sync.Handling
 
         public async Task Start(IEnumerable<SyncPair> syncs, Api api, bool isTestRun = false, SyncMode? mode = null)
         {
-            bool addedHandler = false;
-
             foreach (SyncPair pair in syncs)
             {
-                SyncPairHandler handler;
-                if (handlers.TryGetValue(pair.Token, out handler) && !handler.IsEnded) continue;
+                SyncPairForegroundContainer container = SyncPairForegroundContainer.FromSyncPair(pair, api, isTestRun, mode);
 
-                if (!pair.IsLocalFolderLoaded)
-                {
-                    await pair.LoadLocalFolder();
-                }
-                handler = SyncPairHandler.FromSyncPair(pair, api, isTestRun, mode);
-
-                Queue.Enqueue(handler);
-                handlers[handler.Token] = handler;
-
-                AddedHandler?.Invoke(this, handler);
-                addedHandler = true;
+                Communicator.Enqueue(container);
             }
 
-            if (!addedHandler || IsRunning) return;
+            if (IsRunning) return;
             if (appTrigger == null) RegisterAppBackgroundTask();
 
             await appTrigger.RequestAsync();

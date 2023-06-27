@@ -1,4 +1,5 @@
-﻿using FileSystemUWP.API;
+﻿using FileSystemCommonUWP.API;
+using FileSystemCommonUWP.Sync.Definitions;
 using System.Threading.Tasks;
 
 namespace FileSystemUWP.Sync.Definitions
