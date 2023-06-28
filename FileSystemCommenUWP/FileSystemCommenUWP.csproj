@@ -124,11 +124,16 @@
     <Compile Include="API\ApiExtensions.cs" />
     <Compile Include="HttpRandomAccessStream.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="Sync\Definitions\SyncCompareType.cs" />
     <Compile Include="Sync\Definitions\SyncConflictHandlingType.cs" />
     <Compile Include="Sync\Definitions\SyncMode.cs" />
     <Compile Include="Sync\Definitions\SyncPair.cs" />
     <Compile Include="Sync\Definitions\SyncPairs.cs" />
+    <Compile Include="Sync\Handling\Communication\CanceledSyncPairRunEventArgs.cs" />
+    <Compile Include="Sync\Handling\Communication\DeletedSyncPairRunEventArgs.cs" />
+    <Compile Include="Sync\Handling\Communication\ProgressSyncPairRunEventArgs.cs" />
+    <Compile Include="Sync\Handling\Communication\RequestedSyncPairRunEventArgs.cs" />
     <Compile Include="Sync\Handling\Communication\ErrorFilePairInfo.cs" />
     <Compile Include="Sync\Handling\Communication\FilePairInfo.cs" />
     <Compile Include="Sync\Handling\Communication\SyncPairForegroundContainer.cs" />
@@ -147,6 +152,7 @@
     <Compile Include="Sync\Handling\Mode\SyncActionType.cs" />
     <Compile Include="Sync\Handling\Mode\SyncModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\TwoWayModeHandler.cs" />
+    <Compile Include="Sync\Handling\Communication\SyncPairCommunicator.cs" />
     <Compile Include="Sync\Handling\SyncPairHandler.cs" />
     <Compile Include="Sync\Handling\SyncPairHandlerState.cs" />
     <Compile Include="Sync\Result\SyncedItem.cs" />
@@ -168,6 +174,10 @@
     <ProjectReference Include="..\StdOttLib\StdOttStandardLib\StdOttStandardLib.csproj">
       <Project>{06fccefa-e291-43f0-8f0d-e17d280f6ec4}</Project>
       <Name>StdOttStandardLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\StdOttLib\StdOttUwpLib\StdOttUwpLib.csproj">
+      <Project>{CCF443C5-95A3-4DCD-8468-B71CE49D0206}</Project>
+      <Name>StdOttUwpLib</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

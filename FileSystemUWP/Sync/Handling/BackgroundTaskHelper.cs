@@ -1,9 +1,10 @@
-﻿using FileSystemCommonUWP.API;
+﻿using FileSystemCommonUWP;
+using FileSystemCommonUWP.API;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling.Communication;
-using FileSystemUWP.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
 
@@ -26,16 +27,32 @@ namespace FileSystemUWP.Sync.Handling
             }
         }
 
+        private readonly SyncPairCommunicator communicator;
+        private readonly Dictionary<string, SyncPairForegroundContainer> containers;
         private ApplicationTrigger appTrigger;
         private TimeTrigger timeTrigger;
 
         public bool IsRunning { get; set; }
 
-        public SyncPairCommunicator Communicator { get; }
 
         private BackgroundTaskHelper()
         {
-            Communicator = new SyncPairCommunicator();
+            communicator = SyncPairCommunicator.CreateForegroundCommunicator();
+            communicator.ProgressSyncPairRun += Communicator_ProgressSyncPairRun;
+            communicator.StoppedBackgroundTask += Communicator_StoppedBackgroundTask;
+
+            SyncPairRequestInfo[] containersArray = communicator.LoadContainers();
+            containers = containersArray?.ToDictionary(r => r.RunToken, r => new SyncPairForegroundContainer(r)) ?? new Dictionary<string, SyncPairForegroundContainer>();
+        }
+
+        private void Communicator_ProgressSyncPairRun(object sender, ProgressSyncPairRunEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Communicator_StoppedBackgroundTask(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         public Task Start(SyncPair sync, Api api, bool isTestRun = false, SyncMode? mode = null)
@@ -49,12 +66,15 @@ namespace FileSystemUWP.Sync.Handling
             {
                 SyncPairForegroundContainer container = SyncPairForegroundContainer.FromSyncPair(pair, api, isTestRun, mode);
 
-                Communicator.Enqueue(container);
+                containers.Add(container.Request.RunToken, container);
+                communicator.SaveContainers(containers.Values.Select(c => c.Request).ToArray());
+                communicator.SendRequestedSyncPair(container.Request.RunToken);
             }
 
             if (IsRunning) return;
             if (appTrigger == null) RegisterAppBackgroundTask();
 
+            communicator.Start();
             await appTrigger.RequestAsync();
         }
 
@@ -109,6 +129,16 @@ namespace FileSystemUWP.Sync.Handling
 
             BackgroundTaskRegistration taskRegistration = builder.Register();
             Settings.Current.TimerBackgroundTaskRegistrationId = taskRegistration.TaskId;
+        }
+
+        public void Cancel(string runToken)
+        {
+            communicator.SendCanceledSyncPair(runToken);
+        }
+
+        public void Delete(string runToken)
+        {
+            communicator.SendCanceledSyncPair(runToken);
         }
     }
 }

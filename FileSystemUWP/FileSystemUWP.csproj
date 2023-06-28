@@ -185,7 +185,6 @@
       <DependentUpon>ServerExplorerPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="API\Server.cs" />
-    <Compile Include="Models\Settings.cs" />
     <Compile Include="SettingsStorage\FileSystemSortItemStore.cs" />
     <Compile Include="SettingsStorage\ServerStore.cs" />
     <Compile Include="SettingsStorage\Store.cs" />
@@ -193,7 +192,6 @@
     <Compile Include="Sync\Definitions\SyncPairPageSyncViewModel.cs" />
     <Compile Include="Sync\Definitions\SyncPairsPageViewModel.cs" />
     <Compile Include="Sync\Handling\BackgroundTaskHelper.cs" />
-    <Compile Include="Sync\Handling\SyncPairCommunicator.cs" />
     <Compile Include="Sync\Handling\SyncPairHandlingPage.xaml.cs">
       <DependentUpon>SyncPairHandlingPage.xaml</DependentUpon>
     </Compile>

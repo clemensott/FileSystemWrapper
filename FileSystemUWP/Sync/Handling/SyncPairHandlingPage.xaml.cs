@@ -214,10 +214,10 @@ namespace FileSystemUWP.Sync.Handling
             Frame.GoBack();
         }
 
-        private async void AbbStop_Click(object sender, RoutedEventArgs e)
+        private void AbbStop_Click(object sender, RoutedEventArgs e)
         {
             SyncPairForegroundContainer container = (SyncPairForegroundContainer)DataContext;
-            await BackgroundTaskHelper.Current.Communicator.Cancel(container.Request.RunToken);
+            BackgroundTaskHelper.Current.Cancel(container.Request.RunToken);
         }
     }
 }

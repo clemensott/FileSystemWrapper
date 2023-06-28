@@ -2,7 +2,7 @@
 {
     public enum SyncPairHandlerState
     {
-        Requesting,
+        Loading,
         WaitForStart,
         Running,
         Finished,

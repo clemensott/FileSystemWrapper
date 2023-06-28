@@ -4,6 +4,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 {
     public struct SyncPairResponseInfo
     {
+        public string RunToken { get; set; }
+
         public SyncPairHandlerState State { get; set; }
 
         public int CurrentCount { get; set; }

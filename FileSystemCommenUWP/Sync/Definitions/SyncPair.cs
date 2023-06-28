@@ -1,5 +1,4 @@
 ﻿using FileSystemCommon.Models.FileSystem;
-using FileSystemCommonUWP.Sync.Result;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -20,7 +19,6 @@ namespace FileSystemCommonUWP.Sync.Definitions
         private SyncCompareType compareType;
         private SyncConflictHandlingType conflictHandlingType;
         private ObservableCollection<string> whitelist, blacklist;
-        private SyncedItem[] result;
 
         public bool WithSubfolders
         {

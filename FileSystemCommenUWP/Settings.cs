@@ -3,9 +3,9 @@ using System;
 using System.Linq;
 using Windows.Storage;
 
-namespace FileSystemUWP.Models
+namespace FileSystemCommonUWP
 {
-    class Settings : AppDataContainerObject
+    public class Settings : AppDataContainerObject
     {
         const char syncRunTokensSeparator = '|';
 
@@ -71,6 +71,18 @@ namespace FileSystemUWP.Models
 
                 SetValue(nameof(SyncRunTokens), string.Join(syncRunTokensSeparator.ToString(), value));
             }
+        }
+
+        public string BackgroundCMDs
+        {
+            get => GetValue<string>(nameof(BackgroundCMDs), null);
+            set => SetValue(nameof(BackgroundCMDs), value);
+        }
+
+        public string ForegroundCMDs
+        {
+            get => GetValue<string>(nameof(BackgroundCMDs), null);
+            set => SetValue(nameof(BackgroundCMDs), value);
         }
 
         public string CurrentSyncRunToken

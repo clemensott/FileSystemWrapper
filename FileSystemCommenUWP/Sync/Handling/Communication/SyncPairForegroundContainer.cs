@@ -12,8 +12,6 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
     {
         private SyncPairResponseInfo sync;
 
-        public Api Api { get; }
-
         public SyncPairRequestInfo Request { get; }
 
         public SyncPairResponseInfo Response
@@ -32,19 +30,18 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
             Response.State == SyncPairHandlerState.Error ||
             Response.State == SyncPairHandlerState.Canceled;
 
-        public SyncPairForegroundContainer(Api api, SyncPairRequestInfo request)
+        public SyncPairForegroundContainer(SyncPairRequestInfo request)
         {
-            Api = api;
             Request = request;
             Response = new SyncPairResponseInfo()
             {
-                State = SyncPairHandlerState.Requesting,
+                State = SyncPairHandlerState.Loading,
             };
         }
 
         public static SyncPairForegroundContainer FromSyncPair(SyncPair sync, Api api, bool isTestRun = false, SyncMode? mode = null)
         {
-            return new SyncPairForegroundContainer(api, new SyncPairRequestInfo()
+            return new SyncPairForegroundContainer(new SyncPairRequestInfo()
             {
                 RunToken = Guid.NewGuid().ToString(),
                 Token = sync.Token,
@@ -59,6 +56,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
                 Whitelist = sync.Whitelist.ToArray(),
                 Blacklist = sync.Blacklist.ToArray(),
                 IsTestRun = isTestRun,
+                ApiBaseUrl = api.BaseUrl,
             });
         }
 

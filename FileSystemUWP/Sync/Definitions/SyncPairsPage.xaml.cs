@@ -2,12 +2,10 @@
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling;
-using FileSystemCommonUWP.Sync.Handling.Communication;
 using FileSystemUWP.Sync.Handling;
 using StdOttStandard.Converter.MultipleInputs;
 using StdOttStandard.Linq;
 using StdOttUwp;
-using StdOttUwp.Converters;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -68,17 +66,10 @@ namespace FileSystemUWP.Sync.Definitions
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            BackgroundTaskHelper.Current.Communicator.CurrentSyncChanged += Communicator_CurrentSyncChanged;
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            BackgroundTaskHelper.Current.Communicator.CurrentSyncChanged -= Communicator_CurrentSyncChanged;
-        }
-
-        private void Communicator_CurrentSyncChanged(object sender, SyncPairForegroundContainer e)
-        {
-            throw new NotImplementedException();
         }
 
         private object ServerPathConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
@@ -153,7 +144,7 @@ namespace FileSystemUWP.Sync.Definitions
 
         private async Task StartSyncRun(SyncPairPageSyncViewModel sync, bool isTestRun = false, SyncMode? mode = null)
         {
-            if (sync.Run?.IsEnded == false) await BackgroundTaskHelper.Current.Communicator.Cancel(sync.Run.Request.RunToken);
+            if (sync.Run?.IsEnded == false) BackgroundTaskHelper.Current.Cancel(sync.Run.Request.RunToken);
             else await BackgroundTaskHelper.Current.Start(sync.SyncPair, server.Api, isTestRun);
         }
 

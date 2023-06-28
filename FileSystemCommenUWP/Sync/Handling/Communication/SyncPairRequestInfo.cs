@@ -30,5 +30,6 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public bool IsTestRun { get; set; }
 
+        public string ApiBaseUrl { get; set; }
     }
 }
