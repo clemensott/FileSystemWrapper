@@ -2,11 +2,11 @@
 
 namespace FileSystemCommonUWP.Sync.Handling.Communication
 {
-    public class RequestedSyncPairRunEventArgs : EventArgs
+    public class RequestedProgressSyncPairRunEventArgs : EventArgs
     {
         public string RunToken { get; }
 
-        public RequestedSyncPairRunEventArgs(string runToken)
+        public RequestedProgressSyncPairRunEventArgs(string runToken)
         {
             RunToken = runToken;
         }

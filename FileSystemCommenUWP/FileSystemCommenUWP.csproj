@@ -131,9 +131,8 @@
     <Compile Include="Sync\Definitions\SyncPair.cs" />
     <Compile Include="Sync\Definitions\SyncPairs.cs" />
     <Compile Include="Sync\Handling\Communication\CanceledSyncPairRunEventArgs.cs" />
-    <Compile Include="Sync\Handling\Communication\DeletedSyncPairRunEventArgs.cs" />
+    <Compile Include="Sync\Handling\Communication\RequestedProgressSyncPairRunEventArgs.cs" />
     <Compile Include="Sync\Handling\Communication\ProgressSyncPairRunEventArgs.cs" />
-    <Compile Include="Sync\Handling\Communication\RequestedSyncPairRunEventArgs.cs" />
     <Compile Include="Sync\Handling\Communication\ErrorFilePairInfo.cs" />
     <Compile Include="Sync\Handling\Communication\FilePairInfo.cs" />
     <Compile Include="Sync\Handling\Communication\SyncPairForegroundContainer.cs" />

@@ -55,42 +55,6 @@ namespace FileSystemCommonUWP
             set => SetValue(nameof(ApplicationBackgroundTaskRegistrationId), value.ToString());
         }
 
-        public string[] SyncRunTokens
-        {
-            get
-            {
-                string text;
-                return TryGetValue(nameof(SyncRunTokens), out text) ? text.Split(syncRunTokensSeparator) : new string[0];
-            }
-            set
-            {
-                if (value.Any(token => token.Contains(syncRunTokensSeparator)))
-                {
-                    throw new ArgumentException("Run tokens must not contain the separator char");
-                }
-
-                SetValue(nameof(SyncRunTokens), string.Join(syncRunTokensSeparator.ToString(), value));
-            }
-        }
-
-        public string BackgroundCMDs
-        {
-            get => GetValue<string>(nameof(BackgroundCMDs), null);
-            set => SetValue(nameof(BackgroundCMDs), value);
-        }
-
-        public string ForegroundCMDs
-        {
-            get => GetValue<string>(nameof(BackgroundCMDs), null);
-            set => SetValue(nameof(BackgroundCMDs), value);
-        }
-
-        public string CurrentSyncRunToken
-        {
-            get => GetValue<string>(nameof(CurrentSyncRunToken), null);
-            set => SetValue(nameof(CurrentSyncRunToken), value);
-        }
-
         public AppDataExceptionObject StorageException
         {
             get => DeserialzeObject<AppDataExceptionObject>(nameof(StorageException));

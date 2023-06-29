@@ -2,7 +2,7 @@
 {
     public struct ErrorFilePairInfo
     {
-        public FilePairInfo Pair { get; set; }
+        public FilePairInfo File { get; set; }
 
         public string Message { get; set; }
 
@@ -14,7 +14,7 @@
         {
             return new ErrorFilePairInfo()
             {
-                Pair = FilePairInfo.FromFilePair(pair.Pair),
+                File = FilePairInfo.FromFilePair(pair.Pair),
                 Message = pair.Exception.Message,
                 Stacktrace = pair.Exception.StackTrace,
                 Exception = pair.Exception.ToString(),

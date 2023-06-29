@@ -19,7 +19,6 @@
         <con:ValueConverter x:Key="conflictHandlingNameCon" ConvertEvent="ConflictHandling_ConvertEvent"/>
 
         <con:ValueConverter x:Key="notNullStringConverter" ConvertEvent="NotNullString_ConvertEvent"/>
-        <con:ValueConverter x:Key="pairConverter" ConvertEvent="FilePairConverter_ConvertEvent"/>
         <con:ValueConverter x:Key="isRunningConverter" ConvertEvent="IsRunningConverter_ConvertEvent"/>
     </Page.Resources>
 
@@ -185,22 +184,22 @@
 
                 <StackPanel Margin="2,4">
                     <TextBlock Text="Coping to local path:" FontWeight="Bold"/>
-                    <TextBlock Margin="3,1" Text="{Binding CurrentCopyToLocalFile,Converter={StaticResource pairConverter}}"/>
+                    <TextBlock Margin="3,1" Text="{Binding Path=Run.Response.CurrentCopyToLocalFile}"/>
                 </StackPanel>
 
                 <StackPanel Margin="2,4">
                     <TextBlock Text="Coping to server path:" FontWeight="Bold"/>
-                    <TextBlock Margin="3,1" Text="{Binding CurrentCopyToServerFile,Converter={StaticResource pairConverter}}"/>
+                    <TextBlock Margin="3,1" Text="{Binding Path=Run.Response.CurrentCopyToServerFile}"/>
                 </StackPanel>
 
                 <StackPanel Margin="2,4">
                     <TextBlock Text="Deleting from local path:" FontWeight="Bold"/>
-                    <TextBlock Margin="3,1" Text="{Binding CurrentDeleteFromServerFile,Converter={StaticResource pairConverter}}"/>
+                    <TextBlock Margin="3,1" Text="{Binding Path=Run.Response.CurrentDeleteFromServerFile}"/>
                 </StackPanel>
 
                 <StackPanel Margin="2,4">
                     <TextBlock Text="Deleting  from server path:" FontWeight="Bold"/>
-                    <TextBlock Margin="3,1" Text="{Binding CurrentDeleteFromLocalFile,Converter={StaticResource pairConverter}}"/>
+                    <TextBlock Margin="3,1" Text="{Binding Path=Run.Response.CurrentDeleteFromLocalFile}"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

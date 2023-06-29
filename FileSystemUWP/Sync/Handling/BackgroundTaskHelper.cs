@@ -2,9 +2,10 @@
 using FileSystemCommonUWP.API;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling.Communication;
+using StdOttStandard.Linq;
+using StdOttUwp;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
 
@@ -28,31 +29,88 @@ namespace FileSystemUWP.Sync.Handling
         }
 
         private readonly SyncPairCommunicator communicator;
+        private readonly List<SyncPairRequestInfo> requests;
         private readonly Dictionary<string, SyncPairForegroundContainer> containers;
         private ApplicationTrigger appTrigger;
         private TimeTrigger timeTrigger;
 
-        public bool IsRunning { get; set; }
+        public bool IsRunning { get; private set; }
 
 
         private BackgroundTaskHelper()
         {
             communicator = SyncPairCommunicator.CreateForegroundCommunicator();
             communicator.ProgressSyncPairRun += Communicator_ProgressSyncPairRun;
+            communicator.StartedBackgroundTask += Communicator_StartedBackgroundTask;
             communicator.StoppedBackgroundTask += Communicator_StoppedBackgroundTask;
 
-            SyncPairRequestInfo[] containersArray = communicator.LoadContainers();
-            containers = containersArray?.ToDictionary(r => r.RunToken, r => new SyncPairForegroundContainer(r)) ?? new Dictionary<string, SyncPairForegroundContainer>();
+            requests = new List<SyncPairRequestInfo>();
+            containers = new Dictionary<string, SyncPairForegroundContainer>();
         }
 
-        private void Communicator_ProgressSyncPairRun(object sender, ProgressSyncPairRunEventArgs e)
+        private async void Communicator_ProgressSyncPairRun(object sender, ProgressSyncPairRunEventArgs e)
         {
-            throw new NotImplementedException();
+            IsRunning = true;
+
+            SyncPairForegroundContainer container;
+            if (containers.TryGetValue(e.Response.RunToken, out container))
+            {
+                await UwpUtils.RunSafe(() => container.Response = e.Response);
+            }
+        }
+
+        private void Communicator_StartedBackgroundTask(object sender, EventArgs e)
+        {
+            IsRunning = true;
         }
 
         private void Communicator_StoppedBackgroundTask(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            IsRunning = false;
+        }
+
+        public async Task LoadContainers()
+        {
+            SyncPairRequestInfo[] requests = await communicator.LoadSyncPairRequests();
+            SyncPairResponseInfo[] responses = await communicator.LoadSyncPairResponses();
+            foreach (SyncPairRequestInfo request in requests.ToNotNull())
+            {
+                this.requests.Add(request);
+
+                SyncPairResponseInfo response;
+                SyncPairForegroundContainer container;
+                if (responses != null && responses.TryFirst(r => r.RunToken == request.RunToken, out response))
+                {
+                    container = new SyncPairForegroundContainer(request, response);
+                }
+                else container = new SyncPairForegroundContainer(request);
+
+                containers.Add(request.RunToken, container);
+            }
+        }
+
+        public Task SaveRequests()
+        {
+            return communicator.SaveRequests(requests.ToArray());
+        }
+
+        public async Task RemoveSyncPairRuns(string token)
+        {
+            bool changed = false;
+            while (true)
+            {
+                int index = requests.FindIndex(r => r.Token == token);
+                if (index == -1) break;
+
+                containers.Remove(requests[index].RunToken);
+                requests.RemoveAt(index);
+            }
+
+            if (changed)
+            {
+                await SaveRequests();
+                communicator.SendUpdatedRequestedSyncRunsPairs();
+            }
         }
 
         public Task Start(SyncPair sync, Api api, bool isTestRun = false, SyncMode? mode = null)
@@ -67,18 +125,20 @@ namespace FileSystemUWP.Sync.Handling
                 SyncPairForegroundContainer container = SyncPairForegroundContainer.FromSyncPair(pair, api, isTestRun, mode);
 
                 containers.Add(container.Request.RunToken, container);
-                communicator.SaveContainers(containers.Values.Select(c => c.Request).ToArray());
-                communicator.SendRequestedSyncPair(container.Request.RunToken);
+                requests.Add(container.Request);
             }
 
-            if (IsRunning) return;
-            if (appTrigger == null) RegisterAppBackgroundTask();
-
+            await SaveRequests();
+            communicator.SendUpdatedRequestedSyncRunsPairs();
             communicator.Start();
+
+            if (IsRunning) return;
+            if (appTrigger == null) await RegisterAppBackgroundTask();
+
             await appTrigger.RequestAsync();
         }
 
-        private void RegisterAppBackgroundTask()
+        private async Task RegisterAppBackgroundTask()
         {
             IBackgroundTaskRegistration taskRegistration;
             Guid taskRegistrationId = Settings.Current.ApplicationBackgroundTaskRegistrationId;
@@ -100,11 +160,13 @@ namespace FileSystemUWP.Sync.Handling
             {
                 Name = applicationBackgroundTaskBuilderName,
                 IsNetworkRequested = true,
+                TaskEntryPoint = "FileSystemBackgroundUWP.Sync.SyncBackgroundTask",
             };
 
             builder.SetTrigger(appTrigger);
             builder.AddCondition(new SystemCondition(SystemConditionType.FreeNetworkAvailable));
 
+            await BackgroundExecutionManager.RequestAccessAsync();
             taskRegistration = builder.Register();
             Settings.Current.ApplicationBackgroundTaskRegistrationId = taskRegistration.TaskId;
         }

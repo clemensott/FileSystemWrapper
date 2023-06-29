@@ -22,7 +22,7 @@ using Windows.Storage;
 
 namespace FileSystemCommonUWP.Sync.Handling
 {
-    internal class SyncPairHandler
+    public class SyncPairHandler
     {
         private const int partialHashSize = 10 * 1024; // 10 kB
 
@@ -168,7 +168,7 @@ namespace FileSystemCommonUWP.Sync.Handling
             }
         }
 
-        public ObservableCollection<ErrorFilePair> ErrorFiles
+        internal ObservableCollection<ErrorFilePair> ErrorFiles
         {
             get => errorFiles;
             private set
@@ -256,6 +256,8 @@ namespace FileSystemCommonUWP.Sync.Handling
 
         public string Token { get; }
 
+        public string RunToken { get; }
+
         public string Name { get; }
 
         public string ServerNamePath { get; }
@@ -264,7 +266,7 @@ namespace FileSystemCommonUWP.Sync.Handling
 
         public StorageFolder LocalFolder { get; }
 
-        public SyncModeHandler ModeHandler { get; }
+        internal SyncModeHandler ModeHandler { get; }
 
         public ISyncFileComparer FileComparer { get; }
 

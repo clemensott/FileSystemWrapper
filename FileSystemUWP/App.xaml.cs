@@ -35,6 +35,10 @@ namespace FileSystemUWP
             this.UnhandledException += OnUnhandledException;
 
             viewModel = new ViewModel();
+
+            System.Collections.Generic.HashSet<string> set = new System.Collections.Generic.HashSet<string>();
+            set.Add("a");
+            System.Diagnostics.Debug.WriteLine("set contains: " + set.Contains("a"));
         }
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -53,7 +57,8 @@ namespace FileSystemUWP
             BackgroundTaskHelper.Current.RegisterTimerBackgroundTask();
 
             Frame rootFrame = Window.Current.Content as Frame;
-            Task loadViewModelTaks = Task.CompletedTask;
+            Task loadViewModelTask = Task.CompletedTask;
+            Task loadSyncPairContainersTask = BackgroundTaskHelper.Current.LoadContainers();
 
             // App-Initialisierung nicht wiederholen, wenn das Fenster bereits Inhalte enthält.
             // Nur sicherstellen, dass das Fenster aktiv ist.
@@ -81,13 +86,14 @@ namespace FileSystemUWP
                     // und die neue Seite konfigurieren, indem die erforderlichen Informationen als Navigationsparameter
                     // übergeben werden
                     rootFrame.Navigate(typeof(MainPage), viewModel);
-                    loadViewModelTaks = LoadViewModel();
+                    loadViewModelTask = LoadViewModel();
                 }
                 // Sicherstellen, dass das aktuelle Fenster aktiv ist
                 Window.Current.Activate();
             }
 
-            await loadViewModelTaks;
+            await loadViewModelTask;
+            await loadSyncPairContainersTask;
         }
 
         /// <summary>

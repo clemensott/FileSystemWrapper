@@ -3,6 +3,7 @@ using FileSystemCommon.Models.FileSystem;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling;
 using FileSystemUWP.Sync.Handling;
+using StdOttStandard.CollectionSubscriber;
 using StdOttStandard.Converter.MultipleInputs;
 using StdOttStandard.Linq;
 using StdOttUwp;
@@ -30,6 +31,7 @@ namespace FileSystemUWP.Sync.Definitions
     {
         private Server server;
         private SyncPairsPageViewModel viewModel;
+        private SimpleObservableCollectionSubscriber<SyncPair> serverSyncsSubscriber;
 
         public SyncPairsPage()
         {
@@ -49,9 +51,30 @@ namespace FileSystemUWP.Sync.Definitions
                 Syncs = new ObservableCollection<SyncPairPageSyncViewModel>(syncs),
             };
 
-            base.OnNavigatedTo(e);
+            SetupSyncingSyncs();
+            await LoadLocalFolders();
+        }
 
-            foreach (SyncPair pair in server.Syncs)
+        private void SetupSyncingSyncs()
+        {
+            serverSyncsSubscriber = new SimpleObservableCollectionSubscriber<SyncPair>(server.Syncs);
+            serverSyncsSubscriber.Added += ServerSyncsSubscriber_Added;
+            serverSyncsSubscriber.Removed += ServerSyncsSubscriber_Removed;
+        }
+
+        private void ServerSyncsSubscriber_Added(object sender, ChangedEventArgs<SyncPair> e)
+        {
+            viewModel.Syncs.Insert(e.Index, new SyncPairPageSyncViewModel() { SyncPair = e.Item });
+        }
+
+        private void ServerSyncsSubscriber_Removed(object sender, ChangedEventArgs<SyncPair> e)
+        {
+            viewModel.Syncs.RemoveAt(e.Index);
+        }
+
+        private async Task LoadLocalFolders()
+        {
+            foreach (SyncPair pair in viewModel.Syncs.Select(s => s.SyncPair))
             {
                 if (!pair.IsLocalFolderLoaded)
                 {
@@ -64,12 +87,10 @@ namespace FileSystemUWP.Sync.Definitions
             }
         }
 
-        private void OnLoaded(object sender, RoutedEventArgs e)
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-        }
-
-        private void OnUnloaded(object sender, RoutedEventArgs e)
-        {
+            serverSyncsSubscriber.Added -= ServerSyncsSubscriber_Added;
+            serverSyncsSubscriber.Removed -= ServerSyncsSubscriber_Removed;
         }
 
         private object ServerPathConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
@@ -104,8 +125,9 @@ namespace FileSystemUWP.Sync.Definitions
 
         private static bool IsRunning(SyncPairHandlerState? state)
         {
-            return state == SyncPairHandlerState.WaitForStart ||
-               state == SyncPairHandlerState.Running;
+            return state == SyncPairHandlerState.Loading ||
+                state == SyncPairHandlerState.WaitForStart ||
+                state == SyncPairHandlerState.Running;
         }
 
         private void IbnHandlerDetails_Click(object sender, RoutedEventArgs e)
@@ -137,6 +159,7 @@ namespace FileSystemUWP.Sync.Definitions
 
             if (await DialogUtils.ShowTwoOptionsAsync(sync.SyncPair.Name ?? string.Empty, "Delete?", "Yes", "No"))
             {
+                await BackgroundTaskHelper.Current.RemoveSyncPairRuns(sync.SyncPair.Token);
                 server.Syncs.Remove(sync.SyncPair);
                 await App.SaveViewModel("removed sync pair");
             }
@@ -145,7 +168,11 @@ namespace FileSystemUWP.Sync.Definitions
         private async Task StartSyncRun(SyncPairPageSyncViewModel sync, bool isTestRun = false, SyncMode? mode = null)
         {
             if (sync.Run?.IsEnded == false) BackgroundTaskHelper.Current.Cancel(sync.Run.Request.RunToken);
-            else await BackgroundTaskHelper.Current.Start(sync.SyncPair, server.Api, isTestRun);
+            else
+            {
+                await BackgroundTaskHelper.Current.RemoveSyncPairRuns(sync.SyncPair.Token);
+                await BackgroundTaskHelper.Current.Start(sync.SyncPair, server.Api, isTestRun);
+            }
         }
 
         private async void MfiTestRun_Click(object sender, RoutedEventArgs e)

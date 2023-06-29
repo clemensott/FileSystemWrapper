@@ -133,6 +133,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\FileSystemCommenUWP\FileSystemCommenUWP.csproj">
+      <Project>{F880724E-EC43-48B8-B9ED-78972E64CD99}</Project>
+      <Name>FileSystemCommenUWP</Name>
+    </ProjectReference>
     <ProjectReference Include="..\FileSystemCommon\FileSystemCommon.csproj">
       <Project>{3f6e0509-5273-48c5-bb7e-c4ee257cc0d3}</Project>
       <Name>FileSystemCommon</Name>
@@ -141,7 +145,12 @@
       <Project>{06fccefa-e291-43f0-8f0d-e17d280f6ec4}</Project>
       <Name>StdOttStandardLib</Name>
     </ProjectReference>
+    <ProjectReference Include="..\StdOttLib\StdOttUwpLib\StdOttUwpLib.csproj">
+      <Project>{CCF443C5-95A3-4DCD-8468-B71CE49D0206}</Project>
+      <Name>StdOttUwpLib</Name>
+    </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

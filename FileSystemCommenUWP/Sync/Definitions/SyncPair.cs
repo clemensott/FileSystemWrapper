@@ -146,18 +146,18 @@ namespace FileSystemCommonUWP.Sync.Definitions
             }
         }
 
-        public SyncPair() : this(Guid.NewGuid().ToString(), Guid.NewGuid().ToString())
+        public SyncPair() : this(null, null)
         {
         }
 
-        public SyncPair(string resultToken) : this(Guid.NewGuid().ToString(), resultToken)
+        public SyncPair(string resultToken) : this(null, resultToken)
         {
         }
 
         public SyncPair(string token, string resultToken)
         {
-            Token = token;
-            ResultToken = ResultToken;
+            Token = token ?? Guid.NewGuid().ToString();
+            ResultToken = resultToken ?? Guid.NewGuid().ToString();
         }
 
         public async Task LoadLocalFolder()

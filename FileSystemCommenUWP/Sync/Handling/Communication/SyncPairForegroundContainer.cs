@@ -17,7 +17,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         public SyncPairResponseInfo Response
         {
             get => sync;
-            private set
+            set
             {
                 if (Equals(value, sync)) return;
 
@@ -30,10 +30,10 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
             Response.State == SyncPairHandlerState.Error ||
             Response.State == SyncPairHandlerState.Canceled;
 
-        public SyncPairForegroundContainer(SyncPairRequestInfo request)
+        public SyncPairForegroundContainer(SyncPairRequestInfo request, SyncPairResponseInfo? response = null)
         {
             Request = request;
-            Response = new SyncPairResponseInfo()
+            Response = response ?? new SyncPairResponseInfo()
             {
                 State = SyncPairHandlerState.Loading,
             };
@@ -53,8 +53,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
                 Name = sync.Name,
                 ServerNamePath = sync.ServerPath.GetNamePath(api.Config.DirectorySeparatorChar),
                 ServerPath = sync.ServerPath.LastOrDefault().Path,
-                Whitelist = sync.Whitelist.ToArray(),
-                Blacklist = sync.Blacklist.ToArray(),
+                Whitelist = sync.Whitelist?.ToArray(),
+                Blacklist = sync.Blacklist?.ToArray(),
                 IsTestRun = isTestRun,
                 ApiBaseUrl = api.BaseUrl,
             });

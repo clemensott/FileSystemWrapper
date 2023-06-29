@@ -135,7 +135,7 @@ namespace FileSystemCommon
 
         public static string GetNamePath(this IEnumerable<PathPart> parts, char separator)
         {
-            return string.Join(separator.ToString(), parts?.Select(p => p.Name)) ?? string.Empty;
+            return parts != null ? string.Join(separator.ToString(), parts.Select(p => p.Name)) : string.Empty;
         }
 
         public static string ToName(this IEnumerable<PathPart> parts)

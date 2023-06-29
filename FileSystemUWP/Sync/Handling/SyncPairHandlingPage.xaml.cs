@@ -167,7 +167,7 @@ namespace FileSystemUWP.Sync.Handling
             {
                 ErrorFilePairInfo errorPair = pairs[i];
                 string title = $"Error: {i + 1} / {pairs.Count}";
-                string message = $"{errorPair.Pair.RelativePath}\r\n{errorPair.Exception}";
+                string message = $"{errorPair.File.RelativePath}\r\n{errorPair.Exception}";
 
                 ContentDialogResult result = await DialogUtils.ShowContentAsync(message, title, "Cancel", "Previous", "Next", ContentDialogButton.Secondary);
 
