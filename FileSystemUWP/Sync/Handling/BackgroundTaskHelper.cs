@@ -6,6 +6,7 @@ using StdOttStandard.Linq;
 using StdOttUwp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
 
@@ -113,17 +114,20 @@ namespace FileSystemUWP.Sync.Handling
             }
         }
 
-        public Task Start(SyncPair sync, Api api, bool isTestRun = false, SyncMode? mode = null)
+        public async Task<SyncPairForegroundContainer> Start(SyncPair sync, Api api, bool isTestRun = false, SyncMode? mode = null)
         {
-            return Start(new SyncPair[] { sync }, api, isTestRun, mode);
+            IEnumerable<SyncPairForegroundContainer> containers = await Start(new SyncPair[] { sync }, api, isTestRun, mode);
+            return containers.First();
         }
 
-        public async Task Start(IEnumerable<SyncPair> syncs, Api api, bool isTestRun = false, SyncMode? mode = null)
+        public async Task<IEnumerable<SyncPairForegroundContainer>> Start(IEnumerable<SyncPair> syncs, Api api, bool isTestRun = false, SyncMode? mode = null)
         {
+            List<SyncPairForegroundContainer> newContaienrs = new List<SyncPairForegroundContainer>();
             foreach (SyncPair pair in syncs)
             {
                 SyncPairForegroundContainer container = SyncPairForegroundContainer.FromSyncPair(pair, api, isTestRun, mode);
 
+                newContaienrs.Add(container);
                 containers.Add(container.Request.RunToken, container);
                 requests.Add(container.Request);
             }
@@ -132,10 +136,14 @@ namespace FileSystemUWP.Sync.Handling
             communicator.SendUpdatedRequestedSyncRunsPairs();
             communicator.Start();
 
-            if (IsRunning) return;
-            if (appTrigger == null) await RegisterAppBackgroundTask();
+            if (!IsRunning)
+            {
+                if (appTrigger == null) await RegisterAppBackgroundTask();
 
-            await appTrigger.RequestAsync();
+                await appTrigger.RequestAsync();
+            }
+
+            return newContaienrs;
         }
 
         private async Task RegisterAppBackgroundTask()

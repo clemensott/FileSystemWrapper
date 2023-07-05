@@ -20,6 +20,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public string Name { get; set; }
 
+        public string LocalPath { get; set; }
+
         public string ServerNamePath { get; set; }
 
         public string ServerPath { get; set; }

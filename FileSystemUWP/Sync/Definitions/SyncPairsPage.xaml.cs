@@ -2,6 +2,7 @@
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling;
+using FileSystemCommonUWP.Sync.Handling.Communication;
 using FileSystemUWP.Sync.Handling;
 using StdOttStandard.CollectionSubscriber;
 using StdOttStandard.Converter.MultipleInputs;
@@ -171,7 +172,7 @@ namespace FileSystemUWP.Sync.Definitions
             else
             {
                 await BackgroundTaskHelper.Current.RemoveSyncPairRuns(sync.SyncPair.Token);
-                await BackgroundTaskHelper.Current.Start(sync.SyncPair, server.Api, isTestRun);
+                sync.Run = await BackgroundTaskHelper.Current.Start(sync.SyncPair, server.Api, isTestRun);
             }
         }
 
@@ -205,7 +206,8 @@ namespace FileSystemUWP.Sync.Definitions
         {
             SyncPairPageSyncViewModel sync = UwpUtils.GetDataContext<SyncPairPageSyncViewModel>(sender);
 
-            await BackgroundTaskHelper.Current.Start(sync.SyncPair, server.Api, mode: mode);
+            await BackgroundTaskHelper.Current.RemoveSyncPairRuns(sync.SyncPair.Token);
+            sync.Run = await BackgroundTaskHelper.Current.Start(sync.SyncPair, server.Api, mode: mode);
         }
 
         private async void IbnRunSync_Click(object sender, RoutedEventArgs e)
@@ -248,7 +250,12 @@ namespace FileSystemUWP.Sync.Definitions
 
         private async void AbbRunSync_Click(object sender, RoutedEventArgs e)
         {
-            await BackgroundTaskHelper.Current.Start(server.Syncs, server.Api);
+            IEnumerable<SyncPairForegroundContainer> containers = await BackgroundTaskHelper.Current.Start(server.Syncs, server.Api);
+            foreach (SyncPairForegroundContainer container in containers)
+            {
+                SyncPairPageSyncViewModel syncModel = viewModel.Syncs.FirstOrDefault(s => s.SyncPair.Token == container.Request.Token);
+                if (syncModel != null) syncModel.Run = container;
+            }
         }
     }
 }

@@ -111,8 +111,9 @@ namespace FileSystemUWP.Sync.Handling
 
         private object MicWaiting_Convert(object sender, MultiplesInputsConvert2EventArgs args)
         {
-            if ((SyncPairHandlerState?)args.Input0 == SyncPairHandlerState.WaitForStart || args.Input1 == null) return true;
-            if (!IsRunning((SyncPairHandlerState?)args.Input0)) return false;
+            SyncPairHandlerState? state = (SyncPairHandlerState?)args.Input0;
+            if (state == SyncPairHandlerState.Loading || state == SyncPairHandlerState.WaitForStart || args.Input1 == null) return true;
+            if (!IsRunning(state)) return false;
 
             return (int)args.Input1 == 0;
         }
@@ -124,8 +125,9 @@ namespace FileSystemUWP.Sync.Handling
 
         private static bool IsRunning(SyncPairHandlerState? state)
         {
-            return state == SyncPairHandlerState.WaitForStart ||
-               state == SyncPairHandlerState.Running;
+            return state == SyncPairHandlerState.Loading ||
+                state == SyncPairHandlerState.WaitForStart ||
+                state == SyncPairHandlerState.Running;
         }
 
         private async void TblComparedFiles_PointerReleased(object sender, PointerRoutedEventArgs e)

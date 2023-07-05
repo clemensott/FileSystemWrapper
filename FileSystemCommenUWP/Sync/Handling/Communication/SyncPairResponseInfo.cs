@@ -16,6 +16,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public FilePairInfo[] EqualFiles { get; set; }
 
+        public FilePairInfo[] IgnoreFiles { get; set; }
+
         public FilePairInfo[] ConflictFiles { get; set; }
 
         public FilePairInfo[] CopiedLocalFiles { get; set; }

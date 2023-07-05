@@ -35,10 +35,6 @@ namespace FileSystemUWP
             this.UnhandledException += OnUnhandledException;
 
             viewModel = new ViewModel();
-
-            System.Collections.Generic.HashSet<string> set = new System.Collections.Generic.HashSet<string>();
-            set.Add("a");
-            System.Diagnostics.Debug.WriteLine("set contains: " + set.Contains("a"));
         }
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)

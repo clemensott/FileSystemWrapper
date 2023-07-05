@@ -51,6 +51,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
                 ConflictHandlingType = sync.ConflictHandlingType,
                 WithSubfolders = sync.WithSubfolders,
                 Name = sync.Name,
+                LocalPath = sync.LocalFolder.Path,
                 ServerNamePath = sync.ServerPath.GetNamePath(api.Config.DirectorySeparatorChar),
                 ServerPath = sync.ServerPath.LastOrDefault().Path,
                 Whitelist = sync.Whitelist?.ToArray(),
