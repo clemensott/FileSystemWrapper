@@ -62,6 +62,7 @@ namespace FileSystemBackgroundUWP.Sync
             communicator.UpdatedRequestedSyncPairRuns += Communicator_UpdatedRequestedSyncPairRuns;
             communicator.CanceledSyncPairRun += Communicator_CanceledSyncPairRun;
             communicator.RequestedProgressSyncPairRun += Communicator_RequestedProgressSyncPairRun;
+            communicator.Start();
         }
 
         private void DisposeCommunicator()
@@ -108,12 +109,6 @@ namespace FileSystemBackgroundUWP.Sync
                 await HandleRequest(nextRequest.Value);
                 await communicator.SaveResponses(responses.Values.ToArray());
             }
-
-            for (int i = 0; i < 10; i++)
-            {
-                System.Diagnostics.Debug.WriteLine("Background task: " + i);
-                await Task.Delay(TimeSpan.FromSeconds(1));
-            }
         }
 
         private SyncPairRequestInfo? GetNextSyncPairRequest()
@@ -140,6 +135,7 @@ namespace FileSystemBackgroundUWP.Sync
                 TotalCount = 0,
                 ComparedFiles = CreatePairs(),
                 EqualFiles = CreatePairs(),
+                IgnoreFiles = CreatePairs(),
                 ConflictFiles = CreatePairs(),
                 CopiedLocalFiles = CreatePairs(),
                 CopiedServerFiles = CreatePairs(),
@@ -166,6 +162,7 @@ namespace FileSystemBackgroundUWP.Sync
             res.TotalCount = 30;
             res.ComparedFiles = CreatePairs(5);
             res.EqualFiles = CreatePairs(3);
+            res.IgnoreFiles = CreatePairs(2);
             res.ConflictFiles = CreatePairs(1);
             res.CopiedLocalFiles = CreatePairs(1);
             res.ErrorFiles = new ErrorFilePairInfo[] { new ErrorFilePairInfo() { File = CreatePair(), Exception = "Exception", Message = "Message", Stacktrace = "Stacktrace" } };
@@ -189,7 +186,8 @@ namespace FileSystemBackgroundUWP.Sync
 
             res.CurrentCount = 10;
             res.TotalCount = 40;
-            res.CurrentQueryFolderRelPath = "";
+            res.IgnoreFiles = CreatePairs(5);
+            res.CurrentQueryFolderRelPath = null;
             res.CurrentCopyToLocalFile = CreatePair("copy_to_local_1");
             res.CurrentCopyToServerFile = CreatePair("copy_to_server_1");
             res.CurrentDeleteFromServerFile = CreatePair("delete_from_server_1");
@@ -198,6 +196,7 @@ namespace FileSystemBackgroundUWP.Sync
 
             res.CurrentCount = 20;
             res.TotalCount = 40;
+            res.IgnoreFiles = CreatePairs(10);
             res.CurrentCopyToLocalFile = CreatePair("copy_to_local_2");
             res.CurrentCopyToServerFile = CreatePair("copy_to_server_2");
             res.CurrentDeleteFromServerFile = CreatePair("delete_from_server_2");
@@ -225,6 +224,7 @@ namespace FileSystemBackgroundUWP.Sync
             res.TotalCount = 40;
             res.ComparedFiles = CreatePairs(40);
             res.EqualFiles = CreatePairs(29);
+            res.IgnoreFiles = CreatePairs(12);
             res.ConflictFiles = CreatePairs(3);
             res.CopiedLocalFiles = CreatePairs(4);
             res.CopiedServerFiles = CreatePairs(8);
