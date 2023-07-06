@@ -10,13 +10,15 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public string ResultToken { get; set; }
 
+        public bool WithSubfolders { get; set; }
+
+        public bool IsTestRun { get; set; }
+
         public SyncMode Mode { get; set; }
 
         public SyncCompareType CompareType { get; set; }
 
         public SyncConflictHandlingType ConflictHandlingType { get; set; }
-
-        public bool WithSubfolders { get; set; }
 
         public string Name { get; set; }
 
@@ -26,11 +28,9 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public string ServerPath { get; set; }
 
-        public string[] Whitelist { get; set; }
+        public string[] AllowList { get; set; }
 
-        public string[] Blacklist { get; set; }
-
-        public bool IsTestRun { get; set; }
+        public string[] DenialList { get; set; }
 
         public string ApiBaseUrl { get; set; }
     }

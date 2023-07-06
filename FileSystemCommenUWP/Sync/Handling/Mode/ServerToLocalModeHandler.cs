@@ -1,8 +1,6 @@
 ﻿using FileSystemCommonUWP.API;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling.CompareType;
-using FileSystemCommonUWP.Sync.Result;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace FileSystemCommonUWP.Sync.Handling.Mode
@@ -11,9 +9,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
     {
         public override SyncMode Mode => SyncMode.ServerToLocal;
 
-        public ServerToLocalModeHandler(ISyncFileComparer fileComparer, IDictionary<string, SyncedItem> lastResult,
-            SyncConflictHandlingType conflictHandlingType, Api api) :
-            base(fileComparer, lastResult, conflictHandlingType, api)
+        public ServerToLocalModeHandler(ISyncFileComparer fileComparer, SyncConflictHandlingType conflictHandlingType, Api api)
+            : base(fileComparer, conflictHandlingType, api)
         {
         }
 
@@ -25,7 +22,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
             pair.ServerCompareValue = await serverCompareValueTask;
             pair.LocalCompareValue = await localCompareValueTask;
 
-            return fileComparer.Equals(pair.ServerCompareValue, pair.LocalCompareValue) ? 
+            return fileComparer.Equals(pair.ServerCompareValue, pair.LocalCompareValue) ?
                 SyncActionType.Equal : SyncActionType.CopyToLocal;
         }
 

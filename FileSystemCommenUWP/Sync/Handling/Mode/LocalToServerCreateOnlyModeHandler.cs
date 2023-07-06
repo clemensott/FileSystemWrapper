@@ -1,9 +1,6 @@
 ﻿using FileSystemCommonUWP.API;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling.CompareType;
-using FileSystemCommonUWP.Sync.Result;
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace FileSystemCommonUWP.Sync.Handling.Mode
@@ -12,9 +9,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
     {
         public override SyncMode Mode => SyncMode.LocalToServerCreateOnly;
 
-        public LocalToServerCreateOnlyModeHandler(ISyncFileComparer fileComparer, IDictionary<string, SyncedItem> lastResult,
-            SyncConflictHandlingType conflictHandlingType, Api api) :
-            base(fileComparer, lastResult, conflictHandlingType, api)
+        public LocalToServerCreateOnlyModeHandler(ISyncFileComparer fileComparer, SyncConflictHandlingType conflictHandlingType, Api api) 
+            : base(fileComparer, conflictHandlingType, api)
         {
         }
 

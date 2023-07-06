@@ -10,12 +10,14 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
 {
     class TwoWayModeHandler : SyncModeHandler
     {
+        private readonly SyncedItems syncedItems;
+
         public override SyncMode Mode => SyncMode.TwoWay;
 
-        public TwoWayModeHandler(ISyncFileComparer fileComparer, IDictionary<string, SyncedItem> lastResult,
-            SyncConflictHandlingType conflictHandlingType, Api api) :
-            base(fileComparer, lastResult, conflictHandlingType, api)
+        public TwoWayModeHandler(ISyncFileComparer fileComparer, SyncedItems syncedItems,
+            SyncConflictHandlingType conflictHandlingType, Api api) : base(fileComparer, conflictHandlingType, api)
         {
+            this.syncedItems = syncedItems;
         }
 
         public override async Task<SyncActionType> GetActionOfBothFiles(FilePair pair)
@@ -32,7 +34,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
             {
                 return SyncActionType.Equal;
             }
-            else if (lastResult.TryGetValue(pair.RelativePath, out last))
+            else if (syncedItems.TryGetItem(pair.RelativePath, out last))
             {
                 if (fileComparer.Equals(last.ServerCompareValue, pair.ServerCompareValue))
                 {
@@ -55,7 +57,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
             {
                 pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
 
-                if (lastResult.TryGetValue(pair.RelativePath, out last) &&
+                if (syncedItems.TryGetItem(pair.RelativePath, out last) &&
                     fileComparer.Equals(last.ServerCompareValue, pair.ServerCompareValue))
                 {
                     return SyncActionType.DeleteFromServer;
@@ -66,7 +68,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
             {
                 pair.LocalCompareValue = await fileComparer.GetLocalCompareValue(pair.LocalFile);
 
-                if (lastResult.TryGetValue(pair.RelativePath, out last) &&
+                if (syncedItems.TryGetItem(pair.RelativePath, out last) &&
                     fileComparer.Equals(last.LocalCompareValue, pair.LocalCompareValue))
                 {
                     return SyncActionType.DeleteFromLocal;

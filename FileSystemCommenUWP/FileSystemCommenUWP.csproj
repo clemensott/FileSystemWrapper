@@ -155,6 +155,7 @@
     <Compile Include="Sync\Handling\SyncPairHandler.cs" />
     <Compile Include="Sync\Handling\SyncPairHandlerState.cs" />
     <Compile Include="Sync\Result\SyncedItem.cs" />
+    <Compile Include="Sync\Result\SyncedItems.cs" />
     <EmbeddedResource Include="Properties\FileSystemCommenUWP.rd.xml" />
   </ItemGroup>
   <ItemGroup>

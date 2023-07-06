@@ -40,7 +40,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public FilePairInfo? CurrentDeleteFromLocalFile { get; set; }
 
-        internal static SyncPairResponseInfo FromHandler(SyncPairHandler handler)
+        public static SyncPairResponseInfo FromHandler(SyncPairHandler handler)
         {
             return new SyncPairResponseInfo()
             {

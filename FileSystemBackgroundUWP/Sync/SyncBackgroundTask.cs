@@ -126,6 +126,29 @@ namespace FileSystemBackgroundUWP.Sync
 
         private async Task HandleRequest(SyncPairRequestInfo request)
         {
+            SyncPairHandler handler = null;
+            try
+            {
+                handler = await SyncPairHandler.FromSyncPairRequest(request);
+                handler.Progress += OnHandlerProgress;
+
+                await handler.Run();
+            }
+            catch { }
+            finally
+            {
+                if (handler != null) handler.Progress -= OnHandlerProgress;
+            }
+        }
+
+        private void OnHandlerProgress(object sender, EventArgs e)
+        {
+            SyncPairHandler handler = (SyncPairHandler)sender;
+            communicator.SendProgessSyncPair(SyncPairResponseInfo.FromHandler(handler));
+        }
+
+        private async Task FakeSyncPairRun(SyncPairRequestInfo request)
+        {
             List<SyncPairResponseInfo> list = new List<SyncPairResponseInfo>();
             SyncPairResponseInfo res = new SyncPairResponseInfo()
             {
@@ -237,7 +260,7 @@ namespace FileSystemBackgroundUWP.Sync
             {
                 responses[response.RunToken] = response;
                 communicator.SendProgessSyncPair(response);
-                
+
                 await Task.Delay(StdOttStandard.StdUtils.Random.Next(300, 2000));
             }
         }
