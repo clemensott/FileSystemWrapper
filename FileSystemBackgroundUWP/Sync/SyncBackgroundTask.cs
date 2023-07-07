@@ -24,8 +24,15 @@ namespace FileSystemBackgroundUWP.Sync
                 deferral = taskInstance.GetDeferral();
 
                 await Setup();
-                await Handle();
-                await Dispose();
+                while (true)
+                {
+                    await Handle();
+
+                    communicator.SendStoppedBackgroundTask();
+                    if (await communicator.TryStopCommunicator(10000)) break;
+                }
+
+                DisposeCommunicator();
             }
             catch (Exception exc)
             {
@@ -41,19 +48,11 @@ namespace FileSystemBackgroundUWP.Sync
         private async Task Setup()
         {
             SetupCommunicator();
-            await LoadRequests();
-
             SyncPairResponseInfo[] responses = await communicator.LoadSyncPairResponses();
             this.responses = responses?.ToDictionary(r => r.RunToken) ?? new Dictionary<string, SyncPairResponseInfo>();
-        }
 
-        private async Task Dispose()
-        {
-            communicator.SendStoppedBackgroundTask();
-
-            await Task.Delay(2000);
-
-            DisposeCommunicator();
+            await LoadRequests();
+            communicator.Start();
         }
 
         private void SetupCommunicator()
@@ -62,7 +61,6 @@ namespace FileSystemBackgroundUWP.Sync
             communicator.UpdatedRequestedSyncPairRuns += Communicator_UpdatedRequestedSyncPairRuns;
             communicator.CanceledSyncPairRun += Communicator_CanceledSyncPairRun;
             communicator.RequestedProgressSyncPairRun += Communicator_RequestedProgressSyncPairRun;
-            communicator.Start();
         }
 
         private void DisposeCommunicator()
@@ -77,6 +75,54 @@ namespace FileSystemBackgroundUWP.Sync
         private async Task LoadRequests()
         {
             requests = await communicator.LoadSyncPairRequests() ?? new SyncPairRequestInfo[0];
+
+            await InitResponses();
+        }
+
+        private async Task InitResponses()
+        {
+            foreach (SyncPairRequestInfo request in requests)
+            {
+                SyncPairResponseInfo response;
+                if (!responses.TryGetValue(request.RunToken, out response))
+                {
+                    response = new SyncPairResponseInfo()
+                    {
+                        RunToken = request.RunToken,
+                        State = SyncPairHandlerState.WaitForStart,
+                        CurrentCount = 0,
+                        TotalCount = 0,
+                        ComparedFiles = new FilePairInfo[0],
+                        EqualFiles = new FilePairInfo[0],
+                        IgnoreFiles = new FilePairInfo[0],
+                        ConflictFiles = new FilePairInfo[0],
+                        CopiedLocalFiles = new FilePairInfo[0],
+                        CopiedServerFiles = new FilePairInfo[0],
+                        DeletedLocalFiles = new FilePairInfo[0],
+                        DeletedServerFiles = new FilePairInfo[0],
+                        ErrorFiles = new ErrorFilePairInfo[0],
+                        CurrentQueryFolderRelPath = null,
+                        CurrentCopyToLocalFile = null,
+                        CurrentCopyToServerFile = null,
+                        CurrentDeleteFromServerFile = null,
+                        CurrentDeleteFromLocalFile = null,
+                    };
+                }
+                else if (response.State == SyncPairHandlerState.Loading)
+                {
+                    response.State = SyncPairHandlerState.WaitForStart;
+                };
+
+                responses[response.RunToken] = response;
+            }
+
+            IEnumerable<string> requestRunTokens = requests.Select(r => r.RunToken);
+            foreach (SyncPairResponseInfo response in responses.Values.ToArray())
+            {
+                if (!requestRunTokens.Contains(response.RunToken)) responses.Remove(response.RunToken);
+            }
+
+            await communicator.SaveResponses(responses.Values.ToArray());
         }
 
         private async void Communicator_UpdatedRequestedSyncPairRuns(object sender, EventArgs e)
@@ -86,8 +132,8 @@ namespace FileSystemBackgroundUWP.Sync
 
         private async void Communicator_CanceledSyncPairRun(object sender, CanceledSyncPairRunEventArgs e)
         {
-            if (e.RunToken == currentSyncPairHandler.RunToken) await currentSyncPairHandler?.Cancel();
             await LoadRequests();
+            if (e.RunToken == currentSyncPairHandler?.RunToken) await currentSyncPairHandler.Cancel();
         }
 
         private async void Communicator_RequestedProgressSyncPairRun(object sender, RequestedProgressSyncPairRunEventArgs e)
@@ -126,25 +172,33 @@ namespace FileSystemBackgroundUWP.Sync
 
         private async Task HandleRequest(SyncPairRequestInfo request)
         {
-            SyncPairHandler handler = null;
             try
             {
-                handler = await SyncPairHandler.FromSyncPairRequest(request);
-                handler.Progress += OnHandlerProgress;
+                currentSyncPairHandler = await SyncPairHandler.FromSyncPairRequest(request);
+                currentSyncPairHandler.Progress += OnHandlerProgress;
 
-                await handler.Run();
+                await currentSyncPairHandler.Run();
+
+                SendProgress(currentSyncPairHandler);
             }
             catch { }
             finally
             {
-                if (handler != null) handler.Progress -= OnHandlerProgress;
+                if (currentSyncPairHandler != null) currentSyncPairHandler.Progress -= OnHandlerProgress;
+                currentSyncPairHandler = null;
             }
         }
 
         private void OnHandlerProgress(object sender, EventArgs e)
         {
-            SyncPairHandler handler = (SyncPairHandler)sender;
-            communicator.SendProgessSyncPair(SyncPairResponseInfo.FromHandler(handler));
+            SendProgress((SyncPairHandler)sender);
+        }
+
+        private void SendProgress(SyncPairHandler handler)
+        {
+            SyncPairResponseInfo response = SyncPairResponseInfo.FromHandler(handler);
+            responses[response.RunToken] = response;
+            communicator.SendProgessSyncPair(response);
         }
 
         private async Task FakeSyncPairRun(SyncPairRequestInfo request)

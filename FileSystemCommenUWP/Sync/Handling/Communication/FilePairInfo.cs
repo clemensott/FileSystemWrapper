@@ -12,8 +12,10 @@
 
         public string LocalFilePath { get; set; }
 
-        internal static FilePairInfo FromFilePair(FilePair pair)
+        internal static FilePairInfo? FromFilePair(FilePair pair)
         {
+            if (pair == null) return null;
+
             return new FilePairInfo()
             {
                 Name = pair.Name,

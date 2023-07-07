@@ -4,7 +4,6 @@ using FileSystemCommonUWP.Sync.Definitions;
 using System;
 using System.ComponentModel;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace FileSystemCommonUWP.Sync.Handling.Communication
 {
@@ -12,7 +11,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
     {
         private SyncPairResponseInfo sync;
 
-        public SyncPairRequestInfo Request { get; }
+        public SyncPairRequestInfo Request { get; set; }
 
         public SyncPairResponseInfo Response
         {
@@ -50,6 +49,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
                 CompareType = sync.CompareType,
                 ConflictHandlingType = sync.ConflictHandlingType,
                 WithSubfolders = sync.WithSubfolders,
+                IsCanceled = false,
                 Name = sync.Name,
                 LocalPath = sync.LocalFolder.Path,
                 ServerNamePath = sync.ServerPath.GetNamePath(api.Config.DirectorySeparatorChar),

@@ -43,10 +43,7 @@ namespace FileSystemUWP.Sync.Definitions
         {
             server = (Server)e.Parameter;
 
-            IEnumerable<SyncPairPageSyncViewModel> syncs = server.Syncs.Select(s => new SyncPairPageSyncViewModel()
-            {
-                SyncPair = s,
-            });
+            IEnumerable<SyncPairPageSyncViewModel> syncs = server.Syncs.Select(CreateSyncViewModel);
             DataContext = viewModel = new SyncPairsPageViewModel()
             {
                 Syncs = new ObservableCollection<SyncPairPageSyncViewModel>(syncs),
@@ -54,6 +51,17 @@ namespace FileSystemUWP.Sync.Definitions
 
             SetupSyncingSyncs();
             await LoadLocalFolders();
+        }
+
+        private static SyncPairPageSyncViewModel CreateSyncViewModel(SyncPair sync)
+        {
+            SyncPairForegroundContainer container = BackgroundTaskHelper.Current.GetContainersFromToken(sync.Token).FirstOrDefault();
+
+            return new SyncPairPageSyncViewModel()
+            {
+                SyncPair = sync,
+                Run = container,
+            };
         }
 
         private void SetupSyncingSyncs()
@@ -168,7 +176,7 @@ namespace FileSystemUWP.Sync.Definitions
 
         private async Task StartSyncRun(SyncPairPageSyncViewModel sync, bool isTestRun = false, SyncMode? mode = null)
         {
-            if (sync.Run?.IsEnded == false) BackgroundTaskHelper.Current.Cancel(sync.Run.Request.RunToken);
+            if (sync.Run?.IsEnded == false) await BackgroundTaskHelper.Current.Cancel(sync.Run.Request.RunToken);
             else
             {
                 await BackgroundTaskHelper.Current.RemoveSyncPairRuns(sync.SyncPair.Token);

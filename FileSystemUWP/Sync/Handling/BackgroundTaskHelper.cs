@@ -88,6 +88,11 @@ namespace FileSystemUWP.Sync.Handling
 
                 containers.Add(request.RunToken, container);
             }
+
+            if (containers.Values.Any(container => !container.IsEnded))
+            {
+                await StartBackgroundTask();
+            }
         }
 
         public Task SaveRequests()
@@ -114,6 +119,11 @@ namespace FileSystemUWP.Sync.Handling
             }
         }
 
+        public IEnumerable<SyncPairForegroundContainer> GetContainersFromToken(string token)
+        {
+            return containers.Values.Where(c => c.Request.Token == token);
+        }
+
         public async Task<SyncPairForegroundContainer> Start(SyncPair sync, Api api, bool isTestRun = false, SyncMode? mode = null)
         {
             IEnumerable<SyncPairForegroundContainer> containers = await Start(new SyncPair[] { sync }, api, isTestRun, mode);
@@ -134,6 +144,14 @@ namespace FileSystemUWP.Sync.Handling
 
             await SaveRequests();
             communicator.SendUpdatedRequestedSyncRunsPairs();
+
+            await StartBackgroundTask();
+
+            return newContaienrs;
+        }
+
+        private async Task StartBackgroundTask()
+        {
             communicator.Start();
 
             if (!IsRunning)
@@ -142,8 +160,6 @@ namespace FileSystemUWP.Sync.Handling
 
                 await appTrigger.RequestAsync();
             }
-
-            return newContaienrs;
         }
 
         private async Task RegisterAppBackgroundTask()
@@ -201,9 +217,22 @@ namespace FileSystemUWP.Sync.Handling
             Settings.Current.TimerBackgroundTaskRegistrationId = taskRegistration.TaskId;
         }
 
-        public void Cancel(string runToken)
+        public async Task Cancel(string runToken)
         {
+            SyncPairForegroundContainer container;
+            int requestIndex = requests.FindIndex(r => r.RunToken == runToken);
+            if (requestIndex == -1 || !containers.TryGetValue(runToken, out container)) return;
+
+            SyncPairRequestInfo request = requests[requestIndex];
+            request.IsCanceled = true;
+
+            requests[requestIndex] = request;
+            container.Request = request;
+
+            await SaveRequests();
             communicator.SendCanceledSyncPair(runToken);
+
+            await StartBackgroundTask();
         }
 
         public void Delete(string runToken)

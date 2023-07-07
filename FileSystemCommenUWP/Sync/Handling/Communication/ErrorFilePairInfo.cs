@@ -14,7 +14,7 @@
         {
             return new ErrorFilePairInfo()
             {
-                File = FilePairInfo.FromFilePair(pair.Pair),
+                File = FilePairInfo.FromFilePair(pair.Pair).Value,
                 Message = pair.Exception.Message,
                 Stacktrace = pair.Exception.StackTrace,
                 Exception = pair.Exception.ToString(),

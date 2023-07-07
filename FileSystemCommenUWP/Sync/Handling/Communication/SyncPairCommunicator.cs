@@ -2,7 +2,6 @@
 using StdOttStandard.ProcessCommunication;
 using StdOttUwp.ProcessCommunication;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.Storage;
 
@@ -25,6 +24,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         private const string startedBackgroundTaskName = "started_background_task";
         private const string stoppedBackgroundTaskName = "stopped_background_task";
 
+        private long lastMessageCount = 0;
         private readonly StorageFolder folder;
 
         public event EventHandler<EventArgs> UpdatedRequestedSyncPairRuns;
@@ -40,8 +40,10 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
             this.folder = folder;
         }
 
-        protected override void ReceiveCommand(ReceivedProcessCommand cmd)
+        protected override async void ReceiveCommand(ReceivedProcessCommand cmd)
         {
+            lastMessageCount++;
+
             switch (cmd.Name)
             {
                 case updatedRequestedSyncPairRunsName:
@@ -66,9 +68,22 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
                     break;
 
                 case stoppedBackgroundTaskName:
-                    StoppedBackgroundTask?.Invoke(this, EventArgs.Empty);
+                    if (await TryStopCommunicator(2000))
+                    {
+                        StoppedBackgroundTask?.Invoke(this, EventArgs.Empty);
+                        StopTimer();
+                    }
                     break;
             }
+        }
+
+        public async Task<bool> TryStopCommunicator(int timeoutMillis = 5000)
+        {
+            long count = lastMessageCount;
+
+            await Task.Delay(timeoutMillis);
+
+            return count == lastMessageCount;
         }
 
         public void SendUpdatedRequestedSyncRunsPairs()

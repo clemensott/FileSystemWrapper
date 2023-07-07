@@ -14,6 +14,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public bool IsTestRun { get; set; }
 
+        public bool IsCanceled { get; set; }
+
         public SyncMode Mode { get; set; }
 
         public SyncCompareType CompareType { get; set; }

@@ -168,10 +168,11 @@ namespace FileSystemCommonUWP.Sync.Handling
             }
         }
 
-        private SyncPairHandler(string runToken, bool withSubfolders, bool isTestRun, SyncedItems syncedItems,
+        private SyncPairHandler(string runToken, bool isCanceled, bool withSubfolders, bool isTestRun, SyncedItems syncedItems,
             SyncMode mode, SyncCompareType compareType, SyncConflictHandlingType conflictHandlingType,
             StorageFolder localFolder, string serverPath, string[] allowList, string[] denialList, Api api)
         {
+            State = isCanceled ? SyncPairHandlerState.Canceled : SyncPairHandlerState.WaitForStart;
             bothFiles = new AsyncQueue<FilePair>();
             singleFiles = new AsyncQueue<FilePair>();
             copyToLocalFiles = new AsyncQueue<FilePair>();
@@ -192,7 +193,7 @@ namespace FileSystemCommonUWP.Sync.Handling
             CurrentCount = 0;
             TotalCount = 0;
 
-            this.RunToken = runToken;
+            RunToken = runToken;
             this.withSubfolders = withSubfolders;
             this.isTestRun = isTestRun;
             this.syncedItems = syncedItems;
@@ -203,6 +204,7 @@ namespace FileSystemCommonUWP.Sync.Handling
             this.serverPath = serverPath;
             this.allowList = allowList?.ToArray() ?? new string[0];
             this.denialList = denialList?.ToArray() ?? new string[0];
+            this.api = api;
         }
 
         public static async Task<SyncPairHandler> FromSyncPairRequest(SyncPairRequestInfo request)
@@ -211,7 +213,7 @@ namespace FileSystemCommonUWP.Sync.Handling
             SyncedItems syncedItems = await SyncedItems.Create(request.ResultToken);
             Api api = await GetAPI(request.ApiBaseUrl);
 
-            return new SyncPairHandler(request.RunToken, request.WithSubfolders, request.IsTestRun,
+            return new SyncPairHandler(request.RunToken, request.IsCanceled, request.WithSubfolders, request.IsTestRun,
                 syncedItems, request.Mode, request.CompareType, request.ConflictHandlingType,
                 localFolder, request.ServerPath, request.AllowList, request.DenialList, api);
         }
@@ -826,7 +828,14 @@ namespace FileSystemCommonUWP.Sync.Handling
 
         private void OnPropertyChanged(string name)
         {
-            Progress?.Invoke(this, EventArgs.Empty);
+            try
+            {
+                Progress?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("SyncPairHandler.OnPropertyChanged error: " + e);
+            }
         }
     }
 }
