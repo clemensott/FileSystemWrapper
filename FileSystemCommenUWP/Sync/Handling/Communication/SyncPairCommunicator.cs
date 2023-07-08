@@ -88,7 +88,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public void SendUpdatedRequestedSyncRunsPairs()
         {
-            SendCommand(updatedRequestedSyncPairRunsName);
+            SendKeyCommand(updatedRequestedSyncPairRunsName);
         }
 
         public void SendCanceledSyncPair(string runToken)
@@ -98,22 +98,22 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public void SendRequestedProgressSyncPair()
         {
-            SendCommand(requestedProgressSyncPairRunName);
+            SendKeyCommand(requestedProgressSyncPairRunName);
         }
 
         public void SendProgessSyncPair(SyncPairResponseInfo response)
         {
-            SendCommand(progressSyncPairRunName, response);
+            SendDataCommand(progressSyncPairRunName, response, $"{progressSyncPairRunName}_{response.RunToken}");
         }
 
         public void SendStartedBackgroundTask()
         {
-            SendCommand(stoppedBackgroundTaskName);
+            SendKeyCommand(stoppedBackgroundTaskName);
         }
 
         public void SendStoppedBackgroundTask()
         {
-            SendCommand(stoppedBackgroundTaskName);
+            SendKeyCommand(stoppedBackgroundTaskName);
         }
 
         public async Task<SyncPairRequestInfo[]> LoadSyncPairRequests()
