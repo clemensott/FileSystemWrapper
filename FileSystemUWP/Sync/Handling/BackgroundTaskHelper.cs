@@ -92,6 +92,7 @@ namespace FileSystemUWP.Sync.Handling
             if (containers.Values.Any(container => !container.IsEnded))
             {
                 await StartBackgroundTask();
+                communicator.SendRequestedProgressSyncPair();
             }
         }
 

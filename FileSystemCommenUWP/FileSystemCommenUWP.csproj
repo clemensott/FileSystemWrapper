@@ -125,6 +125,11 @@
     <Compile Include="HttpRandomAccessStream.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="Sync\Handling\CompareType\ExistsComparer.cs" />
+    <Compile Include="Sync\Handling\CompareType\HashComparer.cs" />
+    <Compile Include="Sync\Handling\CompareType\ISyncFileComparer.cs" />
+    <Compile Include="Sync\Handling\CompareType\SizeComparer.cs" />
+    <Compile Include="Sync\Definitions\SyncActionType.cs" />
     <Compile Include="Sync\Definitions\SyncCompareType.cs" />
     <Compile Include="Sync\Definitions\SyncConflictHandlingType.cs" />
     <Compile Include="Sync\Definitions\SyncMode.cs" />
@@ -138,24 +143,20 @@
     <Compile Include="Sync\Handling\Communication\SyncPairForegroundContainer.cs" />
     <Compile Include="Sync\Handling\Communication\SyncPairResponseInfo.cs" />
     <Compile Include="Sync\Handling\Communication\SyncPairRequestInfo.cs" />
-    <Compile Include="Sync\Handling\CompareType\ExistsComparer.cs" />
-    <Compile Include="Sync\Handling\CompareType\HashComparer.cs" />
-    <Compile Include="Sync\Handling\CompareType\ISyncFileComparer.cs" />
-    <Compile Include="Sync\Handling\CompareType\SizeComparer.cs" />
     <Compile Include="Sync\Handling\ErrorFilePair.cs" />
     <Compile Include="Sync\Handling\FilePair.cs" />
+    <Compile Include="Sync\Handling\Communication\SyncPairCommunicator.cs" />
+    <Compile Include="Sync\Handling\SyncPairHandlerState.cs" />
     <Compile Include="Sync\Handling\Mode\LocalToServerCreateOnlyModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\LocalToServerModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\ServerToLocalCreateOnlyModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\ServerToLocalModeHandler.cs" />
-    <Compile Include="Sync\Handling\Mode\SyncActionType.cs" />
     <Compile Include="Sync\Handling\Mode\SyncModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\TwoWayModeHandler.cs" />
-    <Compile Include="Sync\Handling\Communication\SyncPairCommunicator.cs" />
-    <Compile Include="Sync\Handling\SyncPairHandler.cs" />
-    <Compile Include="Sync\Handling\SyncPairHandlerState.cs" />
     <Compile Include="Sync\Result\SyncedItem.cs" />
     <Compile Include="Sync\Result\SyncedItems.cs" />
+    <Compile Include="Sync\Handling\SyncPairHandler.cs" />
+    <Compile Include="Sync\Handling\SyncPairHandlerExtension.cs" />
     <EmbeddedResource Include="Properties\FileSystemCommenUWP.rd.xml" />
   </ItemGroup>
   <ItemGroup>

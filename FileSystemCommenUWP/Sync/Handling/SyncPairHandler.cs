@@ -774,7 +774,7 @@ namespace FileSystemCommonUWP.Sync.Handling
 
                 if (State == SyncPairHandlerState.Running)
                 {
-                    await syncedItems.SaveNewResult();
+                    if (!isTestRun) await syncedItems.SaveNewResult();
                     State = SyncPairHandlerState.Finished;
                 }
             }
@@ -822,7 +822,10 @@ namespace FileSystemCommonUWP.Sync.Handling
 
         private void AddToList<T>(IList<T> list, T pair)
         {
-            list.Add(pair);
+            lock (this)
+            {
+                list.Add(pair);
+            }
             OnPropertyChanged(nameof(list.Count));
         }
 

@@ -1,6 +1,6 @@
-﻿namespace FileSystemCommonUWP.Sync.Handling.Mode
+﻿namespace FileSystemCommonUWP.Sync.Definitions
 {
-    enum SyncActionType
+    public enum SyncActionType
     {
         CopyToLocal,
         CopyToServer,

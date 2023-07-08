@@ -3,7 +3,6 @@ using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling.CompareType;
 using FileSystemCommonUWP.Sync.Result;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace FileSystemCommonUWP.Sync.Handling.Mode

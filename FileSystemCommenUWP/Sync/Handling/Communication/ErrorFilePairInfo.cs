@@ -10,7 +10,7 @@
 
         public string Exception { get; set; }
 
-        internal static ErrorFilePairInfo FromFilePair(ErrorFilePair pair)
+        public static ErrorFilePairInfo FromFilePair(ErrorFilePair pair)
         {
             return new ErrorFilePairInfo()
             {

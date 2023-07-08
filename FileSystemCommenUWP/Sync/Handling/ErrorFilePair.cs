@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FileSystemCommonUWP.Sync.Handling
 {
-    class ErrorFilePair
+    public class ErrorFilePair
     {
         public FilePair Pair { get; }
 

@@ -13,7 +13,9 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         private const string responsesFileName = "sync_pair_communicator_responses.xml";
 
         private const string backgroundReadCmdFileName = "background_sync_pair_communication.xml";
+        private const string backgroundTmpReadCmdFileName = "background_sync_pair_communication.tmp";
         private const string foregroundReadCmdFileName = "foreground_sync_pair_communication.xml";
+        private const string foregroundTmpReadCmdFileName = "foreground_sync_pair_communication.tmp";
 
         private const char syncPairRunTokensSeparator = '|';
 
@@ -34,8 +36,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         public event EventHandler<EventArgs> StartedBackgroundTask;
         public event EventHandler<EventArgs> StoppedBackgroundTask;
 
-        private SyncPairCommunicator(StorageFolder folder, string readCmdsName, string writeCmdsName)
-            : base(new FileProcessCmdPersisting(folder, readCmdsName, writeCmdsName))
+        private SyncPairCommunicator(StorageFolder folder, string readCmdsName, string writeCmdsName, string writeTmpCmdsFileName)
+            : base(new FileProcessCmdPersisting(folder, readCmdsName, writeCmdsName, writeTmpCmdsFileName))
         {
             this.folder = folder;
         }
@@ -93,7 +95,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public void SendCanceledSyncPair(string runToken)
         {
-            SendCommand(canceledSyncPairRunName, runToken);
+            SendDataCommand(canceledSyncPairRunName, runToken, $"{canceledSyncPairRunName}_{runToken}");
         }
 
         public void SendRequestedProgressSyncPair()
@@ -165,14 +167,21 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
             StartTimer();
         }
 
+        public Task FlushCommands()
+        {
+            return FlushAllCommands();
+        }
+
         public static SyncPairCommunicator CreateBackgroundCommunicator()
         {
-            return new SyncPairCommunicator(ApplicationData.Current.LocalFolder, backgroundReadCmdFileName, foregroundReadCmdFileName);
+            return new SyncPairCommunicator(ApplicationData.Current.LocalFolder,
+                backgroundReadCmdFileName, foregroundReadCmdFileName, foregroundTmpReadCmdFileName);
         }
 
         public static SyncPairCommunicator CreateForegroundCommunicator()
         {
-            return new SyncPairCommunicator(ApplicationData.Current.LocalFolder, foregroundReadCmdFileName, backgroundReadCmdFileName);
+            return new SyncPairCommunicator(ApplicationData.Current.LocalFolder,
+                foregroundReadCmdFileName, backgroundReadCmdFileName, backgroundTmpReadCmdFileName);
         }
     }
 }

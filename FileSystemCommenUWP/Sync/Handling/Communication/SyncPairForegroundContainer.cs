@@ -29,7 +29,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
             Response.State == SyncPairHandlerState.Error ||
             Response.State == SyncPairHandlerState.Canceled;
 
-        public SyncPairForegroundContainer(SyncPairRequestInfo request, SyncPairResponseInfo? response = null)
+        public SyncPairForegroundContainer(SyncPairRequestInfo request, SyncPairResponseInfo response = null)
         {
             Request = request;
             Response = response ?? new SyncPairResponseInfo()

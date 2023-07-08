@@ -12,7 +12,7 @@
 
         public string LocalFilePath { get; set; }
 
-        internal static FilePairInfo? FromFilePair(FilePair pair)
+        public static FilePairInfo? FromFilePair(FilePair pair)
         {
             if (pair == null) return null;
 
@@ -22,7 +22,7 @@
                 RelativePath = pair.RelativePath,
                 ServerFullPath = pair.ServerFullPath,
                 ServerFileExists = pair.ServerFileExists,
-                LocalFilePath = pair.LocalFile.Path,
+                LocalFilePath = pair.LocalFile?.Path,
             };
         }
     }
