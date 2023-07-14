@@ -1,5 +1,8 @@
-﻿using System.Collections.ObjectModel;
+﻿using StdOttStandard.Linq;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 
 namespace FileSystemCommonUWP.Sync.Handling.Communication
 {
@@ -9,6 +12,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         private string runToken, currentQueryFolderRelPath;
         private SyncPairHandlerState state;
         private int currentCount, totalCount;
+        private Dictionary<string, FilePairInfo> allFiles;
         private ObservableCollection<FilePairInfo> comparedFiles, equalFiles, ignoreFiles, conflictFiles,
             copiedLocalFiles, copiedServerFiles, deletedLocalFiles, deletedServerFiles;
         private ObservableCollection<ErrorFilePairInfo> errorFiles;
@@ -60,6 +64,21 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
                 totalCount = value;
                 OnPropertyChanged(nameof(TotalCount));
+            }
+        }
+
+        public FilePairInfo[] AllFiles
+        {
+            get => allFiles.Values.ToArray();
+            set
+            {
+                allFiles.Clear();
+                foreach (FilePairInfo file in value.ToNotNull())
+                {
+                    allFiles.Add(file.RelativePath, file);
+                }
+
+                OnPropertyChanged(nameof(AllFiles));
             }
         }
 
@@ -235,6 +254,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         {
             currentCount = 0;
             totalCount = 0;
+            allFiles = new Dictionary<string, FilePairInfo>();
             comparedFiles = new ObservableCollection<FilePairInfo>();
             equalFiles = new ObservableCollection<FilePairInfo>();
             ignoreFiles = new ObservableCollection<FilePairInfo>();
@@ -249,6 +269,16 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
             currentCopyToServerFile = null;
             currentDeleteFromServerFile = null;
             currentDeleteFromLocalFile = null;
+        }
+
+        public void AddFile(FilePairInfo file)
+        {
+            allFiles[file.RelativePath] = file;
+        }
+
+        public bool TryGetFile(string key, out FilePairInfo file)
+        {
+            return allFiles.TryGetValue(key, out file);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

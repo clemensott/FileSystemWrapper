@@ -1,6 +1,7 @@
 ﻿using FileSystemCommonUWP;
 using FileSystemCommonUWP.API;
 using FileSystemCommonUWP.Sync.Definitions;
+using FileSystemCommonUWP.Sync.Handling;
 using FileSystemCommonUWP.Sync.Handling.Communication;
 using StdOttStandard.Linq;
 using StdOttUwp;
@@ -42,6 +43,7 @@ namespace FileSystemUWP.Sync.Handling
         {
             communicator = SyncPairCommunicator.CreateForegroundCommunicator();
             communicator.ProgressSyncPairRun += Communicator_ProgressSyncPairRun;
+            communicator.ProgressUpdatesSyncPairRun += Communicator_ProgressUpdatesSyncPairRun;
             communicator.StartedBackgroundTask += Communicator_StartedBackgroundTask;
             communicator.StoppedBackgroundTask += Communicator_StoppedBackgroundTask;
 
@@ -58,6 +60,113 @@ namespace FileSystemUWP.Sync.Handling
             {
                 await UwpUtils.RunSafe(() => container.Response = e.Response);
             }
+        }
+
+        private async void Communicator_ProgressUpdatesSyncPairRun(object sender, ProgressUpdatesSyncPairRunEventArgs e)
+        {
+            IsRunning = true;
+
+            await UwpUtils.RunSafe(() =>
+            {
+                SyncPairForegroundContainer container = null;
+                foreach (SyncPairProgressUpdate update in e.Updates)
+                {
+                    if (container != null && container.Response.RunToken == update.Token ||
+                        containers.TryGetValue(update.Token, out container))
+                    {
+                        UpdateResponse(container.Response, update);
+                    }
+                }
+            });
+        }
+
+        private void UpdateResponse(SyncPairResponseInfo response, SyncPairProgressUpdate update)
+        {
+            if (response == null) return;
+
+            try
+            {
+                switch (update.Prop)
+                {
+                    case nameof(SyncPairResponseInfo.State):
+                        response.State = update.State.Value;
+                        return;
+
+                    case nameof(SyncPairResponseInfo.CurrentCount):
+                        response.CurrentCount = update.Number.Value;
+                        return;
+
+                    case nameof(SyncPairResponseInfo.TotalCount):
+                        response.TotalCount = update.Number.Value;
+                        return;
+
+                    case nameof(SyncPairResponseInfo.AllFiles):
+                        response.AddFile(update.File.Value);
+                        return;
+
+                    case nameof(SyncPairResponseInfo.ComparedFiles):
+                        AddFile(response, response.ComparedFiles, update.Text);
+                        return;
+
+                    case nameof(SyncPairResponseInfo.EqualFiles):
+                        AddFile(response, response.EqualFiles, update.Text);
+                        return;
+
+                    case nameof(SyncPairResponseInfo.IgnoreFiles):
+                        AddFile(response, response.IgnoreFiles, update.Text);
+                        return;
+
+                    case nameof(SyncPairResponseInfo.ConflictFiles):
+                        AddFile(response, response.ConflictFiles, update.Text);
+                        return;
+
+                    case nameof(SyncPairResponseInfo.CopiedLocalFiles):
+                        AddFile(response, response.CopiedLocalFiles, update.Text);
+                        return;
+
+                    case nameof(SyncPairResponseInfo.DeletedLocalFiles):
+                        AddFile(response, response.DeletedLocalFiles, update.Text);
+                        return;
+
+                    case nameof(SyncPairResponseInfo.DeletedServerFiles):
+                        AddFile(response, response.DeletedServerFiles, update.Text);
+                        return;
+
+                    case nameof(SyncPairResponseInfo.ErrorFiles):
+                        response.ErrorFiles.Add(update.ErrorFile.Value);
+                        return;
+
+                    case nameof(SyncPairResponseInfo.CurrentQueryFolderRelPath):
+                        response.CurrentQueryFolderRelPath = update.Text;
+                        return;
+
+                    case nameof(SyncPairResponseInfo.CurrentCopyToLocalFile):
+                        response.CurrentCopyToLocalFile = update.File;
+                        return;
+
+                    case nameof(SyncPairResponseInfo.CurrentCopyToServerFile):
+                        response.CurrentCopyToServerFile = update.File;
+                        return;
+
+                    case nameof(SyncPairResponseInfo.CurrentDeleteFromServerFile):
+                        response.CurrentDeleteFromServerFile = update.File;
+                        return;
+
+                    case nameof(SyncPairResponseInfo.CurrentDeleteFromLocalFile):
+                        response.CurrentDeleteFromLocalFile = update.File;
+                        return;
+                }
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("UpdateResponse error: " + e);
+            }
+        }
+
+        private static void AddFile(SyncPairResponseInfo response, IList<FilePairInfo> list, string key)
+        {
+            FilePairInfo file;
+            if (response.TryGetFile(key, out file)) list.Add(file);
         }
 
         private void Communicator_StartedBackgroundTask(object sender, EventArgs e)

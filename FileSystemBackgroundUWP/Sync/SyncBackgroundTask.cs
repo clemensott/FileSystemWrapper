@@ -176,9 +176,9 @@ namespace FileSystemBackgroundUWP.Sync
             }
         }
 
-        private void OnHandlerProgress(object sender, EventArgs e)
+        private void OnHandlerProgress(object sender, SyncPairProgressUpdate e)
         {
-            SendProgress((SyncPairHandler)sender);
+            communicator.SendProgressUpdateSyncPair(e);
         }
 
         private async void SendProgress(SyncPairHandler handler)

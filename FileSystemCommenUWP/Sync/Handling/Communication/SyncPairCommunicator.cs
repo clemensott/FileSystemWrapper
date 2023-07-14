@@ -2,6 +2,7 @@
 using StdOttStandard.ProcessCommunication;
 using StdOttUwp.ProcessCommunication;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.Storage;
 
@@ -23,6 +24,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         private const string canceledSyncPairRunName = "canceled_sync_pair_run";
         private const string requestedProgressSyncPairRunName = "request_progress_sync_pair_run";
         private const string progressSyncPairRunName = "progress_sync_pair_run";
+        private const string progressUpdateSyncPairRunName = "progress_update_sync_pair_run";
         private const string startedBackgroundTaskName = "started_background_task";
         private const string stoppedBackgroundTaskName = "stopped_background_task";
 
@@ -33,50 +35,62 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         public event EventHandler<CanceledSyncPairRunEventArgs> CanceledSyncPairRun;
         public event EventHandler<RequestedProgressSyncPairRunEventArgs> RequestedProgressSyncPairRun;
         public event EventHandler<ProgressSyncPairRunEventArgs> ProgressSyncPairRun;
+        public event EventHandler<ProgressUpdatesSyncPairRunEventArgs> ProgressUpdatesSyncPairRun;
         public event EventHandler<EventArgs> StartedBackgroundTask;
         public event EventHandler<EventArgs> StoppedBackgroundTask;
 
         private SyncPairCommunicator(StorageFolder folder, string readCmdsName, string writeCmdsName, string writeTmpCmdsFileName)
-            : base(new FileProcessCmdPersisting(folder, readCmdsName, writeCmdsName, writeTmpCmdsFileName))
+            : base(new FileProcessCmdPersisting(folder, readCmdsName, writeCmdsName, writeTmpCmdsFileName), 300)
         {
             this.folder = folder;
         }
 
-        protected override async void ReceiveCommand(ReceivedProcessCommand cmd)
+        protected override async void ReceiveCommands(ICollection<ReceivedProcessCommand> cmds)
         {
+            List<SyncPairProgressUpdate> updates = null;
             lastMessageCount++;
 
-            switch (cmd.Name)
+            foreach (ReceivedProcessCommand cmd in cmds)
             {
-                case updatedRequestedSyncPairRunsName:
-                    UpdatedRequestedSyncPairRuns?.Invoke(this, EventArgs.Empty);
-                    break;
+                switch (cmd.Name)
+                {
+                    case updatedRequestedSyncPairRunsName:
+                        UpdatedRequestedSyncPairRuns?.Invoke(this, EventArgs.Empty);
+                        break;
 
-                case canceledSyncPairRunName:
-                    CanceledSyncPairRun?.Invoke(this, new CanceledSyncPairRunEventArgs(cmd.Data));
-                    break;
+                    case canceledSyncPairRunName:
+                        CanceledSyncPairRun?.Invoke(this, new CanceledSyncPairRunEventArgs(cmd.Data));
+                        break;
 
-                case requestedProgressSyncPairRunName:
-                    RequestedProgressSyncPairRun?.Invoke(this, new RequestedProgressSyncPairRunEventArgs(cmd.Data));
-                    break;
+                    case requestedProgressSyncPairRunName:
+                        RequestedProgressSyncPairRun?.Invoke(this, new RequestedProgressSyncPairRunEventArgs(cmd.Data));
+                        break;
 
-                case progressSyncPairRunName:
-                    SyncPairResponseInfo response = cmd.DeserializeData<SyncPairResponseInfo>();
-                    ProgressSyncPairRun?.Invoke(this, new ProgressSyncPairRunEventArgs(response));
-                    break;
+                    case progressSyncPairRunName:
+                        SyncPairResponseInfo response = cmd.DeserializeData<SyncPairResponseInfo>();
+                        ProgressSyncPairRun?.Invoke(this, new ProgressSyncPairRunEventArgs(response));
+                        break;
 
-                case startedBackgroundTaskName:
-                    StartedBackgroundTask?.Invoke(this, EventArgs.Empty);
-                    break;
+                    case progressUpdateSyncPairRunName:
+                        if (updates == null) updates = new List<SyncPairProgressUpdate>();
+                        updates.Add(cmd.DeserializeData<SyncPairProgressUpdate>());
+                        break;
 
-                case stoppedBackgroundTaskName:
-                    if (await TryStopCommunicator(2000))
-                    {
-                        StoppedBackgroundTask?.Invoke(this, EventArgs.Empty);
-                        StopTimer();
-                    }
-                    break;
+                    case startedBackgroundTaskName:
+                        StartedBackgroundTask?.Invoke(this, EventArgs.Empty);
+                        break;
+
+                    case stoppedBackgroundTaskName:
+                        if (await TryStopCommunicator(2000))
+                        {
+                            StoppedBackgroundTask?.Invoke(this, EventArgs.Empty);
+                            StopTimer();
+                        }
+                        break;
+                }
             }
+
+            if (updates != null) ProgressUpdatesSyncPairRun?.Invoke(this, new ProgressUpdatesSyncPairRunEventArgs(updates));
         }
 
         public async Task<bool> TryStopCommunicator(int timeoutMillis = 5000)
@@ -106,6 +120,19 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         public void SendProgessSyncPair(SyncPairResponseInfo response)
         {
             SendDataCommand(progressSyncPairRunName, response, $"{progressSyncPairRunName}_{response.RunToken}");
+        }
+
+        public void SendProgressUpdateSyncPair(SyncPairProgressUpdate update)
+        {
+            if (update.Action == SyncPairProgressUpdateAction.Add)
+            {
+                SendDataCommand(progressUpdateSyncPairRunName, update);
+            }
+            else
+            {
+                string key = $"{progressUpdateSyncPairRunName}_{update.Token}_{update.Prop}";
+                SendDataCommand(progressUpdateSyncPairRunName, update, key);
+            }
         }
 
         public void SendStartedBackgroundTask()
