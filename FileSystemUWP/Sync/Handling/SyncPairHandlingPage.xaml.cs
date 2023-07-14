@@ -109,15 +109,6 @@ namespace FileSystemUWP.Sync.Handling
             return pair?.RelativePath ?? "<None>";
         }
 
-        private object MicWaiting_Convert(object sender, MultiplesInputsConvert2EventArgs args)
-        {
-            SyncPairHandlerState? state = (SyncPairHandlerState?)args.Input0;
-            if (state == SyncPairHandlerState.Loading || state == SyncPairHandlerState.WaitForStart || args.Input1 == null) return true;
-            if (!IsRunning(state)) return false;
-
-            return (int)args.Input1 == 0;
-        }
-
         private object IsRunningConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
         {
             return IsRunning((SyncPairHandlerState?)value);

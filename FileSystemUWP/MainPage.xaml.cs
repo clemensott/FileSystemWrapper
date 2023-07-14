@@ -43,7 +43,14 @@ namespace FileSystemUWP
 
         private void ListView_Loaded(object sender, RoutedEventArgs e)
         {
-            ((ListView)sender).SelectionChanged += LvwServers_SelectionChanged;
+            if (viewModel.CurrentServer != null)
+            {
+                Frame.Navigate(typeof(ServerExplorerPage), viewModel.CurrentServer);
+            }
+            else
+            {
+                ((ListView)sender).SelectionChanged += LvwServers_SelectionChanged;
+            }
         }
 
         private void ListView_Unloaded(object sender, RoutedEventArgs e)

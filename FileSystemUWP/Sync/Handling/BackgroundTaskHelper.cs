@@ -42,6 +42,7 @@ namespace FileSystemUWP.Sync.Handling
         private BackgroundTaskHelper()
         {
             communicator = SyncPairCommunicator.CreateForegroundCommunicator();
+            communicator.IsForwardingPings = true;
             communicator.ProgressSyncPairRun += Communicator_ProgressSyncPairRun;
             communicator.ProgressUpdatesSyncPairRun += Communicator_ProgressUpdatesSyncPairRun;
             communicator.StartedBackgroundTask += Communicator_StartedBackgroundTask;
@@ -195,7 +196,7 @@ namespace FileSystemUWP.Sync.Handling
                 }
                 else container = new SyncPairForegroundContainer(request);
 
-                containers.Add(request.RunToken, container);
+                containers[request.RunToken] = container;
             }
 
             if (containers.Values.Any(container => !container.IsEnded))

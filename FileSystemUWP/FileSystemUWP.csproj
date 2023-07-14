@@ -202,6 +202,9 @@
     <Compile Include="Sync\Definitions\SyncPairsPage.xaml.cs">
       <DependentUpon>SyncPairsPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Sync\Handling\SyncPairHandlingProgressbar.xaml.cs">
+      <DependentUpon>SyncPairHandlingProgressbar.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UiUtils.cs" />
     <Compile Include="Models\ViewModel.cs" />
     <Compile Include="Util\FileSystemItemComparer.cs" />
@@ -343,6 +346,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Sync\Handling\SyncPairHandlingPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Sync\Handling\SyncPairHandlingProgressbar.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -11,9 +11,6 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
-        <con:VisibleCollapsedConverter x:Key="visCon" />
-        <con:CollapsedVisibleConverter x:Key="colCon" />
-
         <con:ValueConverter x:Key="modeNameCon" ConvertEvent="ModeNameConverter_ConvertEvent"/>
         <con:ValueConverter x:Key="compareTypeNameCon" ConvertEvent="CompareTypeNameConverter_ConvertEvent"/>
         <con:ValueConverter x:Key="conflictHandlingNameCon" ConvertEvent="ConflictHandling_ConvertEvent"/>
@@ -21,8 +18,6 @@
         <con:ValueConverter x:Key="notNullStringConverter" ConvertEvent="NotNullString_ConvertEvent"/>
         <con:ValueConverter x:Key="fsPairPathConverter" ConvertEvent="FilePairInfoConverter_ConvertEvent"/>
         <con:ValueConverter x:Key="isRunningConverter" ConvertEvent="IsRunningConverter_ConvertEvent"/>
-
-        <x:String x:Key="noneString">&lt;None&gt;</x:String>
     </Page.Resources>
 
     <Grid Margin="5">
@@ -71,24 +66,7 @@
                         <TextBlock VerticalAlignment="Center" Margin="5,0" Text="{Binding State}"/>
                     </StackPanel>
 
-                    <con:MultipleInputs2Converter x:Name="micWaiting" Input0="{Binding State}"
-                                                  Input1="{Binding TotalCount}" Convert="MicWaiting_Convert"/>
-
-                    <ProgressBar Minimum="0" Value="0" Maximum="0" IsIndeterminate="True" Margin="5"
-                                 Visibility="{Binding ElementName=micWaiting,Path=Output,Converter={StaticResource visCon}}"/>
-
-                    <Grid Visibility="{Binding ElementName=micWaiting,Path=Output,Converter={StaticResource colCon}}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Grid.Column="0" Margin="2" Text="{Binding CurrentCount}"/>
-                        <ProgressBar Grid.Column="1" Margin="3,0" Minimum="0" VerticalAlignment="Center"
-                                     Value="{Binding CurrentCount}" Maximum="{Binding TotalCount}"/>
-                        <TextBlock Grid.Column="2" Margin="2" Text="{Binding TotalCount}"/>
-                    </Grid>
+                    <local:SyncPairHandlingProgressbar />
 
                     <Grid Margin="0,10">
                         <Grid.ColumnDefinitions>

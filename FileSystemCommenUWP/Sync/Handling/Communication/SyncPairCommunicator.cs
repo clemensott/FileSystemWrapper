@@ -81,7 +81,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
                         break;
 
                     case stoppedBackgroundTaskName:
-                        if (await TryStopCommunicator(2000))
+                        System.Diagnostics.Debug.WriteLine($"ReceiveCommands stoppedBackgroundTaskName per={persisting.GetHashCode()} now={DateTime.Now.TimeOfDay}");
+                        if (await TryStopCommunicator(TimeSpan.FromSeconds(10)))
                         {
                             StoppedBackgroundTask?.Invoke(this, EventArgs.Empty);
                             StopTimer();
@@ -93,11 +94,16 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
             if (updates != null) ProgressUpdatesSyncPairRun?.Invoke(this, new ProgressUpdatesSyncPairRunEventArgs(updates));
         }
 
-        public async Task<bool> TryStopCommunicator(int timeoutMillis = 5000)
+        public Task<bool> TryStopCommunicator(int timeoutMillis = 5000)
+        {
+            return TryStopCommunicator(TimeSpan.FromMilliseconds(timeoutMillis));
+        }
+
+        public async Task<bool> TryStopCommunicator(TimeSpan timeout)
         {
             long count = lastMessageCount;
 
-            await Task.Delay(timeoutMillis);
+            await Task.Delay(timeout);
 
             return count == lastMessageCount;
         }
@@ -191,12 +197,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
 
         public void Start()
         {
+            lastMessageCount++;
             StartTimer();
-        }
-
-        public Task FlushCommands()
-        {
-            return FlushAllCommands();
         }
 
         public static SyncPairCommunicator CreateBackgroundCommunicator()

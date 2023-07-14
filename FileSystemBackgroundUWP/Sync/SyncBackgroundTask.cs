@@ -27,13 +27,15 @@ namespace FileSystemBackgroundUWP.Sync
                 await Setup();
                 while (true)
                 {
+                    communicator.IsPingEnabled = true;
                     await Handle();
 
+                    communicator.IsPingEnabled = false;
                     communicator.SendStoppedBackgroundTask();
-                    if (await communicator.TryStopCommunicator(10000)) break;
+                    if (await communicator.TryStopCommunicator(TimeSpan.FromSeconds(15))) break;
                 }
 
-                await DisposeCommunicator();
+                DisposeCommunicator();
             }
             catch (Exception exc)
             {
@@ -64,13 +66,12 @@ namespace FileSystemBackgroundUWP.Sync
             communicator.RequestedProgressSyncPairRun += Communicator_RequestedProgressSyncPairRun;
         }
 
-        private async Task DisposeCommunicator()
+        private void DisposeCommunicator()
         {
             communicator.UpdatedRequestedSyncPairRuns -= Communicator_UpdatedRequestedSyncPairRuns;
             communicator.CanceledSyncPairRun -= Communicator_CanceledSyncPairRun;
             communicator.RequestedProgressSyncPairRun -= Communicator_RequestedProgressSyncPairRun;
 
-            await communicator.FlushCommands();
             communicator.Dispose();
             communicator = null;
         }
@@ -120,7 +121,7 @@ namespace FileSystemBackgroundUWP.Sync
         private async void Communicator_CanceledSyncPairRun(object sender, CanceledSyncPairRunEventArgs e)
         {
             await LoadRequests();
-            if (e.RunToken == currentSyncPairHandler?.RunToken) await currentSyncPairHandler.Cancel();
+            if (e.RunToken == currentSyncPairHandler?.RunToken) currentSyncPairHandler.Cancel();
         }
 
         private async void Communicator_RequestedProgressSyncPairRun(object sender, RequestedProgressSyncPairRunEventArgs e)
@@ -164,8 +165,8 @@ namespace FileSystemBackgroundUWP.Sync
                 currentSyncPairHandler = await SyncPairHandler.FromSyncPairRequest(request);
                 currentSyncPairHandler.Progress += OnHandlerProgress;
 
+                SendProgress(currentSyncPairHandler);
                 await currentSyncPairHandler.Run();
-
                 SendProgress(currentSyncPairHandler);
             }
             catch { }
