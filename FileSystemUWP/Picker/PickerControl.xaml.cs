@@ -1,6 +1,5 @@
 ﻿using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.FileSystem.Content;
-using FileSystemUWP.API;
 using FileSystemUWP.Models;
 using StdOttStandard.Linq;
 using StdOttUwp;
@@ -16,6 +15,8 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using FileSystemCommon;
+using FileSystemCommonUWP.API;
 
 // Die Elementvorlage "Benutzersteuerelement" wird unter https://go.microsoft.com/fwlink/?LinkId=234236 dokumentiert.
 

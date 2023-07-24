@@ -1,6 +1,6 @@
-﻿using FileSystemUWP.Sync.Definitions;
-using FileSystemUWP.Sync.Handling.CompareType;
-using FileSystemUWP.Sync.Handling.Mode;
+﻿using FileSystemCommonUWP.Sync.Definitions;
+using FileSystemCommonUWP.Sync.Handling;
+using FileSystemCommonUWP.Sync.Handling.Communication;
 using StdOttStandard;
 using StdOttStandard.Converter.MultipleInputs;
 using StdOttUwp;
@@ -38,36 +38,39 @@ namespace FileSystemUWP.Sync.Handling
         {
             switch (value)
             {
-                case LocalToServerCreateOnlyModeHandler _:
+                case SyncMode.LocalToServerCreateOnly:
                     return "Local to server (create only)";
 
-                case LocalToServerModeHandler _:
+                case SyncMode.LocalToServer:
                     return "Local to server";
 
-                case ServerToLocalCreateOnlyModeHandler _:
+                case SyncMode.ServerToLocalCreateOnly:
                     return "Server to local (create only)";
 
-                case ServerToLocalModeHandler _:
+                case SyncMode.ServerToLocal:
                     return "Server to local";
 
-                case TwoWayModeHandler _:
+                case SyncMode.TwoWay:
                     return "Two way";
             }
 
             throw new ArgumentException("type not implemented", nameof(value));
         }
 
-        private object FileCompareNameConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
+        private object CompareTypeNameConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
         {
             switch (value)
             {
-                case HashComparer hashComparer:
-                    return hashComparer.IsPartial ? "Partial SHA1 Hash" : "SHA1 Hash";
+                case SyncCompareType.Hash:
+                    return "SHA1 Hash";
 
-                case SizeComparer _:
+                case SyncCompareType.PartialHash:
+                    return "Partial SHA1 Hash";
+
+                case SyncCompareType.Size:
                     return "Size";
 
-                case ExistsComparer _:
+                case SyncCompareType.Exists:
                     return "Exists";
             }
 
@@ -100,18 +103,10 @@ namespace FileSystemUWP.Sync.Handling
             return path;
         }
 
-        private object FilePairConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
+        private object FilePairInfoConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
         {
-            FilePair pair = (FilePair)value;
+            FilePairInfo? pair = (FilePairInfo?)value;
             return pair?.RelativePath ?? "<None>";
-        }
-
-        private object MicWaiting_Convert(object sender, MultiplesInputsConvert2EventArgs args)
-        {
-            if ((SyncPairHandlerState?)args.Input0 == SyncPairHandlerState.WaitForStart || args.Input1 == null) return true;
-            if (!IsRunning((SyncPairHandlerState?)args.Input0)) return false;
-
-            return (int)args.Input1 == 0;
         }
 
         private object IsRunningConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
@@ -121,37 +116,38 @@ namespace FileSystemUWP.Sync.Handling
 
         private static bool IsRunning(SyncPairHandlerState? state)
         {
-            return state == SyncPairHandlerState.WaitForStart ||
-               state == SyncPairHandlerState.Running;
+            return state == SyncPairHandlerState.Loading ||
+                state == SyncPairHandlerState.WaitForStart ||
+                state == SyncPairHandlerState.Running;
         }
 
         private async void TblComparedFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
+            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
             await ShowFileList("Compared", pairs);
         }
 
         private async void TblEqualFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
+            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
             await ShowFileList("Equal", pairs);
         }
 
         private async void TblIgnoreFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
+            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
             await ShowFileList("Ignored", pairs);
         }
 
         private async void TblConflictFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
+            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
             await ShowFileList("Conflicts", pairs);
         }
 
         private async void TblErrorFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IList<ErrorFilePair> pairs = (IList<ErrorFilePair>)((FrameworkElement)sender).DataContext;
+            IList<ErrorFilePairInfo> pairs = (IList<ErrorFilePairInfo>)((FrameworkElement)sender).DataContext;
 
             if (pairs.Count == 0)
             {
@@ -162,9 +158,9 @@ namespace FileSystemUWP.Sync.Handling
             int i = 0;
             while (true)
             {
-                ErrorFilePair errorPair = pairs[i];
+                ErrorFilePairInfo errorPair = pairs[i];
                 string title = $"Error: {i + 1} / {pairs.Count}";
-                string message = $"{errorPair.Pair.RelativePath}\r\n{errorPair.Exception}";
+                string message = $"{errorPair.File.RelativePath}\r\n{errorPair.Exception}";
 
                 ContentDialogResult result = await DialogUtils.ShowContentAsync(message, title, "Cancel", "Previous", "Next", ContentDialogButton.Secondary);
 
@@ -176,29 +172,29 @@ namespace FileSystemUWP.Sync.Handling
 
         private async void TblCopiedLocalFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
+            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
             await ShowFileList("Copied local", pairs);
         }
 
         private async void TblCopiedServerFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
+            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
             await ShowFileList("Copied server", pairs);
         }
 
         private async void TblDeletedLocalFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
+            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
             await ShowFileList("Deleted local", pairs);
         }
 
         private async void TblDeletedServerFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePair> pairs = (IEnumerable<FilePair>)((FrameworkElement)sender).DataContext;
+            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
             await ShowFileList("Deleted server", pairs);
         }
 
-        private static async Task ShowFileList(string title, IEnumerable<FilePair> pairs)
+        private static async Task ShowFileList(string title, IEnumerable<FilePairInfo> pairs)
         {
             string message = string.Join("\r\n", pairs.Take(30).Select(p => p.RelativePath));
             if (string.IsNullOrWhiteSpace(message)) message = "<None>";
@@ -211,10 +207,10 @@ namespace FileSystemUWP.Sync.Handling
             Frame.GoBack();
         }
 
-        private async void AbbStop_Click(object sender, RoutedEventArgs e)
+        private void AbbStop_Click(object sender, RoutedEventArgs e)
         {
-            SyncPairHandler handler = (SyncPairHandler)DataContext;
-            await handler.Cancel();
+            SyncPairForegroundContainer container = (SyncPairForegroundContainer)DataContext;
+            BackgroundTaskHelper.Current.Cancel(container.Request.RunToken);
         }
     }
 }

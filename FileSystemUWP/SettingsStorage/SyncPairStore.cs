@@ -1,6 +1,6 @@
 ﻿using FileSystemCommon.Models.FileSystem;
-using FileSystemUWP.Sync.Definitions;
-using FileSystemUWP.Sync.Result;
+using FileSystemCommonUWP.Sync.Definitions;
+using FileSystemCommonUWP.Sync.Result;
 
 namespace FileSystemUWP.SettingsStorage
 {
@@ -9,6 +9,8 @@ namespace FileSystemUWP.SettingsStorage
         public bool WithSubfolders { get; set; }
 
         public string Token { get; set; }
+
+        public string ResultToken { get; set; }
 
         public string Name { get; set; }
 
@@ -23,7 +25,5 @@ namespace FileSystemUWP.SettingsStorage
         public string[] Whitelist { get; set; }
 
         public string[] Blacklist { get; set; }
-
-        public SyncedItem[] Result { get; set; }
     }
 }

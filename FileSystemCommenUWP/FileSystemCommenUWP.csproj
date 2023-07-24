@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F880724E-EC43-48B8-B9ED-78972E64CD99}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>FileSystemCommonUWP</RootNamespace>
+    <AssemblyName>FileSystemCommonUWP</AssemblyName>
+    <DefaultLanguage>de-DE</DefaultLanguage>
+    <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
+    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.15063.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.15063.0</TargetPlatformMinVersion>
+    <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>full</DebugType>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <PlatformTarget>x86</PlatformTarget>
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <Optimize>true</Optimize>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
+    <PlatformTarget>ARM</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\ARM\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>full</DebugType>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM'">
+    <PlatformTarget>ARM</PlatformTarget>
+    <OutputPath>bin\ARM\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <Optimize>true</Optimize>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM64'">
+    <PlatformTarget>ARM64</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\ARM64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>full</DebugType>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM64'">
+    <PlatformTarget>ARM64</PlatformTarget>
+    <OutputPath>bin\ARM64\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <Optimize>true</Optimize>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>full</DebugType>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <Optimize>true</Optimize>
+    <NoWarn>;2008</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="API\Api.cs" />
+    <Compile Include="API\ApiExtensions.cs" />
+    <Compile Include="HttpRandomAccessStream.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="Sync\Handling\Communication\ProgressUpdatesSyncPairRunEventArgs.cs" />
+    <Compile Include="Sync\Handling\Communication\SyncPairProgressUpdateAction.cs" />
+    <Compile Include="Sync\Handling\Communication\SyncPairProgressUpdate.cs" />
+    <Compile Include="Sync\Handling\CompareType\ExistsComparer.cs" />
+    <Compile Include="Sync\Handling\CompareType\HashComparer.cs" />
+    <Compile Include="Sync\Handling\CompareType\ISyncFileComparer.cs" />
+    <Compile Include="Sync\Handling\CompareType\SizeComparer.cs" />
+    <Compile Include="Sync\Definitions\SyncActionType.cs" />
+    <Compile Include="Sync\Definitions\SyncCompareType.cs" />
+    <Compile Include="Sync\Definitions\SyncConflictHandlingType.cs" />
+    <Compile Include="Sync\Definitions\SyncMode.cs" />
+    <Compile Include="Sync\Definitions\SyncPair.cs" />
+    <Compile Include="Sync\Definitions\SyncPairs.cs" />
+    <Compile Include="Sync\Handling\Communication\CanceledSyncPairRunEventArgs.cs" />
+    <Compile Include="Sync\Handling\Communication\RequestedProgressSyncPairRunEventArgs.cs" />
+    <Compile Include="Sync\Handling\Communication\ProgressSyncPairRunEventArgs.cs" />
+    <Compile Include="Sync\Handling\Communication\ErrorFilePairInfo.cs" />
+    <Compile Include="Sync\Handling\Communication\FilePairInfo.cs" />
+    <Compile Include="Sync\Handling\Communication\SyncPairForegroundContainer.cs" />
+    <Compile Include="Sync\Handling\Communication\SyncPairResponseInfo.cs" />
+    <Compile Include="Sync\Handling\Communication\SyncPairRequestInfo.cs" />
+    <Compile Include="Sync\Handling\ErrorFilePair.cs" />
+    <Compile Include="Sync\Handling\FilePair.cs" />
+    <Compile Include="Sync\Handling\Communication\SyncPairCommunicator.cs" />
+    <Compile Include="Sync\Handling\SyncPairHandlerState.cs" />
+    <Compile Include="Sync\Handling\Mode\LocalToServerCreateOnlyModeHandler.cs" />
+    <Compile Include="Sync\Handling\Mode\LocalToServerModeHandler.cs" />
+    <Compile Include="Sync\Handling\Mode\ServerToLocalCreateOnlyModeHandler.cs" />
+    <Compile Include="Sync\Handling\Mode\ServerToLocalModeHandler.cs" />
+    <Compile Include="Sync\Handling\Mode\SyncModeHandler.cs" />
+    <Compile Include="Sync\Handling\Mode\TwoWayModeHandler.cs" />
+    <Compile Include="Sync\Result\SyncedItem.cs" />
+    <Compile Include="Sync\Result\SyncedItems.cs" />
+    <Compile Include="Sync\Handling\SyncPairHandler.cs" />
+    <Compile Include="Sync\Handling\SyncPairHandlerExtension.cs" />
+    <EmbeddedResource Include="Properties\FileSystemCommenUWP.rd.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
+      <Version>6.2.14</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.3</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileSystemCommon\FileSystemCommon.csproj">
+      <Project>{3f6e0509-5273-48c5-bb7e-c4ee257cc0d3}</Project>
+      <Name>FileSystemCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\StdOttLib\StdOttStandardLib\StdOttStandardLib.csproj">
+      <Project>{06fccefa-e291-43f0-8f0d-e17d280f6ec4}</Project>
+      <Name>StdOttStandardLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\StdOttLib\StdOttUwpLib\StdOttUwpLib.csproj">
+      <Project>{CCF443C5-95A3-4DCD-8468-B71CE49D0206}</Project>
+      <Name>StdOttUwpLib</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
+    <VisualStudioVersion>14.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

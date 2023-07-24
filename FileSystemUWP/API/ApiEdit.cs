@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using FileSystemCommonUWP.API;
+using System.Threading.Tasks;
 
 namespace FileSystemUWP.API
 {

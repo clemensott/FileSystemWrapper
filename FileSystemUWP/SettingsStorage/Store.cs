@@ -1,8 +1,8 @@
-﻿using FileSystemUWP.API;
+﻿using FileSystemCommonUWP.API;
+using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemUWP.Controls;
 using FileSystemUWP.Models;
 using FileSystemUWP.Picker;
-using FileSystemUWP.Sync.Definitions;
 using StdOttStandard;
 using StdOttStandard.Linq;
 using System;
@@ -53,7 +53,7 @@ namespace FileSystemUWP.SettingsStorage
 
         private static SyncPair CreateSyncPair(SyncPairStore sync)
         {
-            return new SyncPair(sync.Token)
+            return new SyncPair(sync.Token, sync.ResultToken)
             {
                 WithSubfolders = sync.WithSubfolders,
                 Name = sync.Name,
@@ -63,7 +63,6 @@ namespace FileSystemUWP.SettingsStorage
                 ConflictHandlingType = sync.ConflictHandlingType,
                 Whitelist = sync.Whitelist != null ? new ObservableCollection<string>(sync.Whitelist) : null,
                 Blacklist = sync.Blacklist != null ? new ObservableCollection<string>(sync.Blacklist) : null,
-                Result = sync.Result,
             };
         }
 
@@ -119,6 +118,7 @@ namespace FileSystemUWP.SettingsStorage
             return new SyncPairStore()
             {
                 Token = pair.Token,
+                ResultToken = pair.ResultToken,
                 WithSubfolders = pair.WithSubfolders,
                 Name = pair.Name,
                 ServerPath = pair.ServerPath?.ToArray(),
@@ -127,7 +127,6 @@ namespace FileSystemUWP.SettingsStorage
                 ConflictHandlingType = pair.ConflictHandlingType,
                 Whitelist = pair.Whitelist?.ToArray(),
                 Blacklist = pair.Blacklist?.ToArray(),
-                Result = pair.Result?.ToArray(),
             };
         }
 

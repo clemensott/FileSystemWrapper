@@ -1,17 +1,13 @@
-﻿using FileSystemUWP.Models;
+﻿using FileSystemCommonUWP;
+using FileSystemUWP.Models;
 using FileSystemUWP.SettingsStorage;
-using FileSystemUWP.Sync.Definitions;
 using FileSystemUWP.Sync.Handling;
-using StdOttStandard.Linq;
 using StdOttUwp.BackPress;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
-using Windows.ApplicationModel.Background;
 using Windows.Foundation;
 using Windows.Storage;
 using Windows.UI.Xaml;
@@ -57,7 +53,8 @@ namespace FileSystemUWP
             BackgroundTaskHelper.Current.RegisterTimerBackgroundTask();
 
             Frame rootFrame = Window.Current.Content as Frame;
-            Task loadViewModelTaks = Task.CompletedTask;
+            Task loadViewModelTask = Task.CompletedTask;
+            Task loadSyncPairContainersTask = BackgroundTaskHelper.Current.LoadContainers();
 
             // App-Initialisierung nicht wiederholen, wenn das Fenster bereits Inhalte enthält.
             // Nur sicherstellen, dass das Fenster aktiv ist.
@@ -85,13 +82,14 @@ namespace FileSystemUWP
                     // und die neue Seite konfigurieren, indem die erforderlichen Informationen als Navigationsparameter
                     // übergeben werden
                     rootFrame.Navigate(typeof(MainPage), viewModel);
-                    loadViewModelTaks = LoadViewModel();
+                    loadViewModelTask = LoadViewModel();
                 }
                 // Sicherstellen, dass das aktuelle Fenster aktiv ist
                 Window.Current.Activate();
             }
 
-            await loadViewModelTaks;
+            await loadViewModelTask;
+            await loadSyncPairContainersTask;
         }
 
         /// <summary>
@@ -190,60 +188,6 @@ namespace FileSystemUWP
         private static string GetSaveFilePath(string fileName)
         {
             return Path.Combine(ApplicationData.Current.LocalFolder.Path, fileName);
-        }
-
-        protected override async void OnBackgroundActivated(BackgroundActivatedEventArgs args)
-        {
-            BackgroundTaskDeferral deferral = args.TaskInstance.GetDeferral();
-            BackgroundTaskHelper.Current.IsRunning = true;
-
-            if (!viewModel.IsLoaded)
-            {
-                System.Diagnostics.Debug.WriteLine($"on background1: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
-                await LoadViewModel();
-                System.Diagnostics.Debug.WriteLine($"on background1.1: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
-            }
-
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"on background2: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
-                //if (args.TaskInstance.Task.Name == BackgroundTaskHelper.TimerBackgroundTaskBuilderName)
-                //{
-                //    Settings.Current.SyncTimerTime = DateTime.Now;
-                //    await BackgroundTaskHelper.Current.Start(viewModel.Syncs, viewModel.Api);
-                //}
-
-                Queue<SyncPairHandler> syncs = BackgroundTaskHelper.Current.Queue;
-                System.Diagnostics.Debug.WriteLine($"on background3: {syncs.Count}");
-                while (syncs.Count > 0)
-                {
-                    SyncPairHandler handler = syncs.Dequeue();
-                    if (!await handler.Api.IsAuthorized() && await handler.Api.LoadConfig()) continue;
-
-                    await handler.Start();
-
-                    SyncPair sync;
-                    if (!handler.IsTestRun && handler.State == SyncPairHandlerState.Finished &&
-                        viewModel.Servers.SelectMany(s => s.Syncs).TryFirst(s => s.Token == handler.Token, out sync))
-                    {
-                        sync.Result = handler.NewResult.ToArray();
-                    }
-                }
-                System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count} | {e.Message}");
-                Settings.Current.OnSyncException(e);
-            }
-            finally
-            {
-                System.Diagnostics.Debug.WriteLine($"on background4: {viewModel.IsLoaded} | {viewModel.Servers.Count}");
-                BackgroundTaskHelper.Current.IsRunning = false;
-
-                await StoreViewModel("sync finished");
-                deferral.Complete();
-            }
         }
     }
 }

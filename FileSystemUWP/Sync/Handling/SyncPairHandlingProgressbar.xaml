@@ -1,0 +1,24 @@
+﻿<UserControl
+    x:Class="FileSystemUWP.Sync.Handling.SyncPairHandlingProgressbar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FileSystemUWP.Sync.Handling"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="100"
+    d:DesignWidth="400"
+    DataContextChanged="OnDataContextChanged">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Column="0" Name="tblCurrent" Margin="2" />
+        <ProgressBar Grid.Column="1" Name="pgbProgress" Margin="3,0" Minimum="0" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="2" Name="tblTotal" Margin="2" />
+    </Grid>
+</UserControl>
