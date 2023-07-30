@@ -1,6 +1,5 @@
 ﻿using StdOttUwp.ApplicationDataObjects;
 using System;
-using System.Linq;
 using Windows.Storage;
 
 namespace FileSystemCommonUWP

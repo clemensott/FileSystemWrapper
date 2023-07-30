@@ -102,10 +102,17 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         public async Task<bool> TryStopCommunicator(TimeSpan timeout)
         {
             long count = lastMessageCount;
+            DateTime start = DateTime.Now;
 
-            await Task.Delay(timeout);
+            do
+            {
+                await Task.Delay(10);
 
-            return count == lastMessageCount;
+                if (count != lastMessageCount) return false;
+            }
+            while (DateTime.Now - start < timeout);
+
+            return true;
         }
 
         public void SendUpdatedRequestedSyncRunsPairs()
