@@ -764,41 +764,32 @@ namespace FileSystemCommonUWP.Sync.Handling
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"SyncPairHandler.Run1: {State}");
                 if (State != SyncPairHandlerState.WaitForStart) return;
 
                 State = SyncPairHandlerState.Running;
 
-                System.Diagnostics.Debug.WriteLine($"SyncPairHandler.Run2: {State}");
                 await Task.WhenAll(Task.Run(QueryFiles), CompareFiles(), ProcessFiles());
 
-                System.Diagnostics.Debug.WriteLine($"SyncPairHandler.Run3: {State}");
                 if (State == SyncPairHandlerState.Running)
                 {
-                    System.Diagnostics.Debug.WriteLine($"SyncPairHandler.Run5: {State}");
                     if (!isTestRun) await syncedItems.SaveNewResult();
-                    System.Diagnostics.Debug.WriteLine($"SyncPairHandler.Run6: {State}");
                     State = SyncPairHandlerState.Finished;
                 }
             }
             catch
             {
-                System.Diagnostics.Debug.WriteLine($"SyncPairHandler.Run7: {State}");
                 State = SyncPairHandlerState.Error;
             }
 
             async Task CompareFiles()
             {
-                System.Diagnostics.Debug.WriteLine("SyncPairHandler.Run.CompareFiles1");
                 await Task.WhenAll(Task.Run(CompareBothFiles), Task.Run(CompareSingleFiles));
 
-                System.Diagnostics.Debug.WriteLine("SyncPairHandler.Run.CompareFiles2");
                 copyToLocalFiles.End();
                 copyToServerFiles.End();
 
                 deleteLocalFiles.End();
                 deleteSeverFiles.End();
-                System.Diagnostics.Debug.WriteLine("SyncPairHandler.Run.CompareFiles6");
             }
 
             Task ProcessFiles()
