@@ -51,6 +51,7 @@ namespace FileSystemWeb
                     Share.DeleteShareFolder,
                     Users.GetAllUsers,
                     Users.PostUser,
+                    Users.DeleteUser,
                 };
                 foreach (string permission in permissions)
                 {

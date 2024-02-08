@@ -20,6 +20,7 @@
         {
             public const string GetAllUsers = "permissions.users.get_all_users";
             public const string PostUser = "permissions.users.post_user";
+            public const string DeleteUser = "permissions.users.post_user";
         }
     }
 }

@@ -25,6 +25,7 @@ namespace FileSystemWeb.Data
 
             SeedAdminUser.Seed(builder);
             SeedShareManager.Seed(builder);
+            SeedUserManager.Seed(builder);
         }
     }
 }

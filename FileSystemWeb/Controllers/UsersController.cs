@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
@@ -46,10 +47,23 @@ namespace FileSystemWeb.Controllers
 
             AppUser user = new AppUser()
             {
+                Id = Guid.NewGuid().ToString().ToUpper(),
                 UserName = body.UserName,
             };
 
             IdentityResult result = await userManager.CreateAsync(user, body.Password);
+
+            return result.Succeeded ? (ActionResult)Ok("Success") : BadRequest();
+        }
+
+        [HttpDelete]
+        [Authorize(Policy = Permissions.Users.DeleteUser)]
+        public async Task<ActionResult> Delete([FromBody] DeleteUserBody body)
+        {
+            if (string.IsNullOrWhiteSpace(body.UserName)) return BadRequest("UserName is required");
+
+            AppUser user = await userManager.FindByNameAsync(body.UserName);
+            IdentityResult result = await userManager.DeleteAsync(user);
 
             return result.Succeeded ? (ActionResult)Ok("Success") : BadRequest();
         }
