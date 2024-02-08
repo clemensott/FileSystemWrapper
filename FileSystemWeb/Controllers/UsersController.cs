@@ -36,9 +36,9 @@ namespace FileSystemWeb.Controllers
             }).ToArrayAsync();
         }
 
-        [HttpGet("add")]
+        [HttpPost("add")]
         [Authorize(Policy = Permissions.Users.PostUser)]
-        public async Task<ActionResult> Add([FromQuery] string name, [FromQuery] string password)
+        public async Task<ActionResult> Add([FromBody] string name, [FromBody] string password)
         {
             AppUser user = new AppUser()
             {
