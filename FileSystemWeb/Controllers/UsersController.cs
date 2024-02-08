@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -38,14 +39,17 @@ namespace FileSystemWeb.Controllers
 
         [HttpPost("add")]
         [Authorize(Policy = Permissions.Users.PostUser)]
-        public async Task<ActionResult> Add([FromBody] string name, [FromBody] string password)
+        public async Task<ActionResult> Add([FromBody] AddUserBody body)
         {
+            if (string.IsNullOrWhiteSpace(body.UserName)) return BadRequest("UserName is required");
+            if (string.IsNullOrWhiteSpace(body.Password)) return BadRequest("Password is required");
+
             AppUser user = new AppUser()
             {
-                UserName = name,
+                UserName = body.UserName,
             };
 
-            IdentityResult result = await userManager.CreateAsync(user, password);
+            IdentityResult result = await userManager.CreateAsync(user, body.Password);
 
             return result.Succeeded ? (ActionResult)Ok("Success") : BadRequest();
         }
