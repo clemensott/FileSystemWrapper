@@ -1,5 +1,6 @@
 ﻿using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem.Content;
+using FileSystemCommonUWP.API;
 using FileSystemUWP.API;
 using FileSystemUWP.FileViewers;
 using FileSystemUWP.Models;

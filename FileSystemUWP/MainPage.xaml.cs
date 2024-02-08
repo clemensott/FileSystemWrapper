@@ -1,4 +1,5 @@
-﻿using FileSystemCommon.Models.FileSystem.Content;
+﻿using FileSystemCommonUWP.API;
+using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemUWP.API;
 using FileSystemUWP.Models;
 using StdOttUwp;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+using FileSystemCommonUWP;
 
 // Die Elementvorlage "Leere Seite" wird unter https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x407 dokumentiert.
 
@@ -41,7 +43,14 @@ namespace FileSystemUWP
 
         private void ListView_Loaded(object sender, RoutedEventArgs e)
         {
-            ((ListView)sender).SelectionChanged += LvwServers_SelectionChanged;
+            if (viewModel.CurrentServer != null)
+            {
+                Frame.Navigate(typeof(ServerExplorerPage), viewModel.CurrentServer);
+            }
+            else
+            {
+                ((ListView)sender).SelectionChanged += LvwServers_SelectionChanged;
+            }
         }
 
         private void ListView_Unloaded(object sender, RoutedEventArgs e)
