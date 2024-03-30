@@ -1,7 +1,6 @@
 ﻿using FileSystemCommonUWP;
 using FileSystemCommonUWP.API;
 using FileSystemCommonUWP.Sync.Definitions;
-using FileSystemCommonUWP.Sync.Handling;
 using FileSystemCommonUWP.Sync.Handling.Communication;
 using StdOttStandard.Linq;
 using StdOttUwp;
@@ -31,7 +30,7 @@ namespace FileSystemUWP.Sync.Handling
         }
 
         private readonly SyncPairCommunicator communicator;
-        private readonly List<SyncPairRequestInfo> requests;
+        private readonly Dictionary<string, SyncPairRequestInfo> requests;
         private readonly Dictionary<string, SyncPairForegroundContainer> containers;
         private ApplicationTrigger appTrigger;
         private TimeTrigger timeTrigger;
@@ -48,7 +47,7 @@ namespace FileSystemUWP.Sync.Handling
             communicator.StartedBackgroundTask += Communicator_StartedBackgroundTask;
             communicator.StoppedBackgroundTask += Communicator_StoppedBackgroundTask;
 
-            requests = new List<SyncPairRequestInfo>();
+            requests = new Dictionary<string, SyncPairRequestInfo>();
             containers = new Dictionary<string, SyncPairForegroundContainer>();
         }
 
@@ -186,7 +185,7 @@ namespace FileSystemUWP.Sync.Handling
             SyncPairResponseInfo[] responses = await communicator.LoadSyncPairResponses();
             foreach (SyncPairRequestInfo request in requests.ToNotNull())
             {
-                this.requests.Add(request);
+                this.requests[request.Token] = request;
 
                 SyncPairResponseInfo response;
                 SyncPairForegroundContainer container;
@@ -208,22 +207,12 @@ namespace FileSystemUWP.Sync.Handling
 
         public Task SaveRequests()
         {
-            return communicator.SaveRequests(requests.ToArray());
+            return communicator.SaveRequests(requests.Values.ToArray());
         }
 
         public async Task RemoveSyncPairRuns(string token)
         {
-            bool changed = false;
-            while (true)
-            {
-                int index = requests.FindIndex(r => r.Token == token);
-                if (index == -1) break;
-
-                containers.Remove(requests[index].RunToken);
-                requests.RemoveAt(index);
-            }
-
-            if (changed)
+            if (requests.Remove(token))
             {
                 await SaveRequests();
                 communicator.SendUpdatedRequestedSyncRunsPairs();
@@ -250,7 +239,7 @@ namespace FileSystemUWP.Sync.Handling
 
                 newContaienrs.Add(container);
                 containers.Add(container.Request.RunToken, container);
-                requests.Add(container.Request);
+                requests[container.Request.Token] = container.Request;
             }
 
             await SaveRequests();
@@ -330,14 +319,13 @@ namespace FileSystemUWP.Sync.Handling
 
         public async Task Cancel(string runToken)
         {
+            SyncPairRequestInfo request;
             SyncPairForegroundContainer container;
-            int requestIndex = requests.FindIndex(r => r.RunToken == runToken);
-            if (requestIndex == -1 || !containers.TryGetValue(runToken, out container)) return;
+            if (!requests.TryGetValue(runToken, out request) || !containers.TryGetValue(runToken, out container)) return;
 
-            SyncPairRequestInfo request = requests[requestIndex];
             request.IsCanceled = true;
 
-            requests[requestIndex] = request;
+            requests[runToken] = request;
             container.Request = request;
 
             await SaveRequests();
