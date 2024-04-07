@@ -1,0 +1,91 @@
+﻿@using FileSystemCommon.Models.FileSystem.Content;
+@using FileSystemWeb.Views.FolderViewer;
+@using FileSystemWeb.Views.Shared.Components;
+@model FolderSortButtonModel
+@functions {
+    private IEnumerable<SortByOption> GetAllSortByOptions()
+    {
+        yield return new SortByOption("Name ASC", new FileSystemItemSortBy()
+            {
+                Type = FileSystemItemSortType.Name,
+                Direction = FileSystemItemSortDirection.ASC,
+            }
+        );
+        yield return new SortByOption("Name DESC", new FileSystemItemSortBy()
+            {
+                Type = FileSystemItemSortType.Name,
+                Direction = FileSystemItemSortDirection.DESC,
+            }
+        );
+        yield return new SortByOption("Size ASC", new FileSystemItemSortBy()
+            {
+                Type = FileSystemItemSortType.Size,
+                Direction = FileSystemItemSortDirection.ASC,
+            }
+        );
+        yield return new SortByOption("Size DESC", new FileSystemItemSortBy()
+            {
+                Type = FileSystemItemSortType.Size,
+                Direction = FileSystemItemSortDirection.DESC,
+            }
+        );
+        yield return new SortByOption("Creation time ASC", new FileSystemItemSortBy()
+            {
+                Type = FileSystemItemSortType.CreationTime,
+                Direction = FileSystemItemSortDirection.ASC,
+            }
+        );
+        yield return new SortByOption("Creation time DESC", new FileSystemItemSortBy()
+            {
+                Type = FileSystemItemSortType.CreationTime,
+                Direction = FileSystemItemSortDirection.DESC,
+            }
+        );
+        yield return new SortByOption("Last write time ASC", new FileSystemItemSortBy()
+            {
+                Type = FileSystemItemSortType.LastWriteTime,
+                Direction = FileSystemItemSortDirection.ASC,
+            }
+        );
+        yield return new SortByOption("Last write time DESC", new FileSystemItemSortBy()
+            {
+                Type = FileSystemItemSortType.LastWriteTime,
+                Direction = FileSystemItemSortDirection.DESC,
+            }
+        );
+        yield return new SortByOption("Last access time ASC", new FileSystemItemSortBy()
+            {
+                Type = FileSystemItemSortType.LastAccessTime,
+                Direction = FileSystemItemSortDirection.ASC,
+            }
+        );
+        yield return new SortByOption("Last access time DESC", new FileSystemItemSortBy()
+            {
+                Type = FileSystemItemSortType.LastAccessTime,
+                Direction = FileSystemItemSortDirection.DESC,
+            }
+        );
+    }
+}
+
+<div class="dropdown">
+    <button class="btn btn-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <icon-partial name="fa-sort" type="Solid" />
+    </button>
+    <ul class="dropdown-menu">
+        @{
+            foreach (SortByOption option in GetAllSortByOptions())
+            {
+                bool current = option.Value.Equals(Model.SortBy);
+                <li>
+                    <button type="button" role="menuitem"
+                            class="dropdown-item @(current ? "active" : "")">
+                        <folder-viewer-updater-partial sort-type="@option.Value.Type" sort-direction="option.Value.Direction">
+                            @option.Text
+                        </folder-viewer-updater-partial>
+                    </button>
+                </li>
+            }
+        }
+    </ul>
+</div>

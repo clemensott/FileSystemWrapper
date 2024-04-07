@@ -1,0 +1,35 @@
+﻿.center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.center-root {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+a:visited, a:hover, a:active, a:focus {
+    text-decoration: none !important;
+    outline: none !important;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+a {
+    text-decoration: none;
+}
+
+.container {
+    flex-grow: 1;
+}
+
+input[readonly] {
+    pointer-events: none;
+}

@@ -1,0 +1,9 @@
+﻿@using FileSystemWeb.Views.File;
+@model ViewModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="file-page-container">
+    <file-viewer-partial file="@Model.File" theme="Light" />
+</div>

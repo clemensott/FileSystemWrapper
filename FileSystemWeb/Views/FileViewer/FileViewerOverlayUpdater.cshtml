@@ -1,0 +1,27 @@
+﻿@using FileSystemWeb.Views.FileViewer;
+@using System.Web;
+@model FileViewerOverlayUpdaterModel
+@functions {
+    private string GetFirstQueryValue(string name)
+    {
+        return Context.Request.Query.TryGetValue(name, out var values)
+            && values.Count > 0 ? values.First() : null;
+    }
+}
+@{
+    string folder = HttpUtility.UrlEncode(GetFirstQueryValue("folder"));
+    string file = HttpUtility.UrlEncode(Model.File ?? GetFirstQueryValue("file"));
+    string sortType = HttpUtility.UrlEncode(GetFirstQueryValue("sortType"));
+    string sortDirection = HttpUtility.UrlEncode(GetFirstQueryValue("sortDirection"));
+
+    string query = $"folder={folder}&file={file}&sortType={sortType}&sortDirection={sortDirection}";
+}
+
+<a hx-get="/fileViewer/fileViewerOverlay?folder=@folder&file=@file&sortType=@sortType&sortDirection=@sortDirection"
+   hx-target="#main-file-viewer-overlay"
+   hx-swap="outerHTML"
+   hx-push-url="?@query"
+   href="?@query">
+    @Html.Raw(Model.ChildContent)
+</a>
+

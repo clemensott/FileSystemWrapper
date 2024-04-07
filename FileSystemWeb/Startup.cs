@@ -1,6 +1,8 @@
 using System.IO;
 using FileSystemWeb.Constants;
 using FileSystemWeb.Data;
+using FileSystemWeb.Extensions.DependencyInjection;
+using FileSystemWeb.Extensions.Middlewares;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
 using Microsoft.AspNetCore.Builder;
@@ -34,6 +36,8 @@ namespace FileSystemWeb
             services.AddIdentity<AppUser, IdentityRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
+
+            services.AddApplicationServices();
 
             services.AddAuthorization(options =>
             {
@@ -73,35 +77,14 @@ namespace FileSystemWeb
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
+            app.UseGlobalErrorHandler(env);
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-
-            if (!env.IsDevelopment())
-            {
-                string sslCertificateDirPath = Path.Combine(Directory.GetCurrentDirectory(), @".well-known");
-                if (!Directory.Exists(sslCertificateDirPath)) Directory.CreateDirectory(sslCertificateDirPath);
-                app.UseStaticFiles(new StaticFileOptions
-                {
-                    FileProvider = new PhysicalFileProvider(sslCertificateDirPath),
-                    RequestPath = new PathString("/.well-known"),
-                    ServeUnknownFileTypes = true // serve extensionless files
-                });
-            }
 
             app.UseEndpoints(endpoints =>
             {

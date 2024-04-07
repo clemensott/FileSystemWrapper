@@ -1,0 +1,45 @@
+﻿@using FileSystemCommon.Models.FileSystem.Files;
+@using FileSystemCommon.Models.FileSystem.Folders;
+@using FileSystemWeb.Views.FSItem;
+@using FileSystemWeb.Views.FolderViewer;
+@using System.Web;
+@using Microsoft.AspNetCore.Html;
+@model FolderViewerItemModel
+@{
+    IFileItem file = Model.Item as IFileItem;
+    IFolderItem folder = Model.Item as IFolderItem;
+    bool hasLink = file?.Permission.Info == true || folder?.Permission.List == true;
+
+    FSItemModel fsItemModel = new FSItemModel(Model.Item);
+}
+
+<div class="p-2 folder-viewer-item-container">
+    <div class="folder-viewer-file-item-content @(hasLink ? "folder-viewer-item-container-link" : "")">
+        @if (file != null && hasLink)
+        {
+            string filePathName = System.IO.Path.GetFileName(Model.Item.Path);
+            <file-viewer-overlay-updater-partial file="@filePathName">
+                <fs-item-partial model="@fsItemModel" />
+            </file-viewer-overlay-updater-partial>
+        }
+        else if (folder != null && hasLink)
+        {
+            <folder-viewer-updater-partial folder="@folder.Path" file="">
+                <fs-item-partial model="@fsItemModel" />
+            </folder-viewer-updater-partial>
+        }
+        else
+        {
+            <fs-item-partial model="@fsItemModel" />
+        }
+    </div>
+    @if (file != null)
+    {
+        <file-actions-dropdown-partial file="@file" />
+    }
+    else if (folder != null)
+    {
+        <folder-actions-dropdown-partial folder="@folder" />
+    }
+</div>
+

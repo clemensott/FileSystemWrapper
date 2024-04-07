@@ -1,0 +1,16 @@
+﻿@using FileSystemCommon;
+@using FileSystemWeb.Views.FileViewer;
+@model MediaViewerModel
+@{
+    string mediaUrl = $"/api/files?path={Utils.EncodePath(Model.File.Path)}";
+}
+
+@if (Model.Type == MediaViewerType.Audio)
+{
+    <audio class="media-viewer-content" src="@mediaUrl" autoPlay controls></audio>
+}
+else
+{
+    // TODO: reload as audio if video has no video resolution
+    <video class="media-viewer-content" src="@mediaUrl" autoPlay controls></video>
+}

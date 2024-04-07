@@ -6,6 +6,7 @@ using System.Linq;
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.Configuration;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace FileSystemCommon
 {
@@ -131,6 +132,11 @@ namespace FileSystemCommon
             }
 
             return "application/octet-stream";
+        }
+
+        public static string GetFileType(string extension)
+        {
+            return GetContentType(extension).Split('/')[0];
         }
 
         public static string GetNamePath(this IEnumerable<PathPart> parts, char separator)

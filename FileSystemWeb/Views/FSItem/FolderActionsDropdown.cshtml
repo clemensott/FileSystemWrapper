@@ -1,0 +1,40 @@
+﻿@using FileSystemWeb.Extensions.Http;
+@using FileSystemWeb.Extensions.Views;
+@using FileSystemWeb.Views.FSItem;
+@using System.Web;
+@model FolderActionsDropdownModel
+@{
+    string urlEncodedFolderPath = HttpUtility.UrlEncode(Model.Folder.Path);
+}
+
+<div class="dropdown">
+    <button class="dropdown-toggle btn btn-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">@Model.Title</button>
+    <div class="dropdown-menu dropdown-menu-end">
+        @if (Context.IsShareManager())
+        {
+            string folderShareLink = Model.Folder.SharedId.HasValue
+            ? $"/share/folder/edit/{urlEncodedFolderPath}" : $"/share/folder/add?path={urlEncodedFolderPath}";
+            bool disableShare = !Model.Folder.Permission.Info;
+
+            <button type="button" tabindex="0" role="menuitem"
+                    class="dropdown-item @disableShare.ToAttribute("disabled")"
+                    disabled="@(disableShare.ToAttribute())">
+                <a class="text-dark dropdown-link" href="@folderShareLink" hx-boost="true">
+                    <icon-partial name="fa-share" type="Solid" class-name="me-2" />
+                    Share
+                </a>
+            </button>
+        }
+
+        @{
+            bool disableDelete = !Model.Folder.Permission.Write || !Model.Folder.Deletable;
+
+            <button type="button" disabled="" tabindex="-1"
+                    class="dropdown-item @disableDelete.ToAttribute("disabled")"
+                    disabled="@disableDelete.ToAttribute()">
+                <icon-partial name="fa-trash" type="Solid" class-name="me-2" />
+                Delete
+            </button>
+        }
+    </div>
+</div>

@@ -1,0 +1,50 @@
+﻿@using FileSystemCommon.Models.FileSystem.Files;
+@using FileSystemCommon.Models.FileSystem.Folders;
+@using FileSystemWeb.Helpers;
+@using FileSystemWeb.Views.FSItem;
+@using FileSystemWeb.Views.FolderViewer;
+@using System.Web;
+@using FileSystemWeb.Views.Shared.Components;
+@model FolderViewerModel
+@{
+}
+
+<div id="main-folder-viewer">
+    <div class="folder-viewer-head-container ">
+        <div class="folder-viewer-head-update-icon">
+            <folder-viewer-updater-partial push-url="false">
+                <icon-partial name="fa-retweet" size="X2" />
+            </folder-viewer-updater-partial>
+        </div>
+
+        @{
+            string parentPath = PathHelper.GetParentPath(Model.Content.Path);
+            if (parentPath != null)
+            {
+                <folder-viewer-updater-partial folder="@parentPath" file="">
+                    <icon-partial name="fa-arrow-up" size="X2" class-name="ps-2" />
+                </folder-viewer-updater-partial>
+            }
+        }
+
+        <div class="path ps-2 folder-viewer-head-path">
+            <fs-item-path-partial path="@Model.Content.Path" />
+        </div>
+
+        <folder-sort-button-partial model="@Model.SortButton" />
+
+        <upload-file-button-partial folder-path="@Model.Content.Path.LastOrDefault().Path" />
+    </div>
+
+    <div class="folder-viewer-list" style="padding-top: 0px;">
+        @foreach (FolderSortItem item in Model.Content.Folders)
+        {
+            <folder-viewer-item-partial item="@item" />
+        }
+
+        @foreach (FileSortItem item in Model.Content.Files)
+        {
+            <folder-viewer-item-partial item="@item" />
+        }
+    </div>
+</div>

@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemWeb.Models;
 using FileSystemWeb.Models.Internal;
+using StdOttStandard.Linq;
 
 namespace FileSystemWeb.Helpers
 {
@@ -218,6 +218,17 @@ namespace FileSystemWeb.Helpers
         {
             string path = file.Path;
             return string.IsNullOrWhiteSpace(path) || File.Exists(path);
+        }
+
+        public static (IFileItem previous, IFileItem next) GetFileSiblings(FileSortItem[] files, IFileItem file)
+        {
+            if (files.Length <= 1) return (null, null);
+
+            int index = files.IndexOf(f => f.Path == file.Path);
+            IFileItem previous = files[(index - 1 + files.Length) % files.Length];
+            IFileItem next = files[(index + 1) % files.Length];
+
+            return (previous, next);
         }
     }
 }

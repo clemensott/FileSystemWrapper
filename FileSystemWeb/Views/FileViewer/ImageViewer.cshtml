@@ -1,0 +1,10 @@
+﻿@using FileSystemCommon;
+@using FileSystemWeb.Views.FileViewer;
+@model ImageViewerModel
+@{
+    string apiEncodedFilePath = Utils.EncodePath(Model.File.Path);
+}
+
+<div class="image-container">
+    <img src="/api/files?path=@apiEncodedFilePath" class="image-content" alt="preview" />
+</div>

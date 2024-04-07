@@ -1,0 +1,12 @@
+﻿@using FileSystemWeb.Views.Users;
+@model LoginErrorModel
+
+<label id="login-error-label" class="form-check-label" hx-swap-oob="true">
+    @{
+        if (!string.IsNullOrEmpty(Model.Message))
+        {
+            <input class="is-invalid d-none">
+            <div class="invalid-feedback">@Model.Message</div>
+        }
+    }
+</label>

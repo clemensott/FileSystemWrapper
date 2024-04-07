@@ -1,0 +1,9 @@
+﻿@using FileSystemWeb.Views.FolderViewer;
+@using FileSystemWeb.Views.Shared.Components;
+@model FolderViewerUpdateModel
+
+<document-title-partial is-out-of-bound="true">
+    @Model.Title
+</document-title-partial>
+<folder-viewer-partial model="@Model.FolderViewer" />
+

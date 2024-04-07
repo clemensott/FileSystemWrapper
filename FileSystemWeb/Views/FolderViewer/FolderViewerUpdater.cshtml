@@ -1,0 +1,27 @@
+﻿@using FileSystemWeb.Extensions.Views;
+@using FileSystemWeb.Views.FolderViewer;
+@using System.Web;
+@model FolderViewerUpdaterModel
+@functions {
+    private string GetFirstQueryValue(string name)
+    {
+        return Context.Request.Query.TryGetValue(name, out var values)
+            && values.Count > 0 ? values.First() : null;
+    }
+}
+@{
+    string folder = HttpUtility.UrlEncode(Model.Folder ?? GetFirstQueryValue("folder"));
+    string file = HttpUtility.UrlEncode(Model.File ?? GetFirstQueryValue("file"));
+    string sortType = HttpUtility.UrlEncode(Model.SortType?.ToString() ?? GetFirstQueryValue("sortType"));
+    string sortDirection = HttpUtility.UrlEncode(Model.SortDirection?.ToString() ?? GetFirstQueryValue("sortDirection"));
+
+    string query = $"folder={folder}&file={file}&sortType={sortType}&sortDirection={sortDirection}";
+}
+
+<a hx-get="/folderViewer/folderViewer?folder=@folder&sortType=@sortType&sortDirection=@sortDirection"
+   hx-target="#main-folder-viewer"
+   hx-swap="outerHTML"
+   hx-push-url="@Model.PushUrl.ToAttribute($"?{query}")"
+   href="?@query">
+    @Html.Raw(Model.ChildContent)
+</a>

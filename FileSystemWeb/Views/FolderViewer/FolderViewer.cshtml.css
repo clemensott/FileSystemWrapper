@@ -1,0 +1,48 @@
+﻿.folder-viewer-list {
+    list-style-type: none;
+}
+
+.folder-viewer-head-container {
+    display: flex;
+    flex-direction: row;
+    align-items: start;
+    width: 100%;
+    background: white;
+    padding: 10px;
+    z-index: 15;
+}
+
+.folder-viewer-head-sticky {
+    position: fixed;
+    top: 0;
+    padding-right: 40px;
+}
+
+.folder-viewer-head-update-icon {
+    color: #17a2b8;
+}
+
+.folder-viewer-head-update-icon:hover {
+    cursor: pointer;
+    color: #106b79;
+}
+
+.folder-viewer-head-path {
+    display: flex;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.folder-viewer-to-top-container {
+    position: fixed; /* Fixed/sticky position */
+    bottom: 20px; /* Place the button at the bottom of the page */
+    right: 30px; /* Place the button 30px from the right */
+    z-index: 9; /* Make sure it does not overlap */
+}
+
+.folder-viewer-file-item-container {
+    display: flex;
+    align-items: center;
+}

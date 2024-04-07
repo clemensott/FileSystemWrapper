@@ -1,0 +1,51 @@
+﻿@using FileSystemWeb.Extensions.Http;
+@using FileSystemWeb.Views.Shared.Components;
+@{
+    bool isOutOfBound = Context.Request.IsHtmxRequest();
+    DocumentTitleModel documentTitleModel = new DocumentTitleModel(isOutOfBound, ViewBag.Title);
+    NavbarModel navbarModel = Context.GetNavbarModel(isOutOfBound);
+}
+
+@if (isOutOfBound)
+{
+    <document-title-partial model="@documentTitleModel" />
+    <navbar-partial model="@navbarModel" />
+    <div id="layout-content-container" class="container">
+        @RenderBody()
+    </div>
+}
+else
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="theme-color" content="#000000">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <document-title-partial model="@documentTitleModel" />
+
+        <link rel="stylesheet" href="/vendors/bootstrap/bootstrap.min.css"
+              integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN">
+        <link rel="stylesheet" href="/vendors/fontawesome/css/fontawesome.min.css" />
+        <link rel="stylesheet" href="/vendors/fontawesome/css/brands.min.css" />
+        <link rel="stylesheet" href="/vendors/fontawesome/css/solid.min.css" />
+
+        <link rel="stylesheet" href="/_Layout.css" />
+        <link rel="stylesheet" href="~/FileSystemWeb.styles.css" />
+
+        <script src="/vendors/htmx/htmx.min.js"></script>
+        <script src="/vendors/bootstrap/bootstrap.bundle.min.js"
+                integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL">
+        </script>
+    </head>
+    <body style="background-color: transparent;" hx-history="false">
+        <navbar-partial model="@navbarModel" />
+
+        <div id="layout-content-container" class="container">
+            @RenderBody()
+        </div>
+    </body>
+    </html>
+}
+

@@ -1,0 +1,57 @@
+﻿@using FileSystemCommon.Models.FileSystem.Files;
+@using FileSystemCommon.Models.FileSystem.Folders;
+@using FileSystemCommon;
+@using FileSystemWeb.Views.FSItem;
+@using FileSystemWeb.Views.Shared.Components;
+@model FSItemModel
+@{
+    string iconName = "fa-file";
+    string itemTypeClassName = "fs-item-file";
+
+    if (Model.Item is IFolderItem)
+    {
+        iconName = "fa-folder";
+        itemTypeClassName = "fs-item-folder";
+    }
+    else if (Model.Item is IFileItem file)
+    {
+        string fileType = Utils.GetFileType(file.Extension);
+        switch (fileType)
+        {
+            case "image":
+                iconName = "fa-file-image";
+                itemTypeClassName = "fs-item-image";
+                break;
+
+            case "audio":
+                iconName = "fa-file-audio";
+                itemTypeClassName = "fs-item-image";
+                break;
+
+            case "video":
+                iconName = "fa-file-video fs-item-image";
+                itemTypeClassName = "fs-item-video";
+                break;
+
+            case "text":
+                iconName = "fa-file-alt fs-item-image";
+                itemTypeClassName = "fs-item-text";
+                break;
+
+            case "pdf":
+                iconName = "fa-file-pdf";
+                itemTypeClassName = "fs-item-image";
+                break;
+        }
+    }
+
+}
+
+<div class="fs-item-container">
+    <div class="@itemTypeClassName">
+        <icon-partial name="@iconName" type="Solid" size="X2" />
+    </div>
+    <div class="ps-2">
+        @Model.Item.Name
+    </div>
+</div>

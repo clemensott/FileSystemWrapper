@@ -34,7 +34,22 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="wwwroot\favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\FileSystemCommon\FileSystemCommon.csproj" />
+    <ProjectReference Include="..\StdOttLib\StdOttStandardLib\StdOttStandardLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\vendors\bootstrap\" />
+    <Folder Include="wwwroot\vendors\htmx\" />
+    <Folder Include="wwwroot\vendors\fontawesome\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\favicon.ico" />
   </ItemGroup>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

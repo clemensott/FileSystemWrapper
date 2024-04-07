@@ -1,0 +1,10 @@
+﻿@using FileSystemWeb.Extensions.Views;
+@using FileSystemWeb.Views.Shared.Components;
+@model DocumentTitleModel
+@{
+    string oob = Model.IsOutOfBound.ToAttribute(true);
+}
+
+<title id="document-title" hx-select-oob="@oob">
+    @(Model.Title) - File System
+</title>

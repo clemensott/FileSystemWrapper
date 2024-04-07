@@ -1,0 +1,26 @@
+﻿.folder-viewer-item-container {
+    display: flex;
+    align-items: center;
+}
+
+.folder-viewer-item-container:nth-of-type(even) {
+    background-color: #F8F8F8;
+}
+
+.folder-viewer-file-item-content {
+    flex-grow: 1;
+}
+
+.folder-viewer-item-container-link {
+    color: black;
+    cursor: pointer;
+}
+
+.folder-viewer-item-container-link > a {
+    text-decoration: none;
+    color: black;
+}
+
+.folder-viewer-item-container-link > a:hover {
+    color: #009c9f;
+}

@@ -1,0 +1,8 @@
+﻿@using FileSystemCommon;
+@using FileSystemWeb.Views.FileViewer;
+@model PdfViewerModel
+@{
+    string mediaUrl = $"/api/files?path={Utils.EncodePath(Model.File.Path)}";
+}
+
+<embed src="@mediaUrl" type="application/pdf" class="pdf-viewer-pdf" />

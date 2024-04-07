@@ -1,0 +1,22 @@
+﻿@using FileSystemCommon.Models.FileSystem;
+@using FileSystemWeb.Views.FSItem;
+@using System.Web;
+@using FileSystemWeb.Views.FolderViewer;
+@model FSItemPathModel
+@{
+    for (int i = 0; i < Model.Path.Length; i++)
+    {
+        PathPart part = Model.Path[i];
+        if (i + 1 < Model.Path.Length)
+        {
+            <folder-viewer-updater-partial folder="@part.Path" file="">
+                @part.Name
+            </folder-viewer-updater-partial>
+            @System.IO.Path.DirectorySeparatorChar
+        }
+        else
+        {
+            @part.Name
+        }
+    }
+}

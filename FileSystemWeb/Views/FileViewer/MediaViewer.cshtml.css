@@ -1,0 +1,8 @@
+﻿audio.media-viewer-content {
+    width: 100%;
+}
+
+video.media-viewer-content {
+    max-width: 100%;
+    max-height: 100%;
+}

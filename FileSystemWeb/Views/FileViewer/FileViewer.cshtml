@@ -1,0 +1,87 @@
+﻿@using FileSystemCommon;
+@using FileSystemWeb.Views.FileViewer;
+@model FileViewerModel
+@{
+    string contentType = Utils.GetContentType(Model.File.Extension);
+    string theme = Model.Theme switch
+    {
+        FileViewerTheme.Light => "light",
+        FileViewerTheme.Dark => "dark",
+        _ => throw new ArgumentException("Value not supported"),
+    };
+
+    void RenderInfoText(string text)
+    {
+        <div clase="text-center">
+            <h3 class="font-italic file-viewer-info-text @theme">
+                @text
+            </h3>
+        </div>
+    }
+
+    void RenderErrorText(string text)
+    {
+        <label class="file-viewer-content-error @theme">
+            @text
+        </label>
+    }
+}
+
+<div class="file-viewer-container">
+    <div class="file-viewer-header-container">
+        <div style="flex-grow: 1"></div>
+        <h4 class="file-viewer-title @theme">@Model.File.Name</h4>
+        <div style="flex-grow: 1"></div>
+        <div class="m-1">
+            <file-actions-dropdown-partial title="Options" file="@Model.File" />
+        </div>
+    </div>
+    <div class="file-viewer-content-remaining">
+        <div class="file-viewer-content-container">
+            <div class="file-viewer-content">
+                @if (!Model.File.Permission.Read)
+                {
+                    RenderInfoText("Not authorized for reading");
+                }
+                else if (contentType.StartsWith("image/"))
+                {
+                    <image-viewer-partial file="@Model.File" />
+                }
+                else if (contentType.StartsWith("text/"))
+                {
+                    if (Model.File.Size <= 1024 * 1024)
+                    {
+                        <text-viewer-partial file="@Model.File" />
+                    }
+                    else
+                    {
+                        RenderErrorText("File to big (> 1MB)");
+                    }
+                }
+                else if (contentType.StartsWith("audio/"))
+                {
+                    <media-viewer-partial file="@Model.File" type="Audio" />
+                }
+                else if (contentType.StartsWith("video/"))
+                {
+                    <media-viewer-partial file="@Model.File" type="Video" />
+                }
+                else if (contentType == "application/pdf")
+                {
+                    if (Model.File.Size <= 100 * 1024 * 1024)
+                    {
+                        <pdf-viewer-partial file="@Model.File" />
+                    }
+                    else
+                    {
+                        RenderErrorText("File to big (> 100MB)");
+                    }
+                }
+                else
+                {
+                    RenderInfoText("No preview for this file available");
+                }
+            </div>
+        </div>
+    </div>
+</div>

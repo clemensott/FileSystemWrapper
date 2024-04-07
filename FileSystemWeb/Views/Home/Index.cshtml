@@ -1,0 +1,11 @@
+﻿@using FileSystemWeb.Views.FolderViewer;
+@using FileSystemWeb.Views.Home;
+@model IndexModel
+@{
+    Layout = "_Layout";
+}
+
+<div>
+    <file-viewer-overlay-partial model="@Model.FileViewerOverlay" />
+    <folder-viewer-partial model="@Model.FolderViewer" />
+</div>

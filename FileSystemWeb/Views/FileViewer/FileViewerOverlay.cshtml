@@ -1,0 +1,64 @@
+﻿@using FileSystemWeb.Views.FileViewer;
+@using System.Web;
+@model FileViewerOverlayModel
+@functions {
+    private string GetFirstQueryValue(string name)
+    {
+        return Context.Request.Query.TryGetValue(name, out var values)
+            && values.Count > 0 ? values.First() : null;
+    }
+}
+@{
+    string folder = HttpUtility.UrlEncode(GetFirstQueryValue("folder"));
+    string sortType = HttpUtility.UrlEncode(GetFirstQueryValue("sortType"));
+    string sortDirection = HttpUtility.UrlEncode(GetFirstQueryValue("sortDirection"));
+
+    string query = $"folder={folder}&sortType={sortType}&sortDirection={sortDirection}";
+}
+
+<div id="main-file-viewer-overlay"
+     class="file-viewer-overlay @(Model.File.HasValue ? null : "d-none")"
+     hx-get="/fileViewer/fileViewerOverlay?folder=@folder&sortType=@sortType&sortDirection=@sortDirection"
+     hx-select="#main-file-viewer-overlay"
+     hx-swap="outerHTML"
+     hx-trigger="click[checkCloseOverlay(event)]"
+     hx-push-url="?@query">
+    <script>
+        function checkCloseOverlay(e) {
+            return e.target.classList.contains('file-viewer-overlay') ||
+                e.target.classList.contains('file-viewer-overlay-close-icon') ||
+                e.target.classList.contains('file-viewer-overlay-container') ||
+                e.target.classList.contains('file-viewer-content') ||
+                e.target.classList.contains('image-container');
+        }
+    </script>
+
+    @if (Model.File.HasValue)
+    {
+        <div class="file-viewer-overlay-container">
+            <file-viewer-partial file="@Model.File.Value" theme="Dark" />
+        </div>
+
+        <div class="file-viewer-overlay-close" title="Close">
+            <icon-partial name="fa-times-circle" type="Solid" size="X3" class-name="file-viewer-overlay-close-icon" />
+        </div>
+
+        if (Model.PreviousFile != null)
+        {
+            <div class="file-viewer-overlay-previous" title="@Model.PreviousFile.Name">
+                <file-viewer-overlay-updater-partial file="@Model.PreviousFile.Name">
+                    <icon-partial name="fa-chevron-circle-left" type="Solid" size="X3" />
+                </file-viewer-overlay-updater-partial>
+            </div>
+        }
+
+        if (Model.NextFile != null)
+        {
+            <div class="file-viewer-overlay-next" title="@Model.NextFile.Name">
+                <file-viewer-overlay-updater-partial file="@Model.NextFile.Name">
+                    <icon-partial name="fa-chevron-circle-right" type="Solid" size="X3" />
+                </file-viewer-overlay-updater-partial>
+            </div>
+        }
+    }
+</div>

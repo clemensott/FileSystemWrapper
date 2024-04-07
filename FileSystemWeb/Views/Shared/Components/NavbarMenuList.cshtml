@@ -1,0 +1,23 @@
+﻿@using FileSystemWeb.Views.Shared.Components;
+@model NavbarModel
+
+<div class="navbar-nav">
+    @{
+        if (Model.IsShareAllowed)
+        {
+            bool active = Model.Path.StartsWith("/share");
+            <a class="nav-link @(active ? "active" : "")" aria-current="page" href="/share">Share</a>
+        }
+
+        if (Model.IsAuthenticated)
+        {
+            bool active = Model.Path.StartsWith("/users/logout");
+            <a class="nav-link @(active ? "active" : "")" href="" hx-post="/users/logout">Logout</a>
+        }
+        else
+        {
+            bool active = Model.Path.StartsWith("/users/login");
+            <a class="nav-link @(active ? "active" : "")" href="/users/login" hx-boost="true">Login</a>
+        }
+    }
+</div>

@@ -1,53 +1,52 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using FileSystemCommon.Models.Users;
-using FileSystemWeb.Constants;
+﻿using FileSystemWeb.Controllers.Base;
+using FileSystemWeb.Extensions.Http;
 using FileSystemWeb.Models;
-using Microsoft.AspNetCore.Authorization;
+using FileSystemWeb.Views.Users;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace FileSystemWeb.Controllers
 {
-    [Route("api/[controller]")]
-    [Authorize]
-    public class UsersController : Controller
+    [Route("[controller]")]
+    public class UsersController : LayoutController
     {
-        private readonly UserManager<AppUser> userManager;
-        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly SignInManager<AppUser> signInManager;
 
-        public UsersController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
+        public UsersController(SignInManager<AppUser> signInManager)
         {
-            this.userManager = userManager;
-            this.roleManager = roleManager;
+            this.signInManager = signInManager;
         }
 
-        [HttpGet("all")]
-        [Authorize(Policy = Permissions.Users.GetAllUsers)]
-        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
+        [HttpGet("login")]
+        public IActionResult GetLogin()
         {
-            return await userManager.Users.Select(u => new User()
-            {
-                Id = u.Id,
-                Name = u.UserName,
-            }).ToArrayAsync();
+            Title = "Login";
+
+            return View("./Login");
         }
 
-        [HttpGet("add")]
-        [Authorize(Policy = Permissions.Users.PostUser)]
-        public async Task<ActionResult> Add([FromQuery] string name, [FromQuery] string password)
+        [HttpPost("login")]
+        public async Task<IActionResult> PostLogin([FromForm] string username, [FromForm] string password)
         {
-            AppUser user = new AppUser()
+            var signInResult = await signInManager.PasswordSignInAsync(username, password, false, false);
+
+            if (signInResult.Succeeded)
             {
-                UserName = name,
-            };
+                HttpContext.Response.SetHtmxLocation("/");
+                return NoContent();
+            }
 
-            IdentityResult result = await userManager.CreateAsync(user, password);
+            return View("./LoginError", new LoginErrorModel("Please enter a correct Username and password"));
+        }
 
-            return result.Succeeded ? (ActionResult)Ok("Success") : BadRequest();
+        [HttpPost("logout")]
+        public async Task<IActionResult> PostLogout()
+        {
+            await signInManager.SignOutAsync();
+
+            HttpContext.Response.SetHtmxLocation("/users/login");
+            return NoContent();
         }
     }
 }

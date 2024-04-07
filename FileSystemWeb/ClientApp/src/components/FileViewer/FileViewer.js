@@ -97,7 +97,7 @@ export default function ({path, theme, onFileInfoLoaded, hideOpenFileLinkAction,
         }
 
         return (
-            <div className="text-center'">
+            <div className="text-center">
                 <h3 className={`font-italic file-viewer-info-text ${theme}`}>
                     No preview for this file available
                 </h3>

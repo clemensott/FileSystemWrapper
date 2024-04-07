@@ -1,0 +1,33 @@
+﻿@using FileSystemWeb.Views.Shared.Components;
+@model IconModel
+@{
+    string type = Model.Type switch
+    {
+        IconType.Default => "fa",
+        IconType.Solid => "fas",
+        _ => throw new ArgumentException("Value not supported"),
+    };
+    string size = Model.Size switch
+    {
+        IconSize.XS2 => "fa-2xs",
+        IconSize.XS => "fa-xs",
+        IconSize.SM => "fa-sm",
+        IconSize.Default => "",
+        IconSize.LG => "fa-lg",
+        IconSize.XL => "fa-xl",
+        IconSize.XL2 => "fa-xl2",
+        IconSize.X1 => "fa-1x",
+        IconSize.X2 => "fa-2x",
+        IconSize.X3 => "fa-3x",
+        IconSize.X4 => "fa-4x",
+        IconSize.X5 => "fa-5x",
+        IconSize.X6 => "fa-6x",
+        IconSize.X7 => "fa-7x",
+        IconSize.X8 => "fa-8x",
+        IconSize.X9 => "fa-9x",
+        IconSize.X10 => "fa-10x",
+        _ => throw new ArgumentException("Value not supported"),
+    };
+}
+
+<i class="@type @Model.Name @size @Model.ClassName"></i>

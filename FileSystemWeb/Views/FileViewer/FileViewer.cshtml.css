@@ -1,0 +1,76 @@
+﻿.file-viewer-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+}
+
+.file-viewer-header-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.file-viewer-title.dark {
+    color: white;
+}
+
+.file-viewer-title.light {
+    color: black;
+}
+
+.file-viewer-open-link.dark {
+    color: #17a2b8;
+}
+
+.file-viewer-open-link.light {
+    color: #007bff;
+}
+
+.file-viewer-download-link.dark {
+    color: white;
+}
+
+.file-viewer-download-link.light {
+    color: black;
+}
+
+.file-viewer-content-remaining {
+    flex-grow: 1;
+    flex-shrink: 1;
+    position: relative;
+}
+
+.file-viewer-content-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
+.file-viewer-content {
+    width: 100%;
+    height: 100%;
+}
+
+.file-viewer-info-text {
+    text-align: center;
+}
+
+.file-viewer-info-text.dark {
+    color: lightgray;
+}
+
+.file-viewer-info-text.light {
+    color: darkgray;
+}
+
+.file-viewer-content-error {
+    padding: 5px 10px;
+    background-color: rgb(220, 220, 220);
+    color: red;
+    border-radius: 10px;
+}

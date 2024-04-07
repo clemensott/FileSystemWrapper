@@ -1,0 +1,98 @@
+﻿@using FileSystemCommon;
+@using FileSystemCommon.Models.FileSystem.Files;
+@using FileSystemWeb.Extensions.Http;
+@using FileSystemWeb.Extensions.Views;
+@using FileSystemWeb.Views.FSItem;
+@using FileSystemWeb.Views.Shared.Components;
+@using System.Web;
+@using StdOttStandard;
+@model FileActionsDropdownModel
+@{
+    string urlEncodedFilePath = HttpUtility.UrlEncode(Model.File.Path);
+    string apiEncodedFilePath = Utils.EncodePath(Model.File.Path);
+}
+
+<div class="dropdown">
+    <button class="dropdown-toggle btn btn-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">@Model.Title</button>
+    <div class="dropdown-menu dropdown-menu-end">
+        @{
+            bool disableOpenFile = !Model.File.Permission.Info;
+            string fileOpenFileLink = $"/file/view?path={urlEncodedFilePath}";
+
+            <button type="button" tabindex="0" role="menuitem"
+                    class="dropdown-item @disableOpenFile.ToAttribute("disabled")"
+                    disabled="@(disableOpenFile.ToAttribute())">
+                <a class="text-dark dropdown-link" rel="noopener noreferrer" href="@fileOpenFileLink" target="_blank">
+                    <icon-partial name="fa-external-link-square-alt" type="Solid" class-name="me-2" />
+                    Open file in new tab
+                </a>
+            </button>
+        }
+        @{
+            string fileOpenContentLink = $"/api/files?path={apiEncodedFilePath}";
+            string fileType = Utils.GetFileType(Model.File.Extension);
+            bool isSupportedFile = fileType switch
+            {
+                "image" => true,
+                "audio" => true,
+                "video" => true,
+                "text" => true,
+                "pdf" => true,
+                _ => false,
+            };
+            bool disableOpenContent = !Model.File.Permission.Read || !isSupportedFile;
+
+            <button type="button" tabindex="0" role="menuitem"
+                    class="dropdown-item @disableOpenContent.ToAttribute("disabled")"
+                    disabled="@(disableOpenContent.ToAttribute())">
+                <a class="text-dark dropdown-link" rel="noopener noreferrer" href="@fileOpenContentLink" target="_blank">
+                    <icon-partial name="fa-external-link-square-alt" type="Solid" class-name="me-2" />
+                    Open content in new tab
+                </a>
+            </button>
+        }
+        @{
+            string fileDownloadLink = $"/api/files/download?path={apiEncodedFilePath}";
+            string fileSize = Model.File is FileItemInfo fileInfo ? $"({StdUtils.GetFormattedFileSize(fileInfo.Size)})" : null;
+            bool disableDownload = !Model.File.Permission.Read;
+
+            <button type="button" tabindex="0" role="menuitem"
+                    class="dropdown-item @disableDownload.ToAttribute("disabled")"
+                    disabled="@(disableDownload.ToAttribute())">
+                <a class="text-dark dropdown-link" rel="noopener noreferrer" href="@fileDownloadLink" target="_blank">
+                    <icon-partial name="fa-download" type="Solid" class-name="me-2" />
+                    Download @fileSize
+                </a>
+            </button>
+        }
+
+        <div class="dropdown-divider"></div>
+
+        @if (Context.IsShareManager())
+        {
+            string fileShareLink = Model.File.SharedId.HasValue
+            ? $"/share/file/edit/{urlEncodedFilePath}" : $"/share/file/add?path={urlEncodedFilePath}";
+            bool disableShare = !Model.File.Permission.Info;
+
+            <button type="button" tabindex="0" role="menuitem"
+                    class="dropdown-item @disableShare.ToAttribute("disabled")"
+                    disabled="@(disableShare.ToAttribute())">
+                <a class="text-dark dropdown-link" href="@fileShareLink" hx-boost="true">
+                    <icon-partial name="fa-share" type="Solid" class-name="me-2" />
+                    Share
+                </a>
+            </button>
+        }
+
+        @{
+            bool disableDelete = !Model.File.Permission.Write;
+
+            <button type="button" disabled="" tabindex="-1"
+                    class="dropdown-item @disableDelete.ToAttribute("disabled")"
+                    disabled="@disableDelete.ToAttribute()">
+                <icon-partial name="fa-trash" type="Solid" class-name="me-2" />
+                Delete
+            </button>
+        }
+    </div>
+</div>
