@@ -61,8 +61,8 @@ namespace FileSystemUWP.SettingsStorage
                 Mode = sync.Mode,
                 CompareType = sync.CompareType,
                 ConflictHandlingType = sync.ConflictHandlingType,
-                Whitelist = sync.Whitelist != null ? new ObservableCollection<string>(sync.Whitelist) : null,
-                Blacklist = sync.Blacklist != null ? new ObservableCollection<string>(sync.Blacklist) : null,
+                AllowList = sync.Whitelist != null ? new ObservableCollection<string>(sync.Whitelist) : null,
+                DenyList = sync.Blacklist != null ? new ObservableCollection<string>(sync.Blacklist) : null,
             };
         }
 
@@ -125,8 +125,8 @@ namespace FileSystemUWP.SettingsStorage
                 Mode = pair.Mode,
                 CompareType = pair.CompareType,
                 ConflictHandlingType = pair.ConflictHandlingType,
-                Whitelist = pair.Whitelist?.ToArray(),
-                Blacklist = pair.Blacklist?.ToArray(),
+                Whitelist = pair.AllowList?.ToArray(),
+                Blacklist = pair.DenyList?.ToArray(),
             };
         }
 

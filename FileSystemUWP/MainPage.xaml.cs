@@ -101,7 +101,7 @@ namespace FileSystemUWP
 
             if (await edit.Task)
             {
-                Server server = new Server(viewModel.BackgroundOperations)
+                Server server = new Server()
                 {
                     SortBy = new FileSystemItemSortBy()
                     {
@@ -109,6 +109,7 @@ namespace FileSystemUWP
                         Direction = FileSystemItemSortDirection.ASC,
                     },
                     Api = newApi,
+                    BackgroundOperations = viewModel.BackgroundOperations,
                 };
                 viewModel.Servers.Add(server);
                 await App.SaveViewModel("added server");

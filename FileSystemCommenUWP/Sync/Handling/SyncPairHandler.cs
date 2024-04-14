@@ -337,7 +337,7 @@ namespace FileSystemCommonUWP.Sync.Handling
 
                 foreach (FileSortItem serverFile in serverFiles)
                 {
-                    if (!CheckWhitelistAndBlacklist(serverFile.Path)) continue;
+                    if (!CheckAllowAndDenyList(serverFile.Path)) continue;
 
                     int index;
                     string relFilePath = api.Config.JoinPaths(relPath, serverFile.Name);
@@ -359,7 +359,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                     string relFilePath = api.Config.JoinPaths(relPath, localFile.Name);
                     string serverFilePath = api.Config.JoinPaths(serverPath, relFilePath);
 
-                    if (!CheckWhitelistAndBlacklist(serverFilePath)) continue;
+                    if (!CheckAllowAndDenyList(serverFilePath)) continue;
 
                     singleFiles.Enqueue(CreateFilePair(serverPath, relFilePath, localFile, false));
                     TotalCount++;
@@ -402,7 +402,7 @@ namespace FileSystemCommonUWP.Sync.Handling
         /// </summary>
         /// <param name="path"></param>
         /// <returns>Returns true if file has to be synced</returns>
-        private bool CheckWhitelistAndBlacklist(string path)
+        private bool CheckAllowAndDenyList(string path)
         {
             if (denialList.Any(e => path.EndsWith(e))) return false;
 

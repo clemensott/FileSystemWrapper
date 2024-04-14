@@ -75,11 +75,11 @@
 
                 <TextBlock Text="Extensions allow list:" Margin="3,10,3,3" FontWeight="Bold" />
                 <TextBox Margin="5" AcceptsReturn="True" 
-                         Text="{Binding Whitelist,Mode=TwoWay,Converter={StaticResource linesConverter}}"/>
+                         Text="{Binding AllowList,Mode=TwoWay,Converter={StaticResource linesConverter}}"/>
 
                 <TextBlock Text="Extensions deny list:" Margin="3,10,3,3" FontWeight="Bold" />
                 <TextBox Margin="5" AcceptsReturn="True" 
-                         Text="{Binding Blacklist,Mode=TwoWay,Converter={StaticResource linesConverter}}"/>
+                         Text="{Binding DenyList,Mode=TwoWay,Converter={StaticResource linesConverter}}"/>
             </StackPanel>
         </ScrollViewer>
     </Grid>

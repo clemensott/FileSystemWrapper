@@ -156,6 +156,7 @@
     <Compile Include="Sync\Handling\Mode\ServerToLocalModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\SyncModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\TwoWayModeHandler.cs" />
+    <Compile Include="Sync\Handling\SyncPairRunInfo.cs" />
     <Compile Include="Sync\Result\SyncedItem.cs" />
     <Compile Include="Sync\Result\SyncedItems.cs" />
     <Compile Include="Sync\Handling\SyncPairHandler.cs" />

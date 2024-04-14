@@ -89,18 +89,17 @@ namespace FileSystemUWP
             }
         }
 
+        public int Id { get; set; }
+
         internal FilesViewing LastFilesViewing { get; set; }
 
         public SyncPairs Syncs { get; }
 
-        public BackgroundOperations BackgroundOperations { get; }
+        public BackgroundOperations BackgroundOperations { get; set; }
 
-        public string[] LoadedSyncPairTokens { get; set; }
-
-        public Server(BackgroundOperations backgroundOperations)
+        public Server()
         {
             Syncs = new SyncPairs();
-            BackgroundOperations = backgroundOperations;
         }
 
         public Server(BackgroundOperations backgroundOperations, IEnumerable<SyncPair> pairs)

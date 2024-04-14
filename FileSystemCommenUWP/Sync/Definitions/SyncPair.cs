@@ -18,7 +18,7 @@ namespace FileSystemCommonUWP.Sync.Definitions
         private SyncMode mode;
         private SyncCompareType compareType;
         private SyncConflictHandlingType conflictHandlingType;
-        private ObservableCollection<string> whitelist, blacklist;
+        private ObservableCollection<string> allowList, denyList;
 
         public bool WithSubfolders
         {
@@ -44,6 +44,8 @@ namespace FileSystemCommonUWP.Sync.Definitions
                 OnPropertyChanged(nameof(IsLocalFolderLoaded));
             }
         }
+
+        public int Id { get; set; }
 
         public string Token { get; }
 
@@ -122,27 +124,27 @@ namespace FileSystemCommonUWP.Sync.Definitions
             }
         }
 
-        public ObservableCollection<string> Whitelist
+        public ObservableCollection<string> AllowList
         {
-            get => whitelist;
+            get => allowList;
             set
             {
-                if (value == whitelist) return;
+                if (value == allowList) return;
 
-                whitelist = value;
-                OnPropertyChanged(nameof(Whitelist));
+                allowList = value;
+                OnPropertyChanged(nameof(AllowList));
             }
         }
 
-        public ObservableCollection<string> Blacklist
+        public ObservableCollection<string> DenyList
         {
-            get => blacklist;
+            get => denyList;
             set
             {
-                if (value == blacklist) return;
+                if (value == denyList) return;
 
-                blacklist = value;
-                OnPropertyChanged(nameof(Blacklist));
+                denyList = value;
+                OnPropertyChanged(nameof(DenyList));
             }
         }
 
@@ -201,8 +203,8 @@ namespace FileSystemCommonUWP.Sync.Definitions
                 Mode = Mode,
                 CompareType = CompareType,
                 ConflictHandlingType = ConflictHandlingType,
-                Whitelist = Whitelist != null ? new ObservableCollection<string>(Whitelist) : null,
-                Blacklist = Blacklist != null ? new ObservableCollection<string>(Blacklist) : null,
+                AllowList = AllowList != null ? new ObservableCollection<string>(AllowList) : null,
+                DenyList = DenyList != null ? new ObservableCollection<string>(DenyList) : null,
             };
         }
 

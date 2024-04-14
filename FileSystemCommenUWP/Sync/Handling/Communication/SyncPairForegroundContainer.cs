@@ -54,8 +54,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
                 LocalPath = sync.LocalFolder.Path,
                 ServerNamePath = sync.ServerPath.GetNamePath(api.Config.DirectorySeparatorChar),
                 ServerPath = sync.ServerPath.LastOrDefault().Path,
-                AllowList = sync.Whitelist?.ToArray(),
-                DenialList = sync.Blacklist?.ToArray(),
+                AllowList = sync.AllowList?.ToArray(),
+                DenialList = sync.DenyList?.ToArray(),
                 IsTestRun = isTestRun,
                 ApiBaseUrl = api.BaseUrl,
             });
