@@ -23,18 +23,18 @@ namespace FileSystemCommonUWP.Sync.Definitions
         {
             foreach (SyncPair pair in this)
             {
-                pair.SaveLocalFolder();
+                //pair.SaveLocalFolder();
             }
 
             foreach (string loadedToken in loadedTokens.ToNotNull())
             {
-                if (this.All(p => p.Token != loadedToken))
-                {
-                    RemoveFromFutureAccessList(loadedToken);
-                }
+                //if (this.All(p => p.Token != loadedToken))
+                //{
+                //    RemoveFromFutureAccessList(loadedToken);
+                //}
             }
 
-            loadedTokens = this.Select(p => p.Token).ToArray();
+            //loadedTokens = this.Select(p => p.Token).ToArray();
         }
 
         private static void RemoveFromFutureAccessList(string token)

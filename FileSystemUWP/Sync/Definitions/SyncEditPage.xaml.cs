@@ -8,7 +8,6 @@ using StdOttStandard.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -176,11 +175,7 @@ namespace FileSystemUWP.Sync.Definitions
             picker.FileTypeFilter.Add("*");
             StorageFolder localFolder = await picker.PickSingleFolderAsync();
 
-            try
-            {
-                if (localFolder != null) edit.Sync.LocalFolder = localFolder;
-            }
-            catch { }
+            if (localFolder != null) edit.LocalFolder = localFolder;
         }
 
         private async void AbbApply_Click(object sender, RoutedEventArgs e)

@@ -127,8 +127,6 @@
     <Compile Include="Controls\BackgroundOperationsControl.xaml.cs">
       <DependentUpon>BackgroundOperationsControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Database\DbDataReaderExtensions.cs" />
-    <Compile Include="Database\SqliteExecuteService.cs" />
     <Compile Include="Models\FileSystemItem.cs" />
     <Compile Include="FileSystemItemInfoPage.xaml.cs">
       <DependentUpon>FileSystemItemInfoPage.xaml</DependentUpon>
@@ -188,10 +186,6 @@
     </Compile>
     <Compile Include="API\Server.cs" />
     <Compile Include="SettingsStorage\FileSystemSortItemStore.cs" />
-    <Compile Include="Database\ISqlExecuteService.cs" />
-    <Compile Include="Database\Repos\BaseRepo.cs" />
-    <Compile Include="Database\Repos\ServersRepo.cs" />
-    <Compile Include="Database\Repos\SyncPairsRepos.cs" />
     <Compile Include="SettingsStorage\ServerStore.cs" />
     <Compile Include="SettingsStorage\Store.cs" />
     <Compile Include="SettingsStorage\SyncPairStore.cs" />

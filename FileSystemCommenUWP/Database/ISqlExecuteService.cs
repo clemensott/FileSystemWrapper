@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace FileSystemUWP.Database
+namespace FileSystemCommonUWP.Database
 {
-    interface ISqlExecuteService : IDisposable
+    public interface ISqlExecuteService : IDisposable
     {
         Task<int> ExecuteNonQueryAsync(string sql, IEnumerable<KeyValuePair<string, object>> parameters = null);
 
@@ -17,6 +15,6 @@ namespace FileSystemUWP.Database
 
         Task<T> ExecuteReadFirstAsync<T>(Func<DbDataReader, T> modelConverter, string sql, IEnumerable<KeyValuePair<string, object>> parameters = null);
 
-        Task<IEnumerable<T>> ExecuteReadAllAsync<T>(Func<DbDataReader, T> modelConverter, string sql, IEnumerable<KeyValuePair<string, object>> parameters = null);
+        Task<IList<T>> ExecuteReadAllAsync<T>(Func<DbDataReader, T> modelConverter, string sql, IEnumerable<KeyValuePair<string, object>> parameters = null);
     }
 }

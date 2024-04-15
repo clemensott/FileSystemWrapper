@@ -1,12 +1,18 @@
 ﻿using System.Data.Common;
 
-namespace FileSystemUWP.Database
+namespace FileSystemCommonUWP.Database
 {
     static class DbDataReaderExtensions
     {
-        public static bool GetBoolean(this DbDataReader reader, string name)
+        public static bool? GetBooleanFromNullableLong(this DbDataReader reader, string name)
         {
-            return reader.GetBoolean(reader.GetOrdinal(name));
+            int ordinal = reader.GetOrdinal(name);
+            if (reader.IsDBNull(ordinal))
+            {
+                return null;
+            }
+
+            return reader.GetInt64(ordinal) == 1L;
         }
 
         public static long GetInt64(this DbDataReader reader, string name)

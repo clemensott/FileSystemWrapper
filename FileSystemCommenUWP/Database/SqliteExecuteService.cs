@@ -6,7 +6,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace FileSystemUWP.Database
+namespace FileSystemCommonUWP.Database
 {
     class SqliteExecuteService: ISqlExecuteService
     {
@@ -74,7 +74,7 @@ namespace FileSystemUWP.Database
             }
         }
 
-        public async Task<IEnumerable<T>> ExecuteReadAllAsync<T>(Func<DbDataReader, T> modelConverter, string sql, IEnumerable<KeyValuePair<string, object>> parameters = null)
+        public async Task<IList<T>> ExecuteReadAllAsync<T>(Func<DbDataReader, T> modelConverter, string sql, IEnumerable<KeyValuePair<string, object>> parameters = null)
         {
             using (SqliteCommand command = await GetCommand(sql, parameters))
             {

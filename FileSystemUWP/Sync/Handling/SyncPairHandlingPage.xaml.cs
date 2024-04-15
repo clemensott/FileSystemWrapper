@@ -1,8 +1,8 @@
-﻿using FileSystemCommonUWP.Sync.Definitions;
+﻿using FileSystemCommonUWP.Database;
+using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling;
 using FileSystemCommonUWP.Sync.Handling.Communication;
 using StdOttStandard;
-using StdOttStandard.Converter.MultipleInputs;
 using StdOttUwp;
 using System;
 using System.Collections.Generic;
@@ -22,14 +22,19 @@ namespace FileSystemUWP.Sync.Handling
     /// </summary>
     public sealed partial class SyncPairHandlingPage : Page
     {
+        private readonly AppDatabase database;
+        private SyncPairRun syncPairRun;
+
         public SyncPairHandlingPage()
         {
             this.InitializeComponent();
+
+            database = ((App)Application.Current).Database;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            DataContext = e.Parameter;
+            DataContext = syncPairRun = (SyncPairRun)e.Parameter;
 
             base.OnNavigatedTo(e);
         }
@@ -123,31 +128,31 @@ namespace FileSystemUWP.Sync.Handling
 
         private async void TblComparedFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
+            IEnumerable<SyncPairRunFile> pairs = await GetSyncPairRunFiles(SyncPairRunFileType.Compared);
             await ShowFileList("Compared", pairs);
         }
 
         private async void TblEqualFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
+            IEnumerable<SyncPairRunFile> pairs = await GetSyncPairRunFiles(SyncPairRunFileType.Equal);
             await ShowFileList("Equal", pairs);
         }
 
         private async void TblIgnoreFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
+            IEnumerable<SyncPairRunFile> pairs = await GetSyncPairRunFiles(SyncPairRunFileType.Ignore);
             await ShowFileList("Ignored", pairs);
         }
 
         private async void TblConflictFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
+            IEnumerable<SyncPairRunFile> pairs = await GetSyncPairRunFiles(SyncPairRunFileType.Conflict);
             await ShowFileList("Conflicts", pairs);
         }
 
         private async void TblErrorFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IList<ErrorFilePairInfo> pairs = (IList<ErrorFilePairInfo>)((FrameworkElement)sender).DataContext;
+            IList<SyncPairRunErrorFile> pairs = await database.SyncPairs.SelectSyncPairRunFiles(syncPairRun.Id);
 
             if (pairs.Count == 0)
             {
@@ -158,9 +163,9 @@ namespace FileSystemUWP.Sync.Handling
             int i = 0;
             while (true)
             {
-                ErrorFilePairInfo errorPair = pairs[i];
+                SyncPairRunErrorFile errorPair = pairs[i];
                 string title = $"Error: {i + 1} / {pairs.Count}";
-                string message = $"{errorPair.File.RelativePath}\r\n{errorPair.Exception}";
+                string message = $"{errorPair.RelativePath}\r\n{errorPair.Exception}";
 
                 ContentDialogResult result = await DialogUtils.ShowContentAsync(message, title, "Cancel", "Previous", "Next", ContentDialogButton.Secondary);
 
@@ -172,29 +177,34 @@ namespace FileSystemUWP.Sync.Handling
 
         private async void TblCopiedLocalFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
+            IEnumerable<SyncPairRunFile> pairs = await GetSyncPairRunFiles(SyncPairRunFileType.CopiedLocal);
             await ShowFileList("Copied local", pairs);
         }
 
         private async void TblCopiedServerFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
+            IEnumerable<SyncPairRunFile> pairs = await GetSyncPairRunFiles(SyncPairRunFileType.CopiedServer);
             await ShowFileList("Copied server", pairs);
         }
 
         private async void TblDeletedLocalFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
+            IEnumerable<SyncPairRunFile> pairs = await GetSyncPairRunFiles(SyncPairRunFileType.DeletedLocal);
             await ShowFileList("Deleted local", pairs);
         }
 
         private async void TblDeletedServerFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IEnumerable<FilePairInfo> pairs = (IEnumerable<FilePairInfo>)((FrameworkElement)sender).DataContext;
+            IEnumerable<SyncPairRunFile> pairs = await GetSyncPairRunFiles(SyncPairRunFileType.DeletedServer);
             await ShowFileList("Deleted server", pairs);
         }
 
-        private static async Task ShowFileList(string title, IEnumerable<FilePairInfo> pairs)
+        private async Task<IEnumerable<SyncPairRunFile>> GetSyncPairRunFiles(SyncPairRunFileType type)
+        {
+            return await database.SyncPairs.SelectSyncPairRunFiles(syncPairRun.Id, type);
+        }
+
+        private static async Task ShowFileList(string title, IEnumerable<SyncPairRunFile> pairs)
         {
             string message = string.Join("\r\n", pairs.Take(30).Select(p => p.RelativePath));
             if (string.IsNullOrWhiteSpace(message)) message = "<None>";
@@ -207,10 +217,9 @@ namespace FileSystemUWP.Sync.Handling
             Frame.GoBack();
         }
 
-        private void AbbStop_Click(object sender, RoutedEventArgs e)
+        private async void AbbStop_Click(object sender, RoutedEventArgs e)
         {
-            SyncPairForegroundContainer container = (SyncPairForegroundContainer)DataContext;
-            BackgroundTaskHelper.Current.Cancel(container.Request.RunToken);
+            await BackgroundTaskHelper.Current.Cancel(syncPairRun);
         }
     }
 }

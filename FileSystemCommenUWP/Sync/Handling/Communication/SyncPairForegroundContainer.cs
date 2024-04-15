@@ -42,22 +42,22 @@ namespace FileSystemCommonUWP.Sync.Handling.Communication
         {
             return new SyncPairForegroundContainer(new SyncPairRequestInfo()
             {
-                RunToken = Guid.NewGuid().ToString(),
-                Token = sync.Token,
-                ResultToken = sync.ResultToken,
-                Mode = mode ?? sync.Mode,
-                CompareType = sync.CompareType,
-                ConflictHandlingType = sync.ConflictHandlingType,
-                WithSubfolders = sync.WithSubfolders,
-                IsCanceled = false,
-                Name = sync.Name,
-                LocalPath = sync.LocalFolder.Path,
-                ServerNamePath = sync.ServerPath.GetNamePath(api.Config.DirectorySeparatorChar),
-                ServerPath = sync.ServerPath.LastOrDefault().Path,
-                AllowList = sync.AllowList?.ToArray(),
-                DenialList = sync.DenyList?.ToArray(),
-                IsTestRun = isTestRun,
-                ApiBaseUrl = api.BaseUrl,
+                //RunToken = Guid.NewGuid().ToString(),
+                //Token = sync.Token,
+                //ResultToken = sync.ResultToken,
+                //Mode = mode ?? sync.Mode,
+                //CompareType = sync.CompareType,
+                //ConflictHandlingType = sync.ConflictHandlingType,
+                //WithSubfolders = sync.WithSubfolders,
+                //IsCanceled = false,
+                //Name = sync.Name,
+                //LocalPath = sync.LocalFolder.Path,
+                //ServerNamePath = sync.ServerPath.GetNamePath(api.Config.DirectorySeparatorChar),
+                //ServerPath = sync.ServerPath.LastOrDefault().Path,
+                //AllowList = sync.AllowList?.ToArray(),
+                //DenialList = sync.DenyList?.ToArray(),
+                //IsTestRun = isTestRun,
+                //ApiBaseUrl = api.BaseUrl,
             });
         }
 

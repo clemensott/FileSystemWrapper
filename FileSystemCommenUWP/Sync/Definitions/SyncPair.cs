@@ -12,9 +12,8 @@ namespace FileSystemCommonUWP.Sync.Definitions
     public class SyncPair : INotifyPropertyChanged
     {
         private bool withSubfolders, isLocalFolderLoaded;
-        private string name;
+        private string name, localFolderPath;
         private PathPart[] serverPath;
-        private StorageFolder localFolder;
         private SyncMode mode;
         private SyncCompareType compareType;
         private SyncConflictHandlingType conflictHandlingType;
@@ -32,24 +31,13 @@ namespace FileSystemCommonUWP.Sync.Definitions
             }
         }
 
-        [XmlIgnore]
-        public bool IsLocalFolderLoaded
-        {
-            get => isLocalFolderLoaded;
-            private set
-            {
-                if (value == isLocalFolderLoaded) return;
-
-                isLocalFolderLoaded = value;
-                OnPropertyChanged(nameof(IsLocalFolderLoaded));
-            }
-        }
-
         public int Id { get; set; }
 
-        public string Token { get; }
+        public int? CurrentSyncPairRunId { get; set; }
 
-        public string ResultToken { get; }
+        public int? LastSyncPairResultId { get; set; }
+
+        public string LocalFolderToken { get; }
 
         public string Name
         {
@@ -75,16 +63,15 @@ namespace FileSystemCommonUWP.Sync.Definitions
             }
         }
 
-        [XmlIgnore]
-        public StorageFolder LocalFolder
+        public string LocalFolderPath
         {
-            get => localFolder;
+            get => localFolderPath;
             set
             {
-                if (value == localFolder) return;
+                if (value == localFolderPath) return;
 
-                localFolder = value;
-                OnPropertyChanged(nameof(LocalFolder));
+                localFolderPath = value;
+                OnPropertyChanged(nameof(LocalFolderPath));
             }
         }
 
@@ -148,58 +135,25 @@ namespace FileSystemCommonUWP.Sync.Definitions
             }
         }
 
-        public SyncPair() : this(null, null)
+        public SyncPair() : this(Guid.NewGuid().ToString())
         {
         }
 
-        public SyncPair(string resultToken) : this(null, resultToken)
+        public SyncPair(string localFolderToken)
         {
-        }
-
-        public SyncPair(string token, string resultToken)
-        {
-            Token = token ?? Guid.NewGuid().ToString();
-            ResultToken = resultToken ?? Guid.NewGuid().ToString();
-        }
-
-        public async Task LoadLocalFolder()
-        {
-            if (StorageApplicationPermissions.FutureAccessList.ContainsItem(Token))
-            {
-                LocalFolder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(Token);
-            }
-            IsLocalFolderLoaded = true;
-        }
-
-        public void SaveLocalFolder()
-        {
-            if (LocalFolder != null)
-            {
-                StorageApplicationPermissions.FutureAccessList.AddOrReplace(Token, LocalFolder);
-                IsLocalFolderLoaded = true;
-            }
-            else if (IsLocalFolderLoaded)
-            {
-                try
-                {
-                    if (StorageApplicationPermissions.FutureAccessList.ContainsItem(Token))
-                    {
-                        StorageApplicationPermissions.FutureAccessList.Remove(Token);
-                    }
-                }
-                catch { }
-            }
-
+            LocalFolderToken = localFolderToken;
         }
 
         public SyncPair Clone()
         {
-            return new SyncPair(ResultToken)
+            return new SyncPair(LocalFolderToken)
             {
+                Id = Id,
+                CurrentSyncPairRunId = CurrentSyncPairRunId,
+                LastSyncPairResultId = LastSyncPairResultId,
                 WithSubfolders = WithSubfolders,
                 Name = Name,
                 ServerPath = ServerPath,
-                LocalFolder = LocalFolder,
                 Mode = Mode,
                 CompareType = CompareType,
                 ConflictHandlingType = ConflictHandlingType,

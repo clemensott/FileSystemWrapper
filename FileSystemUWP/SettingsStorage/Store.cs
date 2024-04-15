@@ -36,7 +36,7 @@ namespace FileSystemUWP.SettingsStorage
         private static Server CreateServerExplorer(ServerStore server, BackgroundOperations backgroundOperations)
         {
             IEnumerable<SyncPair> pairs = server.SyncPairs?.Select(CreateSyncPair);
-            return new Server(backgroundOperations, pairs)
+            return new Server(/*backgroundOperations, pairs*/)
             {
                 Api = new Api()
                 {
@@ -53,7 +53,7 @@ namespace FileSystemUWP.SettingsStorage
 
         private static SyncPair CreateSyncPair(SyncPairStore sync)
         {
-            return new SyncPair(sync.Token, sync.ResultToken)
+            return new SyncPair(sync.Token/*, sync.ResultToken*/)
             {
                 WithSubfolders = sync.WithSubfolders,
                 Name = sync.Name,
@@ -85,7 +85,7 @@ namespace FileSystemUWP.SettingsStorage
 
             foreach (Server server in viewModel.Servers)
             {
-                server.Syncs.SaveLocalFolders();
+                //server.Syncs.SaveLocalFolders();
             }
         }
 
@@ -109,7 +109,7 @@ namespace FileSystemUWP.SettingsStorage
                 CurrentFolderPath = viewModel.CurrentFolderPath,
                 SortBy = viewModel.SortBy,
                 RestoreFileSystemItem = CreateFileSystemItemNameStore(viewModel.RestoreFileSystemItem),
-                SyncPairs = viewModel.Syncs.Select(CreateSyncPairStore).ToArray(),
+                //SyncPairs = viewModel.Syncs.Select(CreateSyncPairStore).ToArray(),
             };
         }
 
@@ -117,8 +117,8 @@ namespace FileSystemUWP.SettingsStorage
         {
             return new SyncPairStore()
             {
-                Token = pair.Token,
-                ResultToken = pair.ResultToken,
+                //Token = pair.Token,
+                //ResultToken = pair.ResultToken,
                 WithSubfolders = pair.WithSubfolders,
                 Name = pair.Name,
                 ServerPath = pair.ServerPath?.ToArray(),

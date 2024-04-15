@@ -1,10 +1,12 @@
 ﻿using FileSystemCommonUWP;
+using FileSystemCommonUWP.Database;
+using FileSystemCommonUWP.Database.Servers;
 using FileSystemUWP.Models;
-using FileSystemUWP.SettingsStorage;
 using FileSystemUWP.Sync.Handling;
 using StdOttUwp.BackPress;
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
@@ -21,8 +23,9 @@ namespace FileSystemUWP
     /// </summary>
     sealed partial class App : Application
     {
-        private static readonly Random rnd = new Random();
-        private readonly ViewModel viewModel;
+        private ViewModel viewModel;
+
+        public AppDatabase Database { get; private set; }
 
         /// <summary>
         /// Initialisiert das Singletonanwendungsobjekt. Dies ist die erste Zeile von erstelltem Code
@@ -33,8 +36,6 @@ namespace FileSystemUWP
             this.InitializeComponent();
             this.EnteredBackground += OnEnteredBackground;
             this.UnhandledException += OnUnhandledException;
-
-            viewModel = new ViewModel();
         }
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -52,9 +53,10 @@ namespace FileSystemUWP
             BackPressHandler.Current.Activate();
             BackgroundTaskHelper.Current.RegisterTimerBackgroundTask();
 
+            await LoadDatabase();
+            Task startBackgroundHelperTask = BackgroundTaskHelper.Current.Start(Database);
+
             Frame rootFrame = Window.Current.Content as Frame;
-            Task loadViewModelTask = Task.CompletedTask;
-            Task loadSyncPairContainersTask = BackgroundTaskHelper.Current.LoadContainers();
 
             // App-Initialisierung nicht wiederholen, wenn das Fenster bereits Inhalte enthält.
             // Nur sicherstellen, dass das Fenster aktiv ist.
@@ -82,14 +84,12 @@ namespace FileSystemUWP
                     // und die neue Seite konfigurieren, indem die erforderlichen Informationen als Navigationsparameter
                     // übergeben werden
                     rootFrame.Navigate(typeof(MainPage), viewModel);
-                    loadViewModelTask = LoadViewModel();
                 }
                 // Sicherstellen, dass das aktuelle Fenster aktiv ist
                 Window.Current.Activate();
             }
 
-            await loadViewModelTask;
-            await loadSyncPairContainersTask;
+            await startBackgroundHelperTask;
         }
 
         /// <summary>
@@ -117,34 +117,16 @@ namespace FileSystemUWP
             }
         }
 
-        private async Task LoadViewModel()
+        private async Task LoadDatabase()
         {
-            try
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    try
-                    {
-                        string fileName = Settings.Current.SaveFileName;
-                        if (string.IsNullOrWhiteSpace(fileName)) fileName = "syncs.xml";
-                        await Store.LoadInto(GetSaveFilePath(fileName), viewModel);
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        Settings.Current.OnStorageException(new Exception("Load viewModel error", e));
-                    }
-                }
-            }
-            finally
-            {
-                viewModel.IsLoaded = true;
-            }
-        }
+            if (Database == null) Database = await AppDatabase.OpenSqlite();
 
-        public static Task SaveViewModel(string debug)
-        {
-            return ((App)Current).StoreViewModel(debug);
+            if (viewModel == null)
+            {
+                IEnumerable<ServerInfo> servers = await Database.Servers.SelectServers();
+                int? currentServerId = await Database.Servers.SelectCurrentServerId();
+                viewModel = new ViewModel(servers.Select(s => new Server(s)), currentServerId);
+            }
         }
 
         private async Task StoreViewModel(string debug)
@@ -163,9 +145,12 @@ namespace FileSystemUWP
                         Settings.Current.OnStorageException(new Exception($"No Servers stored from: {debug}"));
                     }
 
-                    string fileName = GetNextSaveFileName();
-                    await Store.Save(GetSaveFilePath(fileName), viewModel);
-                    Settings.Current.SaveFileName = fileName;
+                    foreach (Server server in viewModel.Servers)
+                    {
+                        await Database.Servers.UpdateServer(server.ToInfo());
+                    }
+
+                    await Database.Servers.UpdateCurrentServer(viewModel.CurrentServer?.Id);
                     break;
                 }
                 catch (Exception e)
@@ -173,21 +158,6 @@ namespace FileSystemUWP
                     Settings.Current.OnStorageException(new Exception("Store viewModel error", e));
                 }
             }
-        }
-
-        private static string GetNextSaveFileName()
-        {
-            string fileName;
-            do
-            {
-                fileName = $"data_{rnd.Next(1, 5)}.xml";
-            } while (fileName == Settings.Current.SaveFileName);
-            return fileName;
-        }
-
-        private static string GetSaveFilePath(string fileName)
-        {
-            return Path.Combine(ApplicationData.Current.LocalFolder.Path, fileName);
         }
     }
 }

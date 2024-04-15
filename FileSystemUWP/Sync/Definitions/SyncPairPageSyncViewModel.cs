@@ -1,5 +1,5 @@
 ﻿using FileSystemCommonUWP.Sync.Definitions;
-using FileSystemCommonUWP.Sync.Handling.Communication;
+using FileSystemCommonUWP.Sync.Handling;
 using System.ComponentModel;
 
 namespace FileSystemUWP.Sync.Definitions
@@ -7,7 +7,7 @@ namespace FileSystemUWP.Sync.Definitions
     class SyncPairPageSyncViewModel : INotifyPropertyChanged
     {
         private SyncPair syncPair;
-        private SyncPairForegroundContainer run;
+        private SyncPairRun run;
 
         public SyncPair SyncPair
         {
@@ -21,7 +21,7 @@ namespace FileSystemUWP.Sync.Definitions
             }
         }
 
-        public SyncPairForegroundContainer Run
+        public SyncPairRun Run
         {
             get => run;
             set

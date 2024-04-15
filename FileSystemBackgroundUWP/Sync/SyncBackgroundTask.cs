@@ -1,21 +1,20 @@
-﻿using FileSystemCommonUWP.Sync.Handling;
-using FileSystemCommonUWP.Sync.Handling.Communication;
+﻿using FileSystemCommonUWP.API;
+using FileSystemCommonUWP.Database;
+using FileSystemCommonUWP.Sync;
+using FileSystemCommonUWP.Sync.Handling;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
+using Windows.Storage;
 
 namespace FileSystemBackgroundUWP.Sync
 {
     public sealed class SyncBackgroundTask : IBackgroundTask
     {
         private BackgroundTaskDeferral deferral;
-        private SyncPairCommunicator communicator;
-        private SyncPairRequestInfo[] requests;
-        private Dictionary<string, SyncPairResponseInfo> responses;
+        private AppDatabase database;
         private SyncPairHandler currentSyncPairHandler;
-        private DateTime lastSendCurrentHandlerProgress;
 
         public async void Run(IBackgroundTaskInstance taskInstance)
         {
@@ -24,18 +23,16 @@ namespace FileSystemBackgroundUWP.Sync
                 System.Diagnostics.Debug.WriteLine("start background task");
                 deferral = taskInstance.GetDeferral();
 
-                await Setup();
+                database = await AppDatabase.OpenSqlite();
+                // Check regualy for requested cancel
+
                 while (true)
                 {
-                    communicator.IsPingEnabled = true;
-                    await Handle();
+                    int? nextSyncPairRunId = await database.SyncPairs.SelectNextSyncPairRunId();
+                    if (!nextSyncPairRunId.HasValue) break;
 
-                    communicator.IsPingEnabled = false;
-                    communicator.SendStoppedBackgroundTask();
-                    if (await communicator.TryStopCommunicator(TimeSpan.FromSeconds(15))) break;
+                    await HandleRequest(nextSyncPairRunId.Value);
                 }
-
-                DisposeCommunicator();
             }
             catch (Exception exc)
             {
@@ -48,153 +45,41 @@ namespace FileSystemBackgroundUWP.Sync
             }
         }
 
-        private async Task Setup()
+        private static async Task<AppDatabase> OpenDatabase()
         {
-            SetupCommunicator();
-            SyncPairResponseInfo[] responses = await communicator.LoadSyncPairResponses();
-            this.responses = responses?.ToDictionary(r => r.RunToken) ?? new Dictionary<string, SyncPairResponseInfo>();
-
-            await LoadRequests();
-            communicator.Start();
+            StorageFile dbFile = await ApplicationData.Current.LocalFolder.CreateFileAsync("servers.db", CreationCollisionOption.OpenIfExists);
+            return AppDatabase.FromSqlite(dbFile);
         }
 
-        private void SetupCommunicator()
-        {
-            communicator = SyncPairCommunicator.CreateBackgroundCommunicator();
-            communicator.UpdatedRequestedSyncPairRuns += Communicator_UpdatedRequestedSyncPairRuns;
-            communicator.CanceledSyncPairRun += Communicator_CanceledSyncPairRun;
-            communicator.RequestedProgressSyncPairRun += Communicator_RequestedProgressSyncPairRun;
-        }
-
-        private void DisposeCommunicator()
-        {
-            communicator.UpdatedRequestedSyncPairRuns -= Communicator_UpdatedRequestedSyncPairRuns;
-            communicator.CanceledSyncPairRun -= Communicator_CanceledSyncPairRun;
-            communicator.RequestedProgressSyncPairRun -= Communicator_RequestedProgressSyncPairRun;
-
-            communicator.Dispose();
-            communicator = null;
-        }
-
-        private async Task LoadRequests()
-        {
-            requests = await communicator.LoadSyncPairRequests() ?? new SyncPairRequestInfo[0];
-
-            await InitResponses();
-        }
-
-        private async Task InitResponses()
-        {
-            foreach (SyncPairRequestInfo request in requests)
-            {
-                SyncPairResponseInfo response;
-                if (!responses.TryGetValue(request.RunToken, out response))
-                {
-                    response = new SyncPairResponseInfo()
-                    {
-                        RunToken = request.RunToken,
-                        State = SyncPairHandlerState.WaitForStart,
-                    };
-                }
-                else if (response.State == SyncPairHandlerState.Loading)
-                {
-                    response.State = SyncPairHandlerState.WaitForStart;
-                };
-
-                responses[response.RunToken] = response;
-            }
-
-            IEnumerable<string> requestRunTokens = requests.Select(r => r.RunToken);
-            foreach (SyncPairResponseInfo response in responses.Values.ToArray())
-            {
-                if (!requestRunTokens.Contains(response.RunToken)) responses.Remove(response.RunToken);
-            }
-
-            await communicator.SaveResponses(responses.Values.ToArray());
-        }
-
-        private async void Communicator_UpdatedRequestedSyncPairRuns(object sender, EventArgs e)
-        {
-            await LoadRequests();
-        }
-
-        private async void Communicator_CanceledSyncPairRun(object sender, CanceledSyncPairRunEventArgs e)
-        {
-            await LoadRequests();
-            if (e.RunToken == currentSyncPairHandler?.RunToken) currentSyncPairHandler.Cancel();
-        }
-
-        private async void Communicator_RequestedProgressSyncPairRun(object sender, RequestedProgressSyncPairRunEventArgs e)
-        {
-            await communicator.SaveResponses(responses.Values.ToArray());
-            foreach (SyncPairResponseInfo response in responses.Values)
-            {
-                communicator.SendProgessSyncPair(response);
-            }
-        }
-
-        private async Task Handle()
-        {
-            while (true)
-            {
-                SyncPairRequestInfo? nextRequest = GetNextSyncPairRequest();
-                if (!nextRequest.HasValue) break;
-
-                await HandleRequest(nextRequest.Value);
-                await communicator.SaveResponses(responses.Values.ToArray());
-            }
-        }
-
-        private SyncPairRequestInfo? GetNextSyncPairRequest()
-        {
-            foreach (SyncPairRequestInfo request in requests)
-            {
-                SyncPairResponseInfo response;
-                if (!responses.TryGetValue(request.RunToken, out response) ||
-                    response.State == SyncPairHandlerState.Loading ||
-                    response.State == SyncPairHandlerState.WaitForStart ||
-                    response.State == SyncPairHandlerState.Running) return request;
-            }
-            return null;
-        }
-
-        private async Task HandleRequest(SyncPairRequestInfo request)
+        private async Task HandleRequest(int syncPairRunId)
         {
             try
             {
-                currentSyncPairHandler = await SyncPairHandler.FromSyncPairRequest(request);
-                currentSyncPairHandler.Progress += OnHandlerProgress;
+                SyncPairRun run = (await database.SyncPairs.SelectSyncPairRuns(new int[] { syncPairRunId })).First();
+                SyncPairResult lastResult = await database.SyncPairs.SelectLastSyncPairResult(run.Id);
+                StorageFolder localFolder = await SyncLocalFolderHelper.GetLocalFolder(run.LocalFolderToken);
+                Api api = await GetAPI(run.ApiBaseUrl);
 
-                SendProgress(currentSyncPairHandler);
+                currentSyncPairHandler = new SyncPairHandler(database, run.Id, run.WithSubfolders, run.IsTestRun,
+                    run.RequestedCancel, lastResult, run.Mode, run.CompareType, run.ConflictHandlingType,
+                    localFolder, run.ServerPath, run.AllowList, run.DenyList, api);
+
                 await currentSyncPairHandler.Run();
-                SendProgress(currentSyncPairHandler);
             }
             catch { }
             finally
             {
-                if (currentSyncPairHandler != null) currentSyncPairHandler.Progress -= OnHandlerProgress;
                 currentSyncPairHandler = null;
             }
         }
 
-        private void OnHandlerProgress(object sender, SyncPairProgressUpdate e)
+        private static async Task<Api> GetAPI(string baseUrl)
         {
-            communicator.SendProgressUpdateSyncPair(e);
-        }
-
-        private async void SendProgress(SyncPairHandler handler)
-        {
-            if (DateTime.Now - lastSendCurrentHandlerProgress < TimeSpan.FromMilliseconds(100))
+            Api api = new Api()
             {
-                await Task.Delay(110);
-                if (DateTime.Now - lastSendCurrentHandlerProgress < TimeSpan.FromMilliseconds(100)) return;
-            }
-
-            lastSendCurrentHandlerProgress = DateTime.Now;
-
-            SyncPairResponseInfo response = handler.ToResponse();
-            responses[response.RunToken] = response;
-            communicator.SendProgessSyncPair(response);
+                BaseUrl = baseUrl,
+            };
+            return await api.LoadConfig() ? api : throw new Exception("Couldn't load config from API");
         }
     }
 }

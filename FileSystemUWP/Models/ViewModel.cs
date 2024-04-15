@@ -1,4 +1,5 @@
 ﻿using FileSystemUWP.Controls;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -37,10 +38,17 @@ namespace FileSystemUWP.Models
 
         public BackgroundOperations BackgroundOperations { get; }
 
-        public ViewModel()
+        public ViewModel(IEnumerable<Server> servers, int? currentServerId)
         {
-            Servers = new ObservableCollection<Server>();
+            Servers = new ObservableCollection<Server>(servers);
             BackgroundOperations = new BackgroundOperations();
+
+            foreach (Server server in Servers)
+            {
+                server.BackgroundOperations = BackgroundOperations;
+
+                if (server.Id == currentServerId) CurrentServer = server;
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

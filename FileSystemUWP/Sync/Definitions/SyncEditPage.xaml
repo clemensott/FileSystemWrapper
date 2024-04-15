@@ -56,7 +56,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock VerticalAlignment="Center" Margin="5,0,0,0" Text="{Binding LocalFolder.Path}"/>
+                    <TextBlock VerticalAlignment="Center" Margin="5,0,0,0" Text="{Binding LocalFolderPath}"/>
                     <ctl:IconButton Grid.Column="1" Symbol="Folder" Margin="8,0" Click="IbnSelectLocalFolder_Click"/>
                 </Grid>
 
