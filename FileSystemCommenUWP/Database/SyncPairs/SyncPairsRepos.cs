@@ -391,69 +391,6 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
 
-        //public async Task UpdateSyncPairRun(SyncPairRun run)
-        //{
-        //    const string sql = @"
-        //        UPDATE sync_pair_runs
-        //        SET with_sub_folders = @withSubfolders,
-        //            is_test_run = @isTestRun,
-        //            requested_cancel = @requestedCancel,
-        //            mode = @mode,
-        //            compare_type = @compareType,
-        //            conflict_handling_type = @conflictHandlingType,
-        //            name = @name,
-        //            local_folder_token = @localFolderToken,
-        //            server_name_path = @serverNamePath,
-        //            server_path = @serverPath,
-        //            allow_list = @allowList,
-        //            deny_list = @denyList,
-        //            api_base_url = @apiBaseUrl,
-        //            state = @state,
-        //            current_count = @currentCount,
-        //            all_files_count = @allFilesCount,
-        //            compared_files_count = @comparedFilesCount,
-        //            equal_files_count = @equalFilesCount,
-        //            conflict_files_count = @confilctFilesCount,
-        //            copied_local_files_count = @copiedLocalFilesCount,
-        //            copied_server_files_count = @copiedServerFilesCount,
-        //            deleted_local_files_count = @deletedLocalFilesCount,
-        //            deleted_server_files_count = @deletedServerFilesCount,
-        //            error_files_count = @errorFilesCount,
-        //            ignore_files_count = @ignoreFilesCount
-        //        WHERE id = @id;
-        //    ";
-        //    IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
-        //    {
-        //        CreateParam("withSubfolders", run.WithSubfolders),
-        //        CreateParam("isTestRun", run.IsTestRun ? 1L : 0L),
-        //        CreateParam("requestedCancel", run.RequestedCancel ? 1L : 0L),
-        //        CreateParam("mode", (long)run.Mode),
-        //        CreateParam("compareType", (long)run.CompareType),
-        //        CreateParam("conflictHandlingType", (long)run.ConflictHandlingType),
-        //        CreateParam("name", run.Name),
-        //        CreateParam("localFolderToken", run.LocalFolderToken),
-        //        CreateParam("serverNamePath", run.ServerNamePath),
-        //        CreateParam("serverPath", run.ServerPath),
-        //        CreateParam("allowList", JsonConvert.SerializeObject(run.AllowList)),
-        //        CreateParam("denyList", JsonConvert.SerializeObject(run.DenyList)),
-        //        CreateParam("apiBaseUrl", run.ApiBaseUrl),
-        //        CreateParam("state", (long)run.State),
-        //        CreateParam("currentCount", (long)run.CurrentCount),
-        //        CreateParam("allFilesCount", (long)run.AllFilesCount),
-        //        CreateParam("comparedFilesCount", (long)run.ComparedFilesCount),
-        //        CreateParam("equalFilesCount", (long)run.EqualFilesCount),
-        //        CreateParam("confilctFilesCount", (long)run.ConflictFilesCount),
-        //        CreateParam("copiedLocalFilesCount", (long)run.CopiedLocalFilesCount),
-        //        CreateParam("copiedServerFilesCount", (long)run.CopiedServerFilesCount),
-        //        CreateParam("deletedLocalFilesCount", (long)run.DeletedLocalFilesCount),
-        //        CreateParam("deletedServerFilesCount", (long)run.DeletedServerFilesCount),
-        //        CreateParam("errorFilesCount", (long)run.ErrorFilesCount),
-        //        CreateParam("ignoreFilesCount", (long)run.IgnoreFilesCount),
-        //    };
-
-        //    await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
-        //}
-
         private static SyncPairRunFile CreateSyncPairRunFileObject(DbDataReader reader)
         {
             return new SyncPairRunFile()
