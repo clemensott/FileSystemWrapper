@@ -13,6 +13,8 @@ namespace FileSystemUWP.Sync.Definitions
 
         public SyncPair Sync { get; }
 
+        public string[] InvalidNames { get; }
+
         public StorageFolder LocalFolder
         {
             get => localFolder;
@@ -25,9 +27,10 @@ namespace FileSystemUWP.Sync.Definitions
 
         public Api Api { get; }
 
-        public SyncPairEdit(SyncPair sync, StorageFolder localFolder, Api api, bool isAdd)
+        public SyncPairEdit(SyncPair sync, string[] invalidNames, StorageFolder localFolder, Api api, bool isAdd)
         {
             Sync = sync;
+            InvalidNames = invalidNames;
             LocalFolder = localFolder;
             Api = api;
             IsAdd = isAdd;

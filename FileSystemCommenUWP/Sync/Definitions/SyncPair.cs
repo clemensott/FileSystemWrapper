@@ -33,6 +33,8 @@ namespace FileSystemCommonUWP.Sync.Definitions
 
         public int Id { get; set; }
 
+        public int ServerId { get; }
+
         public int? CurrentSyncPairRunId { get; set; }
 
         public int? LastSyncPairResultId { get; set; }
@@ -135,18 +137,19 @@ namespace FileSystemCommonUWP.Sync.Definitions
             }
         }
 
-        public SyncPair() : this(Guid.NewGuid().ToString())
+        public SyncPair(int serverId) : this(serverId, Guid.NewGuid().ToString())
         {
         }
 
-        public SyncPair(string localFolderToken)
+        public SyncPair(int serverId, string localFolderToken)
         {
+            ServerId = serverId;
             LocalFolderToken = localFolderToken;
         }
 
         public SyncPair Clone()
         {
-            return new SyncPair(LocalFolderToken)
+            return new SyncPair(ServerId, LocalFolderToken)
             {
                 Id = Id,
                 CurrentSyncPairRunId = CurrentSyncPairRunId,

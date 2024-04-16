@@ -38,17 +38,23 @@ namespace FileSystemUWP.Models
 
         public BackgroundOperations BackgroundOperations { get; }
 
-        public ViewModel(IEnumerable<Server> servers, int? currentServerId)
+        public ViewModel()
         {
-            Servers = new ObservableCollection<Server>(servers);
+            Servers = new ObservableCollection<Server>();
             BackgroundOperations = new BackgroundOperations();
+        }
 
-            foreach (Server server in Servers)
+        public void InjectData(IEnumerable<Server> servers, int? currentServerId)
+        {
+            foreach (Server server in servers)
             {
                 server.BackgroundOperations = BackgroundOperations;
+                Servers.Add(server);
 
                 if (server.Id == currentServerId) CurrentServer = server;
             }
+
+            IsLoaded = true;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

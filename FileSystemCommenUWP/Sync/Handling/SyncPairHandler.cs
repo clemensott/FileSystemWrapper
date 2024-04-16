@@ -121,7 +121,6 @@ namespace FileSystemCommonUWP.Sync.Handling
             SyncPairResult lastResult, SyncMode mode, SyncCompareType compareType, SyncConflictHandlingType conflictHandlingType,
             StorageFolder localFolder, string serverPath, string[] allowList, string[] denialList, Api api)
         {
-            this.database = database;
             State = requestedCancel ? SyncPairHandlerState.Canceled : SyncPairHandlerState.WaitForStart;
             bothFiles = new LockQueue<FilePair>();
             singleFiles = new LockQueue<FilePair>();
@@ -130,6 +129,8 @@ namespace FileSystemCommonUWP.Sync.Handling
             deleteLocalFiles = new LockQueue<FilePair>();
             deleteSeverFiles = new LockQueue<FilePair>();
 
+            this.database = database;
+            this.syncPairRunId = syncPairRunId;
             this.withSubfolders = withSubfolders;
             this.isTestRun = isTestRun;
             fileComparer = GetFileComparer(compareType);

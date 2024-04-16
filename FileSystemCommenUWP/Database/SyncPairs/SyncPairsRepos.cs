@@ -1,6 +1,8 @@
-﻿using FileSystemCommonUWP.Sync.Definitions;
+﻿using FileSystemCommon.Models.FileSystem;
+using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling;
 using Newtonsoft.Json;
+using StdOttStandard.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -77,11 +79,12 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     UNIQUE(sync_pair_run_id, relative_path)
                 );
 
+-- Drop table sync_pairs;
                 CREATE TABLE IF NOT EXISTS sync_pairs (
                     id                          INTEGER PRIMARY KEY AUTOINCREMENT,
                     server_id                   INTEGER NOT NULL REFERENCES servers(id),
-                    current_sync_pair_run_id    INTEGER NOT NULL,
-                    last_sync_pair_result_id    INTEGER NOT NULL,
+                    current_sync_pair_run_id    INTEGER,
+                    last_sync_pair_result_id    INTEGER,
                     local_folder_token          TEXT NOT NULL,
                     name                        TEXT NOT NULL,
                     server_path                 TEXT NOT NULL,
@@ -101,35 +104,37 @@ namespace FileSystemCommonUWP.Database.SyncPairs
 
         private static SyncPair CreateSyncPairObject(DbDataReader reader)
         {
+            int serverId = (int)reader.GetInt64("server_id");
             string[] allowList = JsonConvert.DeserializeObject<string[]>(reader.GetString("allow_list"));
             string[] denyList = JsonConvert.DeserializeObject<string[]>(reader.GetString("deny_list"));
 
-            return new SyncPair(reader.GetString("local_folder_token"))
+            return new SyncPair(serverId, reader.GetString("local_folder_token"))
             {
                 Id = (int)reader.GetInt64("id"),
-                CurrentSyncPairRunId = (int)reader.GetInt64("current_sync_pair_run_id"),
-                LastSyncPairResultId = (int)reader.GetInt64("last_sync_pair_result_id"),
+                CurrentSyncPairRunId = (int?)reader.GetInt64Nullable("current_sync_pair_run_id"),
+                LastSyncPairResultId = (int?)reader.GetInt64Nullable("last_sync_pair_result_id"),
                 WithSubfolders = reader.GetInt64("with_subfolders") == 1L,
                 Name = reader.GetString("name"),
+                ServerPath = JsonConvert.DeserializeObject<PathPart[]>(reader.GetString("server_path")),
                 Mode = (SyncMode)reader.GetInt64("mode"),
                 CompareType = (SyncCompareType)reader.GetInt64("compare_type"),
                 ConflictHandlingType = (SyncConflictHandlingType)reader.GetInt64("conflict_handling_type"),
-                AllowList = new ObservableCollection<string>(allowList),
-                DenyList = new ObservableCollection<string>(denyList),
+                AllowList = new ObservableCollection<string>(allowList.ToNotNull()),
+                DenyList = new ObservableCollection<string>(denyList.ToNotNull()),
             };
         }
 
         public async Task<IList<SyncPair>> SelectSyncPairs(int serverId)
         {
             const string sql = @"
-                SELECT id, current_sync_pair_run_id, last_sync_pair_result_id, local_folder_token, name, server_path,
+                SELECT id, server_id, current_sync_pair_run_id, last_sync_pair_result_id, local_folder_token, name, server_path,
                     with_subfolders, mode, compare_type, conflict_handling_type, allow_list, deny_list
                 FROM sync_pairs
                 WHERE server_id = @serverId;
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
-                CreateParam("id", (long)serverId),
+                CreateParam("serverId", (long)serverId),
             };
 
             return await sqlExecuteService.ExecuteReadAllAsync(CreateSyncPairObject, sql, parameters);
@@ -138,20 +143,21 @@ namespace FileSystemCommonUWP.Database.SyncPairs
         public async Task InsertSyncPair(SyncPair pair)
         {
             const string sql = @"
-                INSERT INTO sync_pairs (current_sync_pair_run_id, last_sync_pair_result_id, local_folder_token, name, server_path,
+                INSERT INTO sync_pairs (server_id, current_sync_pair_run_id, last_sync_pair_result_id, local_folder_token, name, server_path,
                     with_subfolders, mode, compare_type, conflict_handling_type, allow_list, deny_list)
-                VALUES (@currentSyncPairRunId, @lastSyncPairResultId, @name, @serverPath,
+                VALUES (@serverId, @currentSyncPairRunId, @lastSyncPairResultId, @localFolderToken, @name, @serverPath,
                     @withSubfolders, @mode, @compareType, @conflictHandlingType, @allowList, @denyList);
 
-                SELECT last_insert_id();
+                SELECT last_insert_rowid();
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
+                CreateParam("serverId", pair.ServerId),
                 CreateParam("currentSyncPairRunId", pair.CurrentSyncPairRunId),
                 CreateParam("lastSyncPairResultId", pair.LastSyncPairResultId),
-                CreateParam("local_folder_token", pair.LocalFolderToken),
+                CreateParam("localFolderToken", pair.LocalFolderToken),
                 CreateParam("name", pair.Name),
-                CreateParam("serverPath", pair.ServerPath),
+                CreateParam("serverPath", JsonConvert.SerializeObject(pair.ServerPath)),
                 CreateParam("withSubfolders", pair.WithSubfolders),
                 CreateParam("mode", (long)pair.Mode),
                 CreateParam("compareType", (long)pair.CompareType),
@@ -168,7 +174,8 @@ namespace FileSystemCommonUWP.Database.SyncPairs
         {
             const string sql = @"
                 UPDATE sync_pairs
-                SET current_sync_pair_run_id = @currentSyncPairRunId,
+                SET server_id = @serverId,
+                    current_sync_pair_run_id = @currentSyncPairRunId,
                     last_sync_pair_result_id = @lastSyncPairResultId,
                     name = @name,
                     server_path = @serverPath,
@@ -183,10 +190,11 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
                 CreateParam("id", (long)pair.Id),
+                CreateParam("serverId", (long)pair.ServerId),
                 CreateParam("currentSyncPairRunId", pair.CurrentSyncPairRunId),
                 CreateParam("lastSyncPairResultId", pair.LastSyncPairResultId),
                 CreateParam("name", pair.Name),
-                CreateParam("serverPath", pair.ServerPath),
+                CreateParam("serverPath", JsonConvert.SerializeObject(pair.ServerPath)),
                 CreateParam("withSubfolders", pair.WithSubfolders ? 1L : 0L),
                 CreateParam("mode", (long)pair.Mode),
                 CreateParam("compareType", (long)pair.CompareType),
@@ -201,8 +209,8 @@ namespace FileSystemCommonUWP.Database.SyncPairs
         public async Task DeleteSyncPair(SyncPair pair)
         {
             const string sql = @"
-                DELETE FROM sync_pairs WHERE id = @id;
-                DELETE FROM sync_pair_run_files WHERE sync_pair_info_id = @currentSyncPairRunId;
+                DELETE FROM sync_pairs WHERE id = @syncPairId;
+                DELETE FROM sync_pair_run_files WHERE sync_pair_run_id = @currentSyncPairRunId;
                 DELETE FROM sync_pair_runs WHERE id = @currentSyncPairRunId;
                 DELETE FROM sync_pair_result_files WHERE sync_pair_result_id = @lastSyncPairResultId;
                 DELETE FROM sync_pair_results WHERE id = @lastSyncPairResultId;
@@ -282,8 +290,8 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                 CreateParam("running", (long)SyncPairHandlerState.Running),
             };
 
-            object nextSyncPairRunId = await sqlExecuteService.ExecuteScalarAsync(sql);
-            return nextSyncPairRunId is DBNull ? (int?)null : (int)(long)nextSyncPairRunId;
+            object nextSyncPairRunId = await sqlExecuteService.ExecuteScalarAsync(sql, parameters);
+            return nextSyncPairRunId is null || nextSyncPairRunId is DBNull ? (int?)null : (int)(long)nextSyncPairRunId;
         }
 
         public async Task InsertSyncPairRun(SyncPair pair, SyncPairRun run)
@@ -301,13 +309,13 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     @errorFilesCount, @ignoreFilesCount);
 
                 UPDATE sync_pairs
-                SET current_sync_pair_run_id = last_insert_id()
+                SET current_sync_pair_run_id = last_insert_rowid()
                 WEHRE id = @syncPairId;
 
                 DELETE FROM sync_pair_run_files WHERE sync_pair_info_id = @oldSyncPairRunId;
                 DELETE FROM sync_pair_runs WHERE id = @oldSyncPairRunId;
 
-                SELECT last_insert_id();
+                SELECT last_insert_rowid();
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
@@ -602,7 +610,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                 INSERT INTO sync_pair_results (id, created)
                 VALUES (DEFAULT, DEFAULT);
 
-                SELECT last_insert_id();
+                SELECT last_insert_rowid();
             ";
             long newSyncPairResultId = await sqlExecuteService.ExecuteScalarAsync<long>(insertResultSql);
 

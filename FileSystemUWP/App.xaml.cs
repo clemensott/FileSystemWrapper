@@ -23,7 +23,7 @@ namespace FileSystemUWP
     /// </summary>
     sealed partial class App : Application
     {
-        private ViewModel viewModel;
+        private readonly ViewModel viewModel;
 
         public AppDatabase Database { get; private set; }
 
@@ -36,6 +36,8 @@ namespace FileSystemUWP
             this.InitializeComponent();
             this.EnteredBackground += OnEnteredBackground;
             this.UnhandledException += OnUnhandledException;
+
+            viewModel = new ViewModel();
         }
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -87,6 +89,7 @@ namespace FileSystemUWP
                 }
                 // Sicherstellen, dass das aktuelle Fenster aktiv ist
                 Window.Current.Activate();
+                await LoadViewModel();
             }
 
             await startBackgroundHelperTask;
@@ -120,13 +123,13 @@ namespace FileSystemUWP
         private async Task LoadDatabase()
         {
             if (Database == null) Database = await AppDatabase.OpenSqlite();
+        }
 
-            if (viewModel == null)
-            {
-                IEnumerable<ServerInfo> servers = await Database.Servers.SelectServers();
-                int? currentServerId = await Database.Servers.SelectCurrentServerId();
-                viewModel = new ViewModel(servers.Select(s => new Server(s)), currentServerId);
-            }
+        private async Task LoadViewModel()
+        {
+            IList<ServerInfo> servers = await Database.Servers.SelectServers();
+            int? currentServerId = await Database.Servers.SelectCurrentServerId();
+            viewModel.InjectData(servers.Select(s => new Server(s)), currentServerId);
         }
 
         private async Task StoreViewModel(string debug)

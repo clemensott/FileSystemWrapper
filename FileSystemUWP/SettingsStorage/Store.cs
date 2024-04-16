@@ -53,7 +53,7 @@ namespace FileSystemUWP.SettingsStorage
 
         private static SyncPair CreateSyncPair(SyncPairStore sync)
         {
-            return new SyncPair(sync.Token/*, sync.ResultToken*/)
+            return new SyncPair(0, sync.Token/*, sync.ResultToken*/)
             {
                 WithSubfolders = sync.WithSubfolders,
                 Name = sync.Name,

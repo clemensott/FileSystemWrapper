@@ -5,7 +5,6 @@ using FileSystemCommonUWP.Sync;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling;
 using FileSystemUWP.Sync.Handling;
-using StdOttStandard.CollectionSubscriber;
 using StdOttStandard.Converter.MultipleInputs;
 using StdOttStandard.Linq;
 using StdOttUwp;
@@ -36,7 +35,6 @@ namespace FileSystemUWP.Sync.Definitions
         private readonly AppDatabase database;
         private Server server;
         private SyncPairsPageViewModel viewModel;
-        private SimpleObservableCollectionSubscriber<SyncPair> serverSyncsSubscriber;
 
         public SyncPairsPage()
         {
@@ -58,6 +56,18 @@ namespace FileSystemUWP.Sync.Definitions
             await UpdateSyncs();
         }
 
+        private async Task<StorageFolder> GetStorageFolderOrDefault(string token)
+        {
+            try
+            {
+                return await SyncLocalFolderHelper.GetLocalFolder(token);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private async Task UpdateSyncs()
         {
             IList<SyncPair> syncPairs = await database.SyncPairs.SelectSyncPairs(server.Id);
@@ -72,6 +82,9 @@ namespace FileSystemUWP.Sync.Definitions
                     sync = new SyncPairPageSyncViewModel();
                     viewModel.Syncs.Add(sync);
                 }
+
+                StorageFolder localFolder = await GetStorageFolderOrDefault(syncPair.LocalFolderToken);
+                syncPair.LocalFolderPath = localFolder?.Path;
 
                 sync.SyncPair = syncPair;
                 sync.Run = syncPairRuns.FirstOrDefault(run => run.Id == syncPair.CurrentSyncPairRunId);
@@ -152,8 +165,9 @@ namespace FileSystemUWP.Sync.Definitions
         {
             SyncPairPageSyncViewModel sync = UwpUtils.GetDataContext<SyncPairPageSyncViewModel>(sender);
             SyncPair newSync = sync.SyncPair.Clone();
-            StorageFolder localFolder = await SyncLocalFolderHelper.GetLocalFolder(newSync.LocalFolderToken);
-            SyncPairEdit edit = new SyncPairEdit(newSync, localFolder, server.Api, false);
+            StorageFolder localFolder = await GetStorageFolderOrDefault(newSync.LocalFolderToken);
+            string[] otherNames = viewModel.Syncs.Select(s => s.SyncPair.Name).Where(n => n != newSync.Name).ToArray();
+            SyncPairEdit edit = new SyncPairEdit(newSync, otherNames, localFolder, server.Api, false);
 
             Frame.Navigate(typeof(SyncEditPage), edit);
 
@@ -242,8 +256,9 @@ namespace FileSystemUWP.Sync.Definitions
 
         private async void AbbAddSyncPair_Click(object sender, RoutedEventArgs e)
         {
-            SyncPair newSync = new SyncPair();
-            SyncPairEdit edit = new SyncPairEdit(newSync, null, server.Api, true);
+            SyncPair newSync = new SyncPair(server.Id);
+            string[] otherNames = viewModel.Syncs.Select(s => s.SyncPair.Name).ToArray();
+            SyncPairEdit edit = new SyncPairEdit(newSync, otherNames, null, server.Api, true);
 
             Frame.Navigate(typeof(SyncEditPage), edit);
 
@@ -254,6 +269,7 @@ namespace FileSystemUWP.Sync.Definitions
                     SyncPair = newSync,
                 });
                 await database.SyncPairs.InsertSyncPair(newSync);
+                SyncLocalFolderHelper.SaveLocalFolder(newSync.LocalFolderToken, edit.LocalFolder);
             }
         }
 

@@ -27,7 +27,10 @@ namespace FileSystemCommonUWP.Database
         public static async Task<AppDatabase> OpenSqlite()
         {
             StorageFile dbFile = await ApplicationData.Current.LocalFolder.CreateFileAsync("servers.db", CreationCollisionOption.OpenIfExists);
-            return FromSqlite(dbFile);
+            AppDatabase database = FromSqlite(dbFile);
+            await database.Init();
+
+            return database;
         }
 
         public static AppDatabase FromSqlite(StorageFile file)

@@ -20,7 +20,7 @@ namespace FileSystemCommonUWP.Database.Servers
             const string sql = @"
                 CREATE TABLE IF NOT EXISTS servers (
                     id                      INTEGER PRIMARY KEY AUTOINCREMENT,
-                    is_current              INTEGER NOT NULL,
+                    is_current              INTEGER NOT NULL DEFAULT false,
                     name                    TEXT NOT NULL,
                     base_url                TEXT NOT NULL,
                     username                TEXT NOT NULL,
@@ -60,15 +60,16 @@ namespace FileSystemCommonUWP.Database.Servers
 
         private static ServerInfo CreateServerObject(DbDataReader reader)
         {
+            string restoreSortKeys = reader.GetStringNullable("restore_item_sort_keys");
             return new ServerInfo()
             {
                 Id = (int)reader.GetInt64("id"),
                 Api = CreateApiObject(reader),
                 SortBy = CreateSortByObject(reader),
-                CurrentFolderPath = reader.GetString("current_folder_path"),
+                CurrentFolderPath = reader.GetStringNullable("current_folder_path"),
                 RestoreIsFile = reader.GetBooleanFromNullableLong("restore_item_is_file"),
-                RestoreName = reader.GetString("restore_item_is_file"),
-                RestoreSortKeys = JsonConvert.DeserializeObject<string[]>(reader.GetString("restore_sort_keys")),
+                RestoreName = reader.GetStringNullable("restore_item_name"),
+                RestoreSortKeys = restoreSortKeys == null ? null : JsonConvert.DeserializeObject<string[]>(restoreSortKeys),
             };
         }
 
@@ -91,7 +92,7 @@ namespace FileSystemCommonUWP.Database.Servers
                 VALUES (@name, @baseUrl, @username, @rawCookies, @currentFolderPath, @sortByType, @sortByDirection,
                     @restoreItemIsFile, @restoreItemName, @restoreItemSortKeys);
 
-                SELECT last_insert_id();
+                SELECT last_insert_rowid();
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
@@ -170,18 +171,18 @@ namespace FileSystemCommonUWP.Database.Servers
             ";
 
             object currentServerId = await sqlExecuteService.ExecuteScalarAsync(sql);
-            return currentServerId is DBNull ? (int?)null : (int)(long)currentServerId;
+            return currentServerId is null || currentServerId is DBNull ? (int?)null : (int)(long)currentServerId;
         }
 
         public async Task UpdateCurrentServer(int? serverId)
         {
             const string sql = @"
                 UPDATE servers
-                SET is_current = false
+                SET is_current = 0
                 WHERE is_current;
 
                 UPDATE servers
-                SET is_current = true
+                SET is_current = 1
                 WHERE id = @serverId;
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = parameters = new KeyValuePair<string, object>[]

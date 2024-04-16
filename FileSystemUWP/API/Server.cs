@@ -101,6 +101,7 @@ namespace FileSystemUWP
 
         public Server(ServerInfo server)
         {
+            Id = server.Id;
             Api = server.Api;
             SortBy = server.SortBy;
             CurrentFolderPath = server.CurrentFolderPath;
@@ -116,6 +117,7 @@ namespace FileSystemUWP
         {
             return new ServerInfo()
             {
+                Id = Id,
                 Api = Api,
                 SortBy = SortBy,
                 CurrentFolderPath = CurrentFolderPath,
