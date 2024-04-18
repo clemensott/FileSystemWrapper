@@ -36,36 +36,44 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     UNIQUE(sync_pair_result_id, relative_path)
                 );
 
+-- Drop table sync_pair_runs;
                 CREATE TABLE IF NOT EXISTS sync_pair_runs (
-                    id                          INTEGER PRIMARY KEY AUTOINCREMENT,
-                    with_sub_folders            INTEGER NOT NULL,
-                    is_test_run                 INTEGER NOT NULL,
-                    requested_cancel            INTEGER NOT NULL,
-                    mode                        INTEGER NOT NULL,
-                    compare_type                INTEGER NOT NULL,
-                    conflict_handling_type      INTEGER NOT NULL,
-                    name                        TEXT NOT NULL,
-                    local_folder_token          TEXT NOT NULL,
-                    server_name_path            TEXT NOT NULL,
-                    server_path                 TEXT NOT NULL,
-                    allow_list                  TEXT NOT NULL,
-                    deny_list                   TEXT NOT NULL,
-                    api_base_url                TEXT NOT NULL,
-                    state                       INTEGER NOT NULL,
-                    current_count               INTEGER NOT NULL,
-                    all_files_count             INTEGER NOT NULL,
-                    compared_files_count        INTEGER NOT NULL,
-                    equal_files_count           INTEGER NOT NULL,
-                    conflict_files_count        INTEGER NOT NULL,
-                    copied_local_files_count    INTEGER NOT NULL,
-                    copied_server_files_count   INTEGER NOT NULL,
-                    deleted_local_files_count   INTEGER NOT NULL,
-                    deleted_server_files_count  INTEGER NOT NULL,
-                    error_files_count           INTEGER NOT NULL,
-                    ignore_files_count          INTEGER NOT NULL,
-                    created                     TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                    with_sub_folders                    INTEGER NOT NULL,
+                    is_test_run                         INTEGER NOT NULL,
+                    requested_cancel                    INTEGER NOT NULL,
+                    mode                                INTEGER NOT NULL,
+                    compare_type                        INTEGER NOT NULL,
+                    conflict_handling_type              INTEGER NOT NULL,
+                    name                                TEXT NOT NULL,
+                    local_folder_token                  TEXT NOT NULL,
+                    local_folder_path                   TEXT,
+                    server_name_path                    TEXT NOT NULL,
+                    server_path                         TEXT NOT NULL,
+                    allow_list                          TEXT NOT NULL,
+                    deny_list                           TEXT NOT NULL,
+                    api_base_url                        TEXT NOT NULL,
+                    state                               INTEGER NOT NULL,
+                    current_count                       INTEGER NOT NULL,
+                    all_files_count                     INTEGER NOT NULL,
+                    compared_files_count                INTEGER NOT NULL,
+                    equal_files_count                   INTEGER NOT NULL,
+                    conflict_files_count                INTEGER NOT NULL,
+                    copied_local_files_count            INTEGER NOT NULL,
+                    copied_server_files_count           INTEGER NOT NULL,
+                    deleted_local_files_count           INTEGER NOT NULL,
+                    deleted_server_files_count          INTEGER NOT NULL,
+                    error_files_count                   INTEGER NOT NULL,
+                    ignore_files_count                  INTEGER NOT NULL,
+                    current_query_folder_rel_path       TEXT,
+                    current_copy_to_local_rel_path      TEXT,
+                    current_copy_to_server_rel_path     TEXT,
+                    current_delete_from_server_rel_path TEXT,
+                    current_delete_from_local_rel_path  TEXT,
+                    created                             TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
+-- Drop table sync_pair_run_files;
                 CREATE TABLE IF NOT EXISTS sync_pair_run_files (
                     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
                     sync_pair_run_id    INTEGER NOT NULL REFERENCES sync_pair_runs(id),
@@ -255,6 +263,12 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                 DeletedServerFilesCount = (int)reader.GetInt64("deleted_server_files_count"),
                 ErrorFilesCount = (int)reader.GetInt64("error_files_count"),
                 IgnoreFilesCount = (int)reader.GetInt64("ignore_files_count"),
+                LocalFolderPath = reader.GetStringNullable("local_folder_path"),
+                CurrentQueryFolderRelPath = reader.GetStringNullable("current_query_folder_rel_path"),
+                CurrentCopyToLocalRelPath = reader.GetStringNullable("current_copy_to_local_rel_path"),
+                CurrentCopyToServerRelPath = reader.GetStringNullable("current_copy_to_server_rel_path"),
+                CurrentDeleteFromServerRelPath = reader.GetStringNullable("current_delete_from_server_rel_path"),
+                CurrentDeleteFromLocalRelPath = reader.GetStringNullable("current_delete_from_local_rel_path"),
             };
         }
 
@@ -266,7 +280,8 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     name, local_folder_token, server_name_path, server_path, allow_list, deny_list, api_base_url,
                     state, current_count, all_files_count, compared_files_count, equal_files_count, conflict_files_count,
                     copied_local_files_count, copied_server_files_count, deleted_local_files_count, deleted_server_files_count,
-                    error_files_count, ignore_files_count
+                    error_files_count, ignore_files_count, local_folder_path, current_query_folder_rel_path, current_copy_to_local_rel_path,
+                    current_copy_to_server_rel_path, current_delete_from_server_rel_path, current_delete_from_local_rel_path
                 FROM sync_pair_runs
                 WHERE id IN ({idValues});
             ";
@@ -301,12 +316,14 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     name, local_folder_token, server_name_path, server_path, allow_list, deny_list, api_base_url,
                     state, current_count, all_files_count, compared_files_count, equal_files_count, conflict_files_count,
                     copied_local_files_count, copied_server_files_count, deleted_local_files_count, deleted_server_files_count,
-                    error_files_count, ignore_files_count)
+                    error_files_count, ignore_files_count, local_folder_path, current_query_folder_rel_path, current_copy_to_local_rel_path,
+                    current_copy_to_server_rel_path, current_delete_from_server_rel_path, current_delete_from_local_rel_path)
                 VALUES (@withSubfolders, @isTestRun, @requestedCancel, @mode, @compareType, @conflictHandlingType,
                     @name, @localFolderToken, @serverNamePath, @serverPath, @allowList, @denyList, @apiBaseUrl,
                     @state, @currentCount, @allFilesCount, @comparedFilesCount, @equalFilesCount, @confilctFilesCount,
                     @copiedLocalFilesCount, @copiedServerFilesCount, @deletedLocalFilesCount, @deletedServerFilesCount,
-                    @errorFilesCount, @ignoreFilesCount);
+                    @errorFilesCount, @ignoreFilesCount, @localFolderPath, @currentQueryFolderRelPath, @currentCopyToLocalRelPath,
+                    @currentCopyToServerRelPath, @currentDeleteFromServerRelPath, @currentDeleteFromLocalRelPath);
 
                 UPDATE sync_pairs
                 SET current_sync_pair_run_id = last_insert_rowid()
@@ -344,6 +361,12 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                 CreateParam("deletedServerFilesCount", (long)run.DeletedServerFilesCount),
                 CreateParam("errorFilesCount", (long)run.ErrorFilesCount),
                 CreateParam("ignoreFilesCount", (long)run.IgnoreFilesCount),
+                CreateParam("localFolderPath", run.LocalFolderPath),
+                CreateParam("currentQueryFolderRelPath", run.CurrentQueryFolderRelPath),
+                CreateParam("currentCopyToLocalRelPath", run.CurrentCopyToLocalRelPath),
+                CreateParam("currentCopyToServerRelPath", run.CurrentCopyToServerRelPath),
+                CreateParam("currentDeleteFromServerRelPath", run.CurrentDeleteFromServerRelPath),
+                CreateParam("currentDeleteFromLocalRelPath", run.CurrentDeleteFromLocalRelPath),
                 CreateParam("syncPairId", (long)pair.Id),
                 CreateParam("oldSyncPairRunId", (long?)pair.CurrentSyncPairRunId),
             };
@@ -352,35 +375,60 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             pair.CurrentSyncPairRunId = run.Id = (int)syncPairRunId;
         }
 
-        public async Task UpdateSyncPairRunRequestCancel(int syncPairId)
+        private async Task UpdateSyncPairRunColumn(int syncPairRunId, string columnName, object value)
         {
-            const string sql = @"
+            string sql = $@"
                 UPDATE sync_pair_runs
-                SET requested_cancel = 1
+                SET {columnName} = @value
                 WHERE id = @id;
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
-                CreateParam("id", syncPairId),
+                CreateParam("id", syncPairRunId),
+                CreateParam("value", value),
             };
 
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public async Task UpdateSyncPairRunState(int syncPairId, SyncPairHandlerState state)
+        public async Task UpdateSyncPairRunRequestCancel(int syncPairRunId)
         {
-            const string sql = @"
-                UPDATE sync_pair_runs
-                SET state = @state
-                WHERE id = @id;
-            ";
-            IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
-            {
-                CreateParam("id", syncPairId),
-                CreateParam("state", (long)state),
-            };
+            await UpdateSyncPairRunColumn(syncPairRunId, "requested_cancel", 1L);
+        }
 
-            await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
+        public async Task UpdateSyncPairRunState(int syncPairRunId, SyncPairHandlerState state)
+        {
+            await UpdateSyncPairRunColumn(syncPairRunId, "state", (long)state);
+        }
+
+        public async Task UpdateSyncPairRunLocalFolderPath(int syncPairRunId, string localFolderPath)
+        {
+            await UpdateSyncPairRunColumn(syncPairRunId, "local_folder_path", localFolderPath);
+        }
+
+        public async Task UpdateSyncPairRunCurrentQueryFolderRelPath(int syncPairRunId, string value)
+        {
+            await UpdateSyncPairRunColumn(syncPairRunId, "current_query_folder_rel_path", value);
+        }
+
+        public async Task UpdateSyncPairRunCurrentCopyToLocalRelPath(int syncPairRunId, string value)
+        {
+            await UpdateSyncPairRunColumn(syncPairRunId, "current_copy_to_local_rel_path", value);
+        }
+
+        public async Task UpdateSyncPairRunCurrentCopyToServerRelPath(int syncPairRunId, string value)
+        {
+            await UpdateSyncPairRunColumn(syncPairRunId, "current_copy_to_server_rel_path", value);
+        }
+
+        public async Task UpdateSyncPairRunCurrentDeleteFromServerRelPath(int syncPairRunId, string value)
+        {
+            await UpdateSyncPairRunColumn(syncPairRunId, "current_delete_from_server_rel_path", value);
+        }
+
+        public async Task UpdateSyncPairRunCurrentDeleteFromLocalRelPath(int syncPairRunId, string value)
+        {
+            await UpdateSyncPairRunColumn(syncPairRunId, "current_delete_from_local_rel_path", value);
         }
 
         public async Task IncreaseSyncPairRunCurrentCount(int syncPairId, int increase = 1)
@@ -453,14 +501,15 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             return await sqlExecuteService.ExecuteReadAllAsync(CreateSyncPairRunErrorFileObject, sql, parameters);
         }
 
-        public async Task ResetSyncPairRunFiles(int syncPairRunId)
+        public async Task ResetSyncPairRun(int syncPairRunId)
         {
             const string sql = @"
                 DELETE FROM sync_pair_run_files
                 WHERE sync_pair_run_id = @syncPairRunId;
 
                 UPDATE sync_pair_runs
-                SET all_files_count = 0,
+                SET current_count = 0,
+                    all_files_count = 0,
                     error_files_count = 0,
                     equal_files_count = 0,
                     conflict_files_count = 0,
@@ -468,8 +517,11 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     copied_server_files_count = 0,
                     deleted_local_files_count = 0,
                     deleted_server_files_count = 0,
-                    error_files_count = 0,
-                    ignore_files_count = 0
+                    current_query_folder_rel_path = null,
+                    current_copy_to_local_rel_path = null,
+                    current_copy_to_server_rel_path = null,
+                    current_delete_from_server_rel_path = null,
+                    current_delete_from_local_rel_path = null
                 WHERE id = @syncPairRunId;
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]

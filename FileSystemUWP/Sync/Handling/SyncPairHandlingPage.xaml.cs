@@ -1,7 +1,6 @@
 ﻿using FileSystemCommonUWP.Database;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling;
-using FileSystemCommonUWP.Sync.Handling.Communication;
 using StdOttStandard;
 using StdOttUwp;
 using System;
@@ -22,21 +21,103 @@ namespace FileSystemUWP.Sync.Handling
     /// </summary>
     public sealed partial class SyncPairHandlingPage : Page
     {
+        private readonly TimeSpan lastUpdatedSyncsMinInterval = TimeSpan.FromMilliseconds(150);
+
+        private bool isUpdatingSyncs;
+        private DateTime lastUpdatedSyncs;
+        private readonly DispatcherTimer timer;
+        private readonly BackgroundTaskHelper backgroundTaskHelper;
         private readonly AppDatabase database;
-        private SyncPairRun syncPairRun;
+        private SyncPairRun viewModel;
 
         public SyncPairHandlingPage()
         {
             this.InitializeComponent();
 
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(1000);
+            timer.Tick += Timer_Tick;
+
+            backgroundTaskHelper = BackgroundTaskHelper.Current;
             database = ((App)Application.Current).Database;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            DataContext = syncPairRun = (SyncPairRun)e.Parameter;
+            DataContext = viewModel = (SyncPairRun)e.Parameter;
 
-            base.OnNavigatedTo(e);
+            SubscribeProgress();
+        }
+
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            UnsubscribeProgress();
+        }
+
+        private void SubscribeProgress()
+        {
+            Application.Current.EnteredBackground += OnEnteredBackground;
+            Application.Current.LeavingBackground += OnLeavingBackground;
+
+            backgroundTaskHelper.SyncProgress += BackgroundTaskHelper_SyncProgress;
+            timer.Start();
+        }
+
+        private void UnsubscribeProgress()
+        {
+            Application.Current.EnteredBackground -= OnEnteredBackground;
+            Application.Current.LeavingBackground -= OnLeavingBackground;
+
+            backgroundTaskHelper.SyncProgress -= BackgroundTaskHelper_SyncProgress;
+            timer.Stop();
+        }
+
+        private void OnEnteredBackground(object sender, Windows.ApplicationModel.EnteredBackgroundEventArgs e)
+        {
+            backgroundTaskHelper.SyncProgress += BackgroundTaskHelper_SyncProgress;
+            timer.Start();
+        }
+
+        private void OnLeavingBackground(object sender, Windows.ApplicationModel.LeavingBackgroundEventArgs e)
+        {
+            backgroundTaskHelper.SyncProgress -= BackgroundTaskHelper_SyncProgress;
+            timer.Stop();
+        }
+
+        private async void Timer_Tick(object sender, object e)
+        {
+            await UpdateSyncs();
+        }
+
+        private async void BackgroundTaskHelper_SyncProgress(object sender, EventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("On Sync Progress");
+            await UwpUtils.RunSafe(() => UpdateSyncs());
+        }
+
+        private async Task UpdateSyncs()
+        {
+            if (isUpdatingSyncs || DateTime.Now - lastUpdatedSyncs < lastUpdatedSyncsMinInterval) return;
+            isUpdatingSyncs = true;
+
+            try
+            {
+                int[] syncPairRunIds = new int[] { viewModel.Id };
+                IList<SyncPairRun> syncPairRuns = await database.SyncPairs.SelectSyncPairRuns(syncPairRunIds);
+                SyncPairRun run = syncPairRuns.FirstOrDefault();
+                if (run == null) return;
+
+                DataContext = viewModel = run;
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("Update syncs error: " + e);
+            }
+            finally
+            {
+                isUpdatingSyncs = false;
+                lastUpdatedSyncs = DateTime.Now;
+            }
         }
 
         private object ModeNameConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
@@ -108,12 +189,6 @@ namespace FileSystemUWP.Sync.Handling
             return path;
         }
 
-        private object FilePairInfoConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
-        {
-            FilePairInfo? pair = (FilePairInfo?)value;
-            return pair?.RelativePath ?? "<None>";
-        }
-
         private object IsRunningConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
         {
             return IsRunning((SyncPairHandlerState?)value);
@@ -152,7 +227,7 @@ namespace FileSystemUWP.Sync.Handling
 
         private async void TblErrorFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IList<SyncPairRunErrorFile> pairs = await database.SyncPairs.SelectSyncPairRunErrorFiles(syncPairRun.Id);
+            IList<SyncPairRunErrorFile> pairs = await database.SyncPairs.SelectSyncPairRunErrorFiles(viewModel.Id);
 
             if (pairs.Count == 0)
             {
@@ -201,7 +276,7 @@ namespace FileSystemUWP.Sync.Handling
 
         private async Task<IEnumerable<SyncPairRunFile>> GetSyncPairRunFiles(SyncPairRunFileType type)
         {
-            return await database.SyncPairs.SelectSyncPairRunFiles(syncPairRun.Id, type);
+            return await database.SyncPairs.SelectSyncPairRunFiles(viewModel.Id, type);
         }
 
         private static async Task ShowFileList(string title, IEnumerable<SyncPairRunFile> pairs)
@@ -219,7 +294,7 @@ namespace FileSystemUWP.Sync.Handling
 
         private async void AbbStop_Click(object sender, RoutedEventArgs e)
         {
-            await BackgroundTaskHelper.Current.Cancel(syncPairRun);
+            await BackgroundTaskHelper.Current.Cancel(viewModel);
         }
     }
 }

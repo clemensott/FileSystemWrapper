@@ -78,6 +78,12 @@ namespace FileSystemUWP.Sync.Definitions
             Run.DeletedServerFilesCount = run.DeletedServerFilesCount;
             Run.ErrorFilesCount = run.ErrorFilesCount;
             Run.IgnoreFilesCount = run.IgnoreFilesCount;
+            Run.LocalFolderPath = run.LocalFolderPath;
+            Run.CurrentQueryFolderRelPath = run.CurrentQueryFolderRelPath;
+            Run.CurrentCopyToLocalRelPath = run.CurrentCopyToLocalRelPath;
+            Run.CurrentCopyToServerRelPath = run.CurrentCopyToServerRelPath;
+            Run.DeletedServerFilesCount = run.DeletedServerFilesCount;
+            Run.DeletedLocalFilesCount = run.DeletedLocalFilesCount;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

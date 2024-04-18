@@ -9,6 +9,8 @@ namespace FileSystemCommonUWP.Sync.Handling
         private int currentCount, allFilesCount, comparedFilesCount, equalFilesCount,
             conflictFilesCount, copiedLocalFilesCount, copiedServerFilesCount,
             deletedLocalFilesCount, deletedServerFilesCount, errorFilesCount, ignoreFilesCount;
+        private string localFolderPath, currentQueryFolderRelPath, currentCopyToLocalRelPath, 
+            currentCopyToServerRelPath, currentDeleteFromServerRelPath, currentDeleteFromLocalRelPath;
 
         public int Id { get; set; }
 
@@ -183,6 +185,79 @@ namespace FileSystemCommonUWP.Sync.Handling
 
                 ignoreFilesCount = value;
                 OnPropertyChanged(nameof(IgnoreFilesCount));
+            }
+        }
+
+        public string LocalFolderPath
+        {
+            get => localFolderPath;
+            set
+            {
+                if (value == localFolderPath) return;
+
+                localFolderPath = value;
+                OnPropertyChanged(nameof(localFolderPath));
+            }
+        }
+
+
+        public string CurrentQueryFolderRelPath
+        {
+            get => currentQueryFolderRelPath;
+            set
+            {
+                if (value == currentQueryFolderRelPath) return;
+
+                currentQueryFolderRelPath = value;
+                OnPropertyChanged(nameof(CurrentQueryFolderRelPath));
+            }
+        }
+
+        public string CurrentCopyToLocalRelPath
+        {
+            get => currentCopyToLocalRelPath;
+            set
+            {
+                if (value == currentCopyToLocalRelPath) return;
+
+                currentCopyToLocalRelPath = value;
+                OnPropertyChanged(nameof(CurrentCopyToLocalRelPath));
+            }
+        }
+
+        public string CurrentCopyToServerRelPath
+        {
+            get => currentCopyToServerRelPath;
+            set
+            {
+                if (value == currentCopyToServerRelPath) return;
+
+                currentCopyToServerRelPath = value;
+                OnPropertyChanged(nameof(CurrentCopyToServerRelPath));
+            }
+        }
+
+        public string CurrentDeleteFromServerRelPath
+        {
+            get => currentDeleteFromServerRelPath;
+            set
+            {
+                if (value == currentDeleteFromServerRelPath) return;
+
+                currentDeleteFromServerRelPath = value;
+                OnPropertyChanged(nameof(CurrentDeleteFromServerRelPath));
+            }
+        }
+
+        public string CurrentDeleteFromLocalRelPath
+        {
+            get => currentDeleteFromLocalRelPath;
+            set
+            {
+                if (value == currentDeleteFromLocalRelPath) return;
+
+                currentDeleteFromLocalRelPath = value;
+                OnPropertyChanged(nameof(CurrentDeleteFromLocalRelPath));
             }
         }
         #endregion
