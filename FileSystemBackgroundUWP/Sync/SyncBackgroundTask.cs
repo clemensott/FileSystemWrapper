@@ -14,11 +14,13 @@ namespace FileSystemBackgroundUWP.Sync
 {
     public sealed class SyncBackgroundTask : IBackgroundTask
     {
+        private IBackgroundTaskInstance taskInstance;
         private AppDatabase database;
         private SyncPairHandler currentSyncPairHandler;
 
         public async void Run(IBackgroundTaskInstance taskInstance)
         {
+            this.taskInstance = taskInstance;
             BackgroundTaskDeferral deferral = null;
             Timer heartBeatTimer = null;
 
@@ -74,6 +76,7 @@ namespace FileSystemBackgroundUWP.Sync
                     run.RequestedCancel, lastResult, run.Mode, run.CompareType, run.ConflictHandlingType,
                     localFolder, run.ServerPath, run.AllowList, run.DenyList, api);
 
+                currentSyncPairHandler.Progress += CurrentSyncPairHandler_Progress;
                 await currentSyncPairHandler.Run();
             }
             catch (Exception e)
@@ -82,8 +85,14 @@ namespace FileSystemBackgroundUWP.Sync
             }
             finally
             {
+                if (currentSyncPairHandler != null) currentSyncPairHandler.Progress += CurrentSyncPairHandler_Progress;
                 currentSyncPairHandler = null;
             }
+        }
+
+        private void CurrentSyncPairHandler_Progress(object sender, EventArgs e)
+        {
+            TriggerProgress();
         }
 
         private static async Task<Api> GetAPI(string baseUrl)
@@ -97,10 +106,12 @@ namespace FileSystemBackgroundUWP.Sync
 
         private Timer StartTimer(IBackgroundTaskInstance taskInstance)
         {
-            return new Timer((_) =>
-            {
-                taskInstance.Progress = (uint)FlipStatus((BackgroundTaskStatus)taskInstance.Progress);
-            }, null, TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(500));
+            return new Timer((_) => TriggerProgress(), null, TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(500));
+        }
+
+        private void TriggerProgress()
+        {
+            taskInstance.Progress = (uint)FlipStatus((BackgroundTaskStatus)taskInstance.Progress);
         }
 
         private static BackgroundTaskStatus FlipStatus(BackgroundTaskStatus status)

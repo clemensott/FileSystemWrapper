@@ -18,6 +18,7 @@ namespace FileSystemUWP.Sync.Handling
         private const string applicationBackgroundTaskBuilderName = "AppSyncFileSystemTask";
         public const string TimerBackgroundTaskBuilderName = "TimerSyncFileSystemTask";
 
+        private static readonly TimeSpan statusUpdateTimeout = TimeSpan.FromSeconds(10);
         private static BackgroundTaskHelper instance;
 
         public static BackgroundTaskHelper Current
@@ -30,11 +31,28 @@ namespace FileSystemUWP.Sync.Handling
             }
         }
 
+
         private AppDatabase database;
         private readonly SemaphoreSlim startBackgroundTaskSem;
-        private BackgroundTaskStatusTracker statusTracker;
         private ApplicationTrigger appTrigger;
         private TimeTrigger timeTrigger;
+        private IBackgroundTaskRegistration taskRegistration;
+        private BackgroundTaskStatus status;
+
+        public BackgroundTaskStatus Status
+        {
+            get => status;
+            private set
+            {
+                status = value;
+                LastStatusUpdate = DateTime.Now;
+                SyncProgress?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        public DateTime LastStatusUpdate { get; private set; }
+
+        public event EventHandler SyncProgress;
 
         private BackgroundTaskHelper()
         {
@@ -97,12 +115,12 @@ namespace FileSystemUWP.Sync.Handling
             try
             {
                 await startBackgroundTaskSem.WaitAsync();
-                if (statusTracker == null || !await statusTracker.IsStopped())
+                if (await IsStopped())
                 {
                     if (appTrigger == null) await RegisterAppBackgroundTask();
 
                     await appTrigger.RequestAsync();
-                    statusTracker.SetTriggered();
+                    Status = BackgroundTaskStatus.Triggered;
                 }
             }
             finally
@@ -113,7 +131,6 @@ namespace FileSystemUWP.Sync.Handling
 
         private async Task RegisterAppBackgroundTask()
         {
-            IBackgroundTaskRegistration taskRegistration;
             Guid taskRegistrationId = Settings.Current.ApplicationBackgroundTaskRegistrationId;
             if (BackgroundTaskRegistration.AllTasks.TryGetValue(taskRegistrationId, out taskRegistration))
             {
@@ -121,7 +138,7 @@ namespace FileSystemUWP.Sync.Handling
                     lastTraskRegistration.Trigger is ApplicationTrigger)
                 {
                     appTrigger = (ApplicationTrigger)lastTraskRegistration.Trigger;
-                    statusTracker = BackgroundTaskStatusTracker.Start(taskRegistration);
+                    StartTracking();
                     return;
                 }
 
@@ -144,7 +161,7 @@ namespace FileSystemUWP.Sync.Handling
             taskRegistration = builder.Register();
             Settings.Current.ApplicationBackgroundTaskRegistrationId = taskRegistration.TaskId;
 
-            statusTracker = BackgroundTaskStatusTracker.Start(taskRegistration);
+            StartTracking();
         }
 
         public void RegisterTimerBackgroundTask()
@@ -175,10 +192,47 @@ namespace FileSystemUWP.Sync.Handling
             await StartBackgroundTask();
         }
 
+        private void StartTracking()
+        {
+            taskRegistration.Progress += TaskRegistration_Progress;
+            taskRegistration.Completed += TaskRegistration_Completed;
+        }
+
+        private void TaskRegistration_Progress(BackgroundTaskRegistration sender, BackgroundTaskProgressEventArgs args)
+        {
+            Status = (BackgroundTaskStatus)args.Progress;
+        }
+
+        private void TaskRegistration_Completed(BackgroundTaskRegistration sender, BackgroundTaskCompletedEventArgs args)
+        {
+            Status = BackgroundTaskStatus.Stopped;
+        }
+
+        private bool HitStatusTimeout()
+        {
+            return DateTime.Now - LastStatusUpdate > statusUpdateTimeout;
+        }
+
+        public async Task<bool> IsStopped()
+        {
+            while (true)
+            {
+                if (HitStatusTimeout() || Status == BackgroundTaskStatus.Unkown || Status == BackgroundTaskStatus.Stopped) return true;
+                if (Status == BackgroundTaskStatus.RunningA || Status == BackgroundTaskStatus.RunningB) return false;
+
+                await Task.Delay(100);
+            }
+        }
+
         public void Dispose()
         {
             startBackgroundTaskSem?.Dispose();
-            statusTracker?.Dispose();
+
+            if (taskRegistration != null)
+            {
+                taskRegistration.Progress -= TaskRegistration_Progress;
+                taskRegistration.Completed -= TaskRegistration_Completed;
+            }
         }
     }
 }

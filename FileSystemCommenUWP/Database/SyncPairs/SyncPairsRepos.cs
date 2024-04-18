@@ -519,12 +519,14 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             }
         }
 
-        private static string GetInscreaseFileCount(SyncPairRunFileType type)
+        private static string GetInscreaseFileCount(SyncPairRunFileType type, bool increaseCurrentCount)
         {
             string countColumnName = GetCountColumnName(type);
+            string increaseCurrentCountSql = increaseCurrentCount ? "current_count = current_count + 1," : "";
             return $@"
                 UPDATE sync_pair_runs
-                SET {countColumnName} = {countColumnName} + 1
+                SET {increaseCurrentCountSql}
+                    {countColumnName} = {countColumnName} + 1
                 WHERE id = @syncPairRunId;
             ";
         }
@@ -535,7 +537,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                 INSERT INTO sync_pair_run_files (sync_pair_run_id, type, name, relative_path)
                 VALUES (@syncPairRunId, @type, @name, @relativePath);
 
-                {GetInscreaseFileCount(SyncPairRunFileType.All)}
+                {GetInscreaseFileCount(SyncPairRunFileType.All, false)}
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
@@ -548,7 +550,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public async Task SetSyncPairRunFileType(int syncPairRunId, string relativePath, SyncPairRunFileType type)
+        public async Task SetSyncPairRunFileType(int syncPairRunId, string relativePath, SyncPairRunFileType type, bool increaseCurrentCount)
         {
             string countColumnName = GetCountColumnName(type);
             string sql = $@"
@@ -556,7 +558,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                 SET type = type | @type
                 WHERE sync_pair_run_id = @syncPairRunId AND relative_path = @relativePath;
 
-                {GetInscreaseFileCount(type)}
+                {GetInscreaseFileCount(type, increaseCurrentCount)}
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
@@ -568,7 +570,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public async Task SetSyncPairRunErrorFileType(int syncPairRunId, string relativePath, Exception exception)
+        public async Task SetSyncPairRunErrorFileType(int syncPairRunId, string relativePath, Exception exception, bool increaseCurrentCount)
         {
             string sql = $@"
                 UPDATE sync_pair_run_files
@@ -578,7 +580,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     error_exception = @errorException
                 WHERE sync_pair_run_id = @syncPairRunId AND relative_path = @relativePath;
 
-                {GetInscreaseFileCount(SyncPairRunFileType.Error)}
+                {GetInscreaseFileCount(SyncPairRunFileType.Error, increaseCurrentCount)}
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {

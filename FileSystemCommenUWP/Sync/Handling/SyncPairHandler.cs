@@ -26,7 +26,7 @@ namespace FileSystemCommonUWP.Sync.Handling
         private readonly AppDatabase database;
         private readonly int syncPairRunId;
 
-        private readonly bool withSubfolders, isTestRun;
+        private readonly bool withSubfolders, isTestRun, requestedCancel;
         private readonly string serverPath;
         private readonly StorageFolder localFolder;
         private readonly SyncModeHandler modeHandler;
@@ -45,83 +45,18 @@ namespace FileSystemCommonUWP.Sync.Handling
 
         public string RunToken { get; }
 
-        public SyncPairHandlerState State
-        {
-            get => state;
-            private set
-            {
-                if (value == state) return;
+        public bool IsCanceled => state == SyncPairHandlerState.Canceled;
 
-                state = value;
-            }
-        }
+        public bool IsEnded => state == SyncPairHandlerState.Finished ||
+            state == SyncPairHandlerState.Error ||
+            state == SyncPairHandlerState.Canceled;
 
-        public bool IsCanceled => State == SyncPairHandlerState.Canceled;
-
-        public bool IsEnded => State == SyncPairHandlerState.Finished ||
-            State == SyncPairHandlerState.Error ||
-            State == SyncPairHandlerState.Canceled;
-
-        public string CurrentQueryFolderRelPath
-        {
-            get => currentQueryFolderRelPath;
-            private set
-            {
-                if (value == currentQueryFolderRelPath) return;
-
-                currentQueryFolderRelPath = value;
-            }
-        }
-
-        public FilePair CurrentCopyToLocalFile
-        {
-            get => currentCopyToLocalFile;
-            private set
-            {
-                if (value == currentCopyToLocalFile) return;
-
-                currentCopyToLocalFile = value;
-            }
-        }
-
-        public FilePair CurrentCopyToServerFile
-        {
-            get => currentCopyToServerFile;
-            private set
-            {
-                if (value == currentCopyToServerFile) return;
-
-                currentCopyToServerFile = value;
-            }
-        }
-
-        public FilePair CurrentDeleteFromServerFile
-        {
-            get => currentDeleteFromServerFile;
-            private set
-            {
-                if (value == currentDeleteFromServerFile) return;
-
-                currentDeleteFromServerFile = value;
-            }
-        }
-
-        public FilePair CurrentDeleteFromLocalFile
-        {
-            get => currentDeleteFromLocalFile;
-            private set
-            {
-                if (value == currentDeleteFromLocalFile) return;
-
-                currentDeleteFromLocalFile = value;
-            }
-        }
+        public event EventHandler Progress;
 
         public SyncPairHandler(AppDatabase database, int syncPairRunId, bool withSubfolders, bool isTestRun, bool requestedCancel,
             SyncPairResult lastResult, SyncMode mode, SyncCompareType compareType, SyncConflictHandlingType conflictHandlingType,
             StorageFolder localFolder, string serverPath, string[] allowList, string[] denialList, Api api)
         {
-            State = requestedCancel ? SyncPairHandlerState.Canceled : SyncPairHandlerState.WaitForStart;
             bothFiles = new LockQueue<FilePair>();
             singleFiles = new LockQueue<FilePair>();
             copyToLocalFiles = new LockQueue<FilePair>();
@@ -132,6 +67,7 @@ namespace FileSystemCommonUWP.Sync.Handling
             this.database = database;
             this.syncPairRunId = syncPairRunId;
             this.withSubfolders = withSubfolders;
+            this.requestedCancel = requestedCancel;
             this.isTestRun = isTestRun;
             fileComparer = GetFileComparer(compareType);
             conlictHandlingType = conflictHandlingType;
@@ -200,6 +136,31 @@ namespace FileSystemCommonUWP.Sync.Handling
         private async Task AddFileToAll(SyncPairRunFile file)
         {
             await database.SyncPairs.InsertSyncPairRunFile(syncPairRunId, file);
+            Progress?.Invoke(this, EventArgs.Empty);
+        }
+
+        private async Task AddToList(FilePair pair, SyncPairRunFileType type, bool increaseCurrentCount)
+        {
+            await database.SyncPairs.SetSyncPairRunFileType(syncPairRunId, pair.RelativePath, type, increaseCurrentCount);
+            Progress?.Invoke(this, EventArgs.Empty);
+        }
+
+        private async Task ErrorFile(FilePair pair, string message, Exception e = null)
+        {
+            await database.SyncPairs.SetSyncPairRunErrorFileType(syncPairRunId, pair.RelativePath, e, true);
+            Progress?.Invoke(this, EventArgs.Empty);
+        }
+
+        private async Task SaveNewResult()
+        {
+            await database.SyncPairs.InsertSyncPairResult(syncPairRunId, newResult);
+        }
+
+        private async Task SetState(SyncPairHandlerState state)
+        {
+            this.state = state;
+            await database.SyncPairs.UpdateSyncPairRunState(syncPairRunId, state);
+            Progress?.Invoke(this, EventArgs.Empty);
         }
 
         private async Task QueryFiles()
@@ -215,7 +176,7 @@ namespace FileSystemCommonUWP.Sync.Handling
             }
             finally
             {
-                CurrentQueryFolderRelPath = null;
+                currentQueryFolderRelPath = null;
 
                 bothFiles.End();
                 singleFiles.End();
@@ -226,7 +187,7 @@ namespace FileSystemCommonUWP.Sync.Handling
             {
                 if (IsCanceled) return;
 
-                CurrentQueryFolderRelPath = relPath;
+                currentQueryFolderRelPath = relPath;
 
                 string serverFolderPath = api.Config.JoinPaths(serverPath, relPath);
 
@@ -333,7 +294,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                 {
                     SyncActionType action = await modeHandler.GetActionOfBothFiles(pair);
                     await HandleAction(action, pair);
-                    await AddToList(pair, SyncPairRunFileType.Compared);
+                    await AddToList(pair, SyncPairRunFileType.Compared, false);
                 }
                 catch (Exception e)
                 {
@@ -353,7 +314,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                 {
                     SyncActionType action = await modeHandler.GetActionOfSingleFiles(pair);
                     await HandleAction(action, pair);
-                    await AddToList(pair, SyncPairRunFileType.Compared);
+                    await AddToList(pair, SyncPairRunFileType.Compared, false);
                 }
                 catch (Exception e)
                 {
@@ -371,7 +332,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                     break;
 
                 case SyncActionType.CopyToLocalByConflict:
-                    await AddToList(pair, SyncPairRunFileType.Conflict);
+                    await AddToList(pair, SyncPairRunFileType.Conflict, false);
                     copyToLocalFiles.Enqueue(pair);
                     break;
 
@@ -380,7 +341,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                     break;
 
                 case SyncActionType.CopyToServerByConflict:
-                    await AddToList(pair, SyncPairRunFileType.Conflict);
+                    await AddToList(pair, SyncPairRunFileType.Conflict, false);
                     copyToServerFiles.Enqueue(pair);
                     break;
 
@@ -393,11 +354,24 @@ namespace FileSystemCommonUWP.Sync.Handling
                     break;
 
                 case SyncActionType.Equal:
-                    await AddToList(pair, SyncPairRunFileType.Equal);
+                    await AddToList(pair, SyncPairRunFileType.Equal, true);
                     break;
 
                 case SyncActionType.Ignore:
-                    await AddToList(pair, SyncPairRunFileType.Ignore);
+                    SyncPairResultFile last;
+                    if (lastResult.TryGetFile(pair.RelativePath, out last))
+                    {
+                        if (pair.ServerCompareValue == null) pair.ServerCompareValue = last.ServerCompareValue;
+                        if (pair.LocalCompareValue == null) pair.LocalCompareValue = last.LocalCompareValue;
+                    }
+                    newResult.AddFile(new SyncPairResultFile()
+                    {
+                        RelativePath = pair.RelativePath,
+                        LocalCompareValue = pair.LocalCompareValue,
+                        ServerCompareValue = pair.ServerCompareValue,
+                    });
+
+                    await AddToList(pair, SyncPairRunFileType.Ignore, true);
                     break;
             }
         }
@@ -406,71 +380,54 @@ namespace FileSystemCommonUWP.Sync.Handling
         {
             while (true)
             {
-                CurrentCopyToLocalFile = null;
+                currentCopyToLocalFile = null;
 
                 (bool isEnd, FilePair pair) = copyToLocalFiles.Dequeue();
                 if (isEnd || IsCanceled) break;
 
-                if (isTestRun)
-                {
-                    await AddToList(pair, SyncPairRunFileType.CopiedLocal);
-                    continue;
-                }
+                currentCopyToLocalFile = pair;
 
-                CurrentCopyToLocalFile = pair;
-
-                StorageFolder localFolder;
+                string errorMessage = "Unkown";
                 string fileName;
+                StorageFolder localFolder;
+                StorageFile tmpFile = null;
 
                 try
                 {
-                    (localFolder, fileName) = await TryCreateLocalFolder(pair.RelativePath, this.localFolder);
-                }
-                catch (Exception e)
-                {
-                    await ErrorFile(pair, "Create local folder error", e);
-                    continue;
-                }
-
-                StorageFile tmpFile;
-
-                try
-                {
-                    tmpFile = await localFolder.CreateFileAsync(fileName, CreationCollisionOption.GenerateUniqueName);
-                }
-                catch (Exception e)
-                {
-                    await ErrorFile(pair, "Create local tmpFile error", e);
-                    continue;
-                }
-
-                try
-                {
-                    await api.DownloadFile(pair.ServerFullPath, tmpFile);
-                    object localCompareValue = await fileComparer.GetLocalCompareValue(tmpFile);
-
-                    if (fileName != tmpFile.Name)
+                    if (!isTestRun)
                     {
-                        System.Diagnostics.Debug.WriteLine("Download file1");
-                        await tmpFile.RenameAsync(fileName, NameCollisionOption.ReplaceExisting);
+                        errorMessage = "Create local folder error";
+                        (localFolder, fileName) = await TryCreateLocalFolder(pair.RelativePath, this.localFolder);
+
+
+                        errorMessage = "Create local tmpFile error";
+                        tmpFile = await localFolder.CreateFileAsync(fileName, CreationCollisionOption.GenerateUniqueName);
+
+
+                        errorMessage = "Copy file to local error";
+                        await api.DownloadFile(pair.ServerFullPath, tmpFile);
+                        object localCompareValue = await fileComparer.GetLocalCompareValue(tmpFile);
+
+                        if (fileName != tmpFile.Name)
+                        {
+                            await tmpFile.RenameAsync(fileName, NameCollisionOption.ReplaceExisting);
+                        }
+
+                        pair.LocalCompareValue = localCompareValue;
+                        if (pair.ServerCompareValue == null) pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
                     }
 
-                    System.Diagnostics.Debug.WriteLine("Download file2: " + tmpFile.Path);
-                    pair.LocalCompareValue = localCompareValue;
-                    System.Diagnostics.Debug.WriteLine("Download file3");
-                    if (pair.ServerCompareValue == null) pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
-
-                    await AddToList(pair, SyncPairRunFileType.CopiedLocal);
+                    await AddToList(pair, SyncPairRunFileType.CopiedLocal, true);
                     continue;
                 }
                 catch (Exception e)
                 {
-                    await ErrorFile(pair, "Copy file to local error", e);
+                    await ErrorFile(pair, errorMessage, e);
                 }
 
                 try
                 {
-                    await tmpFile.DeleteAsync();
+                    if (tmpFile != null) await tmpFile.DeleteAsync();
                 }
                 catch { }
             }
@@ -495,37 +452,33 @@ namespace FileSystemCommonUWP.Sync.Handling
         {
             while (true)
             {
-                CurrentCopyToServerFile = null;
+                currentCopyToServerFile = null;
 
                 (bool isEnd, FilePair pair) = copyToServerFiles.Dequeue();
                 if (isEnd || IsCanceled) break;
 
-                if (isTestRun)
-                {
-                    await AddToList(pair, SyncPairRunFileType.CopiedServer);
-                    continue;
-                }
-
-                CurrentCopyToServerFile = pair;
-
-                if (!await TryCreateServerFolder(pair.ServerFullPath))
-                {
-                    await ErrorFile(pair, "Create server folder, to copy file to, failed");
-                    continue;
-                }
+                currentCopyToServerFile = pair;
 
                 try
                 {
-                    if (!await api.UploadFile(pair.ServerFullPath, pair.LocalFile))
+                    if (!isTestRun)
                     {
-                        await ErrorFile(pair, "Uploading file to server failed");
-                        continue;
+                        if (!await TryCreateServerFolder(pair.ServerFullPath))
+                        {
+                            await ErrorFile(pair, "Create server folder, to copy file to, failed");
+                            continue;
+                        }
+                        if (!await api.UploadFile(pair.ServerFullPath, pair.LocalFile))
+                        {
+                            await ErrorFile(pair, "Uploading file to server failed");
+                            continue;
+                        }
+
+                        if (pair.LocalCompareValue == null) pair.LocalCompareValue = await fileComparer.GetLocalCompareValue(pair.LocalFile);
+                        pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
                     }
 
-                    if (pair.LocalCompareValue == null) pair.LocalCompareValue = await fileComparer.GetLocalCompareValue(pair.LocalFile);
-                    pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
-
-                    await AddToList(pair, SyncPairRunFileType.CopiedServer);
+                    await AddToList(pair, SyncPairRunFileType.CopiedServer, true);
                 }
                 catch (Exception e)
                 {
@@ -558,23 +511,17 @@ namespace FileSystemCommonUWP.Sync.Handling
         {
             while (true)
             {
-                CurrentDeleteFromLocalFile = null;
+                currentDeleteFromLocalFile = null;
 
                 (bool isEnd, FilePair pair) = deleteLocalFiles.Dequeue();
                 if (isEnd || IsCanceled) break;
 
-                if (isTestRun)
-                {
-                    await AddToList(pair, SyncPairRunFileType.DeletedLocal);
-                    continue;
-                }
-
-                CurrentDeleteFromLocalFile = pair;
+                currentDeleteFromLocalFile = pair;
 
                 try
                 {
-                    await pair.LocalFile.DeleteAsync();
-                    await AddToList(pair, SyncPairRunFileType.DeletedLocal);
+                    if (!isTestRun) await pair.LocalFile.DeleteAsync();
+                    await AddToList(pair, SyncPairRunFileType.DeletedLocal, true);
                 }
                 catch (Exception e)
                 {
@@ -589,22 +536,16 @@ namespace FileSystemCommonUWP.Sync.Handling
         {
             while (true)
             {
-                CurrentDeleteFromServerFile = null;
+                currentDeleteFromServerFile = null;
 
                 (bool isEnd, FilePair pair) = deleteSeverFiles.Dequeue();
                 if (isEnd || IsCanceled) break;
 
-                if (isTestRun)
-                {
-                    await AddToList(pair, SyncPairRunFileType.DeletedServer);
-                    continue;
-                }
+                currentDeleteFromServerFile = pair;
 
-                CurrentDeleteFromServerFile = pair;
-
-                if (await api.DeleteFile(pair.ServerFullPath))
+                if (isTestRun || await api.DeleteFile(pair.ServerFullPath))
                 {
-                    await AddToList(pair, SyncPairRunFileType.DeletedServer);
+                    await AddToList(pair, SyncPairRunFileType.DeletedServer, true);
                     continue;
                 }
 
@@ -614,44 +555,22 @@ namespace FileSystemCommonUWP.Sync.Handling
             System.Diagnostics.Debug.WriteLine($"Del Server ended!!!!!!!!!!!!!");
         }
 
-        private async Task AddToList(FilePair pair, SyncPairRunFileType type)
-        {
-            await database.SyncPairs.SetSyncPairRunFileType(syncPairRunId, pair.RelativePath, type);
-        }
-
-        private async Task ErrorFile(FilePair pair, string message, Exception e = null)
-        {
-            await database.SyncPairs.SetSyncPairRunErrorFileType(syncPairRunId, pair.RelativePath, e);
-        }
-
-        private async Task IncreaseCurrentCount()
-        {
-            await database.SyncPairs.IncreaseSyncPairRunCurrentCount(syncPairRunId);
-        }
-
-        private async Task SaveNewResult()
-        {
-            await database.SyncPairs.InsertSyncPairResult(syncPairRunId, newResult);
-        }
-
-        private async Task SetState(SyncPairHandlerState state)
-        {
-            State = state;
-            await database.SyncPairs.UpdateSyncPairRunState(syncPairRunId, state);
-        }
-
         public async Task Run()
         {
             try
             {
-                if (State != SyncPairHandlerState.WaitForStart) return;
+                if (requestedCancel)
+                {
+                    await SetState(SyncPairHandlerState.Canceled);
+                    return;
+                }
 
                 await SetState(SyncPairHandlerState.Running);
 
                 await database.SyncPairs.ResetSyncPairRunFiles(syncPairRunId);
                 await Task.WhenAll(Task.Run(QueryFiles), CompareFiles(), ProcessFiles());
 
-                if (State == SyncPairHandlerState.Running)
+                if (state == SyncPairHandlerState.Running)
                 {
                     if (!isTestRun) await SaveNewResult();
                     await SetState(SyncPairHandlerState.Finished);

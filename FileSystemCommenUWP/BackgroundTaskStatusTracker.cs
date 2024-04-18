@@ -23,7 +23,7 @@ namespace FileSystemCommonUWP
 
         public DateTime LastStatusUpdate { get; private set; }
 
-        private BackgroundTaskStatusTracker(IBackgroundTaskRegistration taskRegistration)
+        public BackgroundTaskStatusTracker(IBackgroundTaskRegistration taskRegistration)
         {
             Status = BackgroundTaskStatus.Unkown;
             this.taskRegistration = taskRegistration;
