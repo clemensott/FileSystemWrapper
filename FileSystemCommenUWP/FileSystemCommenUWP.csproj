@@ -122,6 +122,8 @@
   <ItemGroup>
     <Compile Include="API\Api.cs" />
     <Compile Include="API\ApiExtensions.cs" />
+    <Compile Include="BackgroundTaskStatus.cs" />
+    <Compile Include="BackgroundTaskStatusTracker.cs" />
     <Compile Include="Database\Database.cs" />
     <Compile Include="Database\DbDataReaderExtensions.cs" />
     <Compile Include="Database\ISqlExecuteService.cs" />

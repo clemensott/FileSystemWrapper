@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
-using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -36,6 +35,7 @@ namespace FileSystemUWP
             this.InitializeComponent();
             this.EnteredBackground += OnEnteredBackground;
             this.UnhandledException += OnUnhandledException;
+            this.Suspending += OnSuspending;
 
             viewModel = new ViewModel();
         }
@@ -161,6 +161,12 @@ namespace FileSystemUWP
                     Settings.Current.OnStorageException(new Exception("Store viewModel error", e));
                 }
             }
+        }
+
+        private void OnSuspending(object sender, SuspendingEventArgs e)
+        {
+            Database?.Dispose();
+            BackgroundTaskHelper.Current.Dispose();
         }
     }
 }

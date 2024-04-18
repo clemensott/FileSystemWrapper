@@ -1,9 +1,11 @@
-﻿using FileSystemCommonUWP.API;
+﻿using FileSystemCommonUWP;
+using FileSystemCommonUWP.API;
 using FileSystemCommonUWP.Database;
 using FileSystemCommonUWP.Sync;
 using FileSystemCommonUWP.Sync.Handling;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
 using Windows.Storage;
@@ -12,16 +14,19 @@ namespace FileSystemBackgroundUWP.Sync
 {
     public sealed class SyncBackgroundTask : IBackgroundTask
     {
-        private BackgroundTaskDeferral deferral;
         private AppDatabase database;
         private SyncPairHandler currentSyncPairHandler;
 
         public async void Run(IBackgroundTaskInstance taskInstance)
         {
+            BackgroundTaskDeferral deferral = null;
+            Timer heartBeatTimer = null;
+
             try
             {
                 System.Diagnostics.Debug.WriteLine("start background task");
                 deferral = taskInstance.GetDeferral();
+                heartBeatTimer = StartTimer(taskInstance);
 
                 database = await AppDatabase.OpenSqlite();
                 // Check regualy for requested cancel
@@ -33,6 +38,10 @@ namespace FileSystemBackgroundUWP.Sync
 
                     await HandleRequest(nextSyncPairRunId.Value);
                 }
+
+                taskInstance.Progress = (uint)BackgroundTaskStatus.WaitStoppingA;
+                await Task.Delay(TimeSpan.FromSeconds(5));
+                taskInstance.Progress = (uint)BackgroundTaskStatus.Stopping;
             }
             catch (Exception exc)
             {
@@ -40,6 +49,7 @@ namespace FileSystemBackgroundUWP.Sync
             }
             finally
             {
+                heartBeatTimer?.Dispose();
                 deferral?.Complete();
                 System.Diagnostics.Debug.WriteLine("end background task");
             }
@@ -66,7 +76,10 @@ namespace FileSystemBackgroundUWP.Sync
 
                 await currentSyncPairHandler.Run();
             }
-            catch { }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("HandleRequest error:" + e);
+            }
             finally
             {
                 currentSyncPairHandler = null;
@@ -80,6 +93,41 @@ namespace FileSystemBackgroundUWP.Sync
                 BaseUrl = baseUrl,
             };
             return await api.LoadConfig() ? api : throw new Exception("Couldn't load config from API");
+        }
+
+        private Timer StartTimer(IBackgroundTaskInstance taskInstance)
+        {
+            return new Timer((_) =>
+            {
+                taskInstance.Progress = (uint)FlipStatus((BackgroundTaskStatus)taskInstance.Progress);
+            }, null, TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(500));
+        }
+
+        private static BackgroundTaskStatus FlipStatus(BackgroundTaskStatus status)
+        {
+            switch (status)
+            {
+                case BackgroundTaskStatus.Unkown:
+                case BackgroundTaskStatus.Triggered:
+                case BackgroundTaskStatus.RunningB:
+                case BackgroundTaskStatus.Stopped:
+                    return BackgroundTaskStatus.RunningA;
+
+                case BackgroundTaskStatus.RunningA:
+                    return BackgroundTaskStatus.RunningB;
+
+                case BackgroundTaskStatus.WaitStoppingA:
+                    return BackgroundTaskStatus.WaitStoppingB;
+
+                case BackgroundTaskStatus.WaitStoppingB:
+                    return BackgroundTaskStatus.WaitStoppingA;
+
+                case BackgroundTaskStatus.Stopping:
+                    return BackgroundTaskStatus.Stopping;
+
+                default:
+                    return BackgroundTaskStatus.RunningA;
+            }
         }
     }
 }

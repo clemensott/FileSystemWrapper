@@ -2,16 +2,12 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
-using Windows.Storage;
-using Windows.Storage.AccessCache;
 
 namespace FileSystemCommonUWP.Sync.Definitions
 {
     public class SyncPair : INotifyPropertyChanged
     {
-        private bool withSubfolders, isLocalFolderLoaded;
+        private bool withSubfolders;
         private string name, localFolderPath;
         private PathPart[] serverPath;
         private SyncMode mode;

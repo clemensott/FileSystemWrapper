@@ -7,12 +7,13 @@ using FileSystemCommonUWP.Sync.Handling;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
 
 namespace FileSystemUWP.Sync.Handling
 {
-    class BackgroundTaskHelper
+    class BackgroundTaskHelper : IDisposable
     {
         private const string applicationBackgroundTaskBuilderName = "AppSyncFileSystemTask";
         public const string TimerBackgroundTaskBuilderName = "TimerSyncFileSystemTask";
@@ -30,13 +31,14 @@ namespace FileSystemUWP.Sync.Handling
         }
 
         private AppDatabase database;
+        private readonly SemaphoreSlim startBackgroundTaskSem;
+        private BackgroundTaskStatusTracker statusTracker;
         private ApplicationTrigger appTrigger;
         private TimeTrigger timeTrigger;
 
-        public bool IsRunning { get; private set; } // TODO: Update this value
-
         private BackgroundTaskHelper()
         {
+            startBackgroundTaskSem = new SemaphoreSlim(1);
         }
 
         public async Task Start(AppDatabase database)
@@ -90,11 +92,22 @@ namespace FileSystemUWP.Sync.Handling
 
         private async Task StartBackgroundTask()
         {
-            if (!IsRunning)
-            {
-                if (appTrigger == null) await RegisterAppBackgroundTask();
+            if (startBackgroundTaskSem.CurrentCount == 0) return;
 
-                await appTrigger.RequestAsync();
+            try
+            {
+                await startBackgroundTaskSem.WaitAsync();
+                if (statusTracker == null || !await statusTracker.IsStopped())
+                {
+                    if (appTrigger == null) await RegisterAppBackgroundTask();
+
+                    await appTrigger.RequestAsync();
+                    statusTracker.SetTriggered();
+                }
+            }
+            finally
+            {
+                startBackgroundTaskSem.Release();
             }
         }
 
@@ -108,6 +121,7 @@ namespace FileSystemUWP.Sync.Handling
                     lastTraskRegistration.Trigger is ApplicationTrigger)
                 {
                     appTrigger = (ApplicationTrigger)lastTraskRegistration.Trigger;
+                    statusTracker = BackgroundTaskStatusTracker.Start(taskRegistration);
                     return;
                 }
 
@@ -129,6 +143,8 @@ namespace FileSystemUWP.Sync.Handling
             await BackgroundExecutionManager.RequestAccessAsync();
             taskRegistration = builder.Register();
             Settings.Current.ApplicationBackgroundTaskRegistrationId = taskRegistration.TaskId;
+
+            statusTracker = BackgroundTaskStatusTracker.Start(taskRegistration);
         }
 
         public void RegisterTimerBackgroundTask()
@@ -157,6 +173,12 @@ namespace FileSystemUWP.Sync.Handling
         {
             await database.SyncPairs.UpdateSyncPairRunRequestCancel(run.Id);
             await StartBackgroundTask();
+        }
+
+        public void Dispose()
+        {
+            startBackgroundTaskSem?.Dispose();
+            statusTracker?.Dispose();
         }
     }
 }

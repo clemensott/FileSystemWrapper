@@ -248,18 +248,18 @@ namespace FileSystemCommonUWP.Sync.Handling
                     string relFilePath = api.Config.JoinPaths(relPath, serverFile.Name);
                     StorageFile localFile;
 
+                    await AddFileToAll(new SyncPairRunFile()
+                    {
+                        Name = serverFile.Name,
+                        RelativePath = relFilePath,
+                    });
+
                     if (localFiles.TryGetValue(serverFile.Name, out localFile))
                     {
                         localFiles.Remove(serverFile.Name);
                         bothFiles.Enqueue(CreateFilePair(serverPath, relFilePath, localFile, true));
                     }
                     else singleFiles.Enqueue(CreateFilePair(serverPath, relFilePath, null, true));
-
-                    await AddFileToAll(new SyncPairRunFile()
-                    {
-                        Name = serverFile.Name,
-                        RelativePath = relFilePath,
-                    });
                 }
 
                 foreach (StorageFile localFile in localFiles.Values)
@@ -269,13 +269,13 @@ namespace FileSystemCommonUWP.Sync.Handling
 
                     if (!CheckAllowAndDenyList(serverFilePath)) continue;
 
-                    singleFiles.Enqueue(CreateFilePair(serverPath, relFilePath, localFile, false));
-
                     await AddFileToAll(new SyncPairRunFile()
                     {
                         Name = localFile.Name,
                         RelativePath = relFilePath,
                     });
+
+                    singleFiles.Enqueue(CreateFilePair(serverPath, relFilePath, localFile, false));
                 }
 
                 if (!withSubfolders) return;
@@ -634,25 +634,32 @@ namespace FileSystemCommonUWP.Sync.Handling
             await database.SyncPairs.InsertSyncPairResult(syncPairRunId, newResult);
         }
 
+        private async Task SetState(SyncPairHandlerState state)
+        {
+            State = state;
+            await database.SyncPairs.UpdateSyncPairRunState(syncPairRunId, state);
+        }
+
         public async Task Run()
         {
             try
             {
                 if (State != SyncPairHandlerState.WaitForStart) return;
 
-                State = SyncPairHandlerState.Running;
+                await SetState(SyncPairHandlerState.Running);
 
+                await database.SyncPairs.ResetSyncPairRunFiles(syncPairRunId);
                 await Task.WhenAll(Task.Run(QueryFiles), CompareFiles(), ProcessFiles());
 
                 if (State == SyncPairHandlerState.Running)
                 {
                     if (!isTestRun) await SaveNewResult();
-                    State = SyncPairHandlerState.Finished;
+                    await SetState(SyncPairHandlerState.Finished);
                 }
             }
             catch
             {
-                State = SyncPairHandlerState.Error;
+                await SetState(SyncPairHandlerState.Error);
             }
 
             async Task CompareFiles()
@@ -678,11 +685,11 @@ namespace FileSystemCommonUWP.Sync.Handling
             }
         }
 
-        public void Cancel()
+        public async Task Cancel()
         {
             if (IsEnded) return;
 
-            State = SyncPairHandlerState.Canceled;
+            await SetState(SyncPairHandlerState.Canceled);
 
             bothFiles.End();
             singleFiles.End();

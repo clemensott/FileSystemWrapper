@@ -310,9 +310,9 @@ namespace FileSystemCommonUWP.Database.SyncPairs
 
                 UPDATE sync_pairs
                 SET current_sync_pair_run_id = last_insert_rowid()
-                WEHRE id = @syncPairId;
+                WHERE id = @syncPairId;
 
-                DELETE FROM sync_pair_run_files WHERE sync_pair_info_id = @oldSyncPairRunId;
+                DELETE FROM sync_pair_run_files WHERE sync_pair_run_id = @oldSyncPairRunId;
                 DELETE FROM sync_pair_runs WHERE id = @oldSyncPairRunId;
 
                 SELECT last_insert_rowid();
@@ -345,7 +345,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                 CreateParam("errorFilesCount", (long)run.ErrorFilesCount),
                 CreateParam("ignoreFilesCount", (long)run.IgnoreFilesCount),
                 CreateParam("syncPairId", (long)pair.Id),
-                CreateParam("oldSyncPairRunId", (long)pair.CurrentSyncPairRunId),
+                CreateParam("oldSyncPairRunId", (long?)pair.CurrentSyncPairRunId),
             };
 
             long syncPairRunId = await sqlExecuteService.ExecuteScalarAsync<long>(sql, parameters);
@@ -437,7 +437,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             };
         }
 
-        public async Task<IList<SyncPairRunErrorFile>> SelectSyncPairRunFiles(int syncPairRunId)
+        public async Task<IList<SyncPairRunErrorFile>> SelectSyncPairRunErrorFiles(int syncPairRunId)
         {
             const string sql = @"
                 SELECT name, relative_path, error_message, error_stackstrace, error_exception
@@ -451,6 +451,33 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             };
 
             return await sqlExecuteService.ExecuteReadAllAsync(CreateSyncPairRunErrorFileObject, sql, parameters);
+        }
+
+        public async Task ResetSyncPairRunFiles(int syncPairRunId)
+        {
+            const string sql = @"
+                DELETE FROM sync_pair_run_files
+                WHERE sync_pair_run_id = @syncPairRunId;
+
+                UPDATE sync_pair_runs
+                SET all_files_count = 0,
+                    error_files_count = 0,
+                    equal_files_count = 0,
+                    conflict_files_count = 0,
+                    copied_local_files_count = 0,
+                    copied_server_files_count = 0,
+                    deleted_local_files_count = 0,
+                    deleted_server_files_count = 0,
+                    error_files_count = 0,
+                    ignore_files_count = 0
+                WHERE id = @syncPairRunId;
+            ";
+            IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
+            {
+                CreateParam("syncPairRunId", (long)syncPairRunId),
+            };
+
+            await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
 
         private static string GetCountColumnName(SyncPairRunFileType type)
@@ -496,7 +523,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
         {
             string countColumnName = GetCountColumnName(type);
             return $@"
-                UPDATE sync_pairs
+                UPDATE sync_pair_runs
                 SET {countColumnName} = {countColumnName} + 1
                 WHERE id = @syncPairRunId;
             ";
@@ -505,14 +532,15 @@ namespace FileSystemCommonUWP.Database.SyncPairs
         public async Task InsertSyncPairRunFile(int syncPairRunId, SyncPairRunFile file)
         {
             string sql = $@"
-                INSERT INTO sync_pair_run_files (sync_pair_run_id, name, relative_path)
-                VALUES (@syncPairRunId, @name, @relativePath);
+                INSERT INTO sync_pair_run_files (sync_pair_run_id, type, name, relative_path)
+                VALUES (@syncPairRunId, @type, @name, @relativePath);
 
                 {GetInscreaseFileCount(SyncPairRunFileType.All)}
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
                 CreateParam("syncPairRunId", syncPairRunId),
+                CreateParam("type", (long)SyncPairRunFileType.All),
                 CreateParam("name", file.Name),
                 CreateParam("relativePath", file.RelativePath),
             };
@@ -582,7 +610,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                 FROM sync_pair_results spr
                     JOIN sync_pair_result_files sprf ON spr.id = sprf.sync_pair_result_id
                     JOIN sync_pairs AS sp ON spr.id = sp.last_sync_pair_result_id
-                WHERE sp.current_sync_pair_run_id = syncPairRunId;
+                WHERE sp.current_sync_pair_run_id = @syncPairRunId;
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {

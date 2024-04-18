@@ -152,7 +152,7 @@ namespace FileSystemUWP.Sync.Handling
 
         private async void TblErrorFiles_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            IList<SyncPairRunErrorFile> pairs = await database.SyncPairs.SelectSyncPairRunFiles(syncPairRun.Id);
+            IList<SyncPairRunErrorFile> pairs = await database.SyncPairs.SelectSyncPairRunErrorFiles(syncPairRun.Id);
 
             if (pairs.Count == 0)
             {
