@@ -21,11 +21,13 @@ namespace FileSystemCommonUWP.Database.SyncPairs
         public async Task Init()
         {
             const string sql = @"
+-- Drop table sync_pair_results;
                 CREATE TABLE IF NOT EXISTS sync_pair_results (
                     id                      INTEGER PRIMARY KEY AUTOINCREMENT,
                     created                 TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
+-- Drop table sync_pair_result_files;
                 CREATE TABLE IF NOT EXISTS sync_pair_result_files (
                     id                      INTEGER PRIMARY KEY AUTOINCREMENT,
                     sync_pair_result_id     INTEGER NOT NULL REFERENCES sync_pair_results(id),
@@ -91,8 +93,8 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                 CREATE TABLE IF NOT EXISTS sync_pairs (
                     id                          INTEGER PRIMARY KEY AUTOINCREMENT,
                     server_id                   INTEGER NOT NULL REFERENCES servers(id),
-                    current_sync_pair_run_id    INTEGER,
-                    last_sync_pair_result_id    INTEGER,
+                    current_sync_pair_run_id    INTEGER REFERENCES sync_pair_runs(id),
+                    last_sync_pair_result_id    INTEGER REFERENCES sync_pair_results(id),
                     local_folder_token          TEXT NOT NULL,
                     name                        TEXT NOT NULL,
                     server_path                 TEXT NOT NULL,
@@ -675,6 +677,42 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             return new SyncPairResult(files);
         }
 
+        private async Task InsertSyncPairResultFiles(long syncPairResultId, SyncPairResult result)
+        {
+            const int maxGroupSize = 5000;
+            List<SyncPairResultFile> resultFilesGroup = new List<SyncPairResultFile>();
+            foreach (SyncPairResultFile file in result)
+            {
+                resultFilesGroup.Add(file);
+                if (resultFilesGroup.Count >= maxGroupSize) await InsertFiles();
+            }
+
+            if (resultFilesGroup.Count > 0) await InsertFiles();
+
+            async Task InsertFiles()
+            {
+                string syncPairResultFileValuesSql = string.Join(",", result
+                  .Select((_, i) => $"(@resId, @rel{i}, @local{i}, @server{i})"));
+                string insertFilesSql = $@"
+                    INSERT INTO sync_pair_result_files (sync_pair_result_id, relative_path, local_compare_value, server_compare_value)
+                    VALUES {syncPairResultFileValuesSql};
+                ";
+                IEnumerable<KeyValuePair<string, object>> insertFilesParameters = new KeyValuePair<string, object>[]
+                {
+                    CreateParam("resId", syncPairResultId),
+                }.Concat(resultFilesGroup.SelectMany((f, i) => new KeyValuePair<string, object>[]
+                {
+                    CreateParam($"rel{i}", f.RelativePath),
+                    CreateParam($"local{i}", JsonConvert.SerializeObject(f.LocalCompareValue)),
+                    CreateParam($"server{i}", JsonConvert.SerializeObject(f.ServerCompareValue)),
+                }));
+
+                await sqlExecuteService.ExecuteNonQueryAsync(insertFilesSql, insertFilesParameters);
+
+                resultFilesGroup.Clear();
+            }
+        }
+
         public async Task InsertSyncPairResult(int syncPairRunId, SyncPairResult result)
         {
             const string lastResultSql = @"
@@ -686,45 +724,34 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             {
                 CreateParam("syncPairRunId", (long)syncPairRunId),
             };
-            long lastSyncPairResultId = await sqlExecuteService.ExecuteScalarAsync<long>(lastResultSql, lastResultParameters);
+            object lastSyncPairResultIdObject = await sqlExecuteService.ExecuteScalarAsync(lastResultSql, lastResultParameters);
+            long? lastSyncPairResultId = lastSyncPairResultIdObject is DBNull ? (long?)null : (long)lastSyncPairResultIdObject;
 
             const string insertResultSql = @"
-                INSERT INTO sync_pair_results (id, created)
-                VALUES (DEFAULT, DEFAULT);
+                INSERT INTO sync_pair_results (created)
+                VALUES (CURRENT_TIMESTAMP);
 
                 SELECT last_insert_rowid();
             ";
             long newSyncPairResultId = await sqlExecuteService.ExecuteScalarAsync<long>(insertResultSql);
 
-            IEnumerable<string> syncPairResultFileValuesSql = result
-                .Select((_, i) => $"(@newId, @relativePath{i}, @localCompareValue{i}, @serverCompareValue{i})");
-            string sql = $@"
-                INSERT INTO sync_pair_results (id, created)
-                VALUES (DEFAULT, DEFAULT);
+            await InsertSyncPairResultFiles(newSyncPairResultId, result);
 
-                INSERT INTO sync_pair_result_files (sync_pair_result_id, relative_path, local_compare_value, server_compare_value)
-                VALUES {string.Join(",", syncPairResultFileValuesSql)};
-
+            const string sql = @"
                 UPDATE sync_pairs
-                SET last_sync_pair_result_id = @newId;
+                SET last_sync_pair_result_id = @newSyncPairResultId
                 WHERE current_sync_pair_run_id = @syncPairRunId;
 
                 DELETE FROM sync_pair_result_files WHERE sync_pair_result_id = @lastSyncPairResultId;
-                DELETE FROM sync_pair_results WHERE id @lastSyncPairResultId;
+                DELETE FROM sync_pair_results WHERE id = @lastSyncPairResultId;
             ";
 
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
-                CreateParam("newId", newSyncPairResultId),
+                CreateParam("newSyncPairResultId", newSyncPairResultId),
                 CreateParam("syncPairRunId", (long)syncPairRunId),
                 CreateParam("lastSyncPairResultId", lastSyncPairResultId),
-            }
-            .Concat(result.SelectMany((file, i) => new KeyValuePair<string, object>[]
-            {
-                CreateParam($"relativePath{i}", file.RelativePath),
-                CreateParam($"localCompareValue{i}", file.LocalCompareValue),
-                CreateParam($"serverCompareValue{i}", file.ServerCompareValue),
-            }));
+            };
 
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
