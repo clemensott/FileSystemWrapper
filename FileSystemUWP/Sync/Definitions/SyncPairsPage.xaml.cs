@@ -133,7 +133,6 @@ namespace FileSystemUWP.Sync.Definitions
 
         private async void BackgroundTaskHelper_SyncProgress(object sender, EventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("On Sync Progress");
             await UwpUtils.RunSafe(() => UpdateSyncs());
         }
 

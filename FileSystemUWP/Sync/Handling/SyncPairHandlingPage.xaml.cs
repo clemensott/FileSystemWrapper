@@ -91,7 +91,6 @@ namespace FileSystemUWP.Sync.Handling
 
         private async void BackgroundTaskHelper_SyncProgress(object sender, EventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("On Sync Progress");
             await UwpUtils.RunSafe(() => UpdateSyncs());
         }
 
