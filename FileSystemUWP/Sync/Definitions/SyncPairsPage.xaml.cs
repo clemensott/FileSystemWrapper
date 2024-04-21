@@ -31,39 +31,36 @@ namespace FileSystemUWP.Sync.Definitions
     /// </summary>
     public sealed partial class SyncPairsPage : Page
     {
-        private readonly TimeSpan lastUpdatedSyncsMinInterval = TimeSpan.FromMilliseconds(150);
-
-        private bool isUpdatingSyncs;
-        private DateTime lastUpdatedSyncs;
-        private readonly DispatcherTimer timer;
         private readonly BackgroundTaskHelper backgroundTaskHelper;
         private readonly AppDatabase database;
+        private readonly SyncPairsPageViewModel viewModel;
+        private readonly SyncPairRunProgressUpdater updater;
         private Server server;
-        private SyncPairsPageViewModel viewModel;
 
         public SyncPairsPage()
         {
             this.InitializeComponent();
 
-            timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(1000);
-            timer.Tick += Timer_Tick;
-
             backgroundTaskHelper = BackgroundTaskHelper.Current;
             database = ((App)Application.Current).Database;
+            viewModel = new SyncPairsPageViewModel()
+            {
+                Syncs = new ObservableCollection<SyncPairPageSyncViewModel>(),
+            };
+            updater = new SyncPairRunProgressUpdater(UpdateSyncs);
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
-            SubscribeProgress();
-
             server = (Server)e.Parameter;
-            DataContext = viewModel = new SyncPairsPageViewModel()
-            {
-                Syncs = new ObservableCollection<SyncPairPageSyncViewModel>(),
-            };
+            DataContext = viewModel;
 
-            await UpdateSyncs();
+            await updater.Start();
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            updater.Stop();
         }
 
         private async Task<StorageFolder> GetStorageFolderOrDefault(string token)
@@ -91,78 +88,38 @@ namespace FileSystemUWP.Sync.Definitions
             });
         }
 
-        protected override void OnNavigatedFrom(NavigationEventArgs e)
-        {
-            UnsubscribeProgress();
-        }
-
-        private void SubscribeProgress()
-        {
-            Application.Current.EnteredBackground += OnEnteredBackground;
-            Application.Current.LeavingBackground += OnLeavingBackground;
-
-            backgroundTaskHelper.SyncProgress += BackgroundTaskHelper_SyncProgress;
-            timer.Start();
-        }
-
-        private void UnsubscribeProgress()
-        {
-            Application.Current.EnteredBackground -= OnEnteredBackground;
-            Application.Current.LeavingBackground -= OnLeavingBackground;
-
-            backgroundTaskHelper.SyncProgress -= BackgroundTaskHelper_SyncProgress;
-            timer.Stop();
-        }
-
-        private void OnEnteredBackground(object sender, Windows.ApplicationModel.EnteredBackgroundEventArgs e)
-        {
-            backgroundTaskHelper.SyncProgress += BackgroundTaskHelper_SyncProgress;
-            timer.Stop();
-        }
-
-        private async void OnLeavingBackground(object sender, Windows.ApplicationModel.LeavingBackgroundEventArgs e)
-        {
-            backgroundTaskHelper.SyncProgress -= BackgroundTaskHelper_SyncProgress;
-            timer.Start();
-
-            await UpdateSyncs();
-        }
-
-        private async void Timer_Tick(object sender, object e)
-        {
-            await UpdateSyncs();
-        }
-
-        private async void BackgroundTaskHelper_SyncProgress(object sender, EventArgs e)
-        {
-            await UwpUtils.RunSafe(() => UpdateSyncs());
-        }
-
         private async Task UpdateSyncs()
         {
-            if (isUpdatingSyncs || DateTime.Now - lastUpdatedSyncs < lastUpdatedSyncsMinInterval) return;
-            isUpdatingSyncs = true;
+            IList<SyncPair> syncPairs = await database.SyncPairs.SelectSyncPairs(server.Id);
+            int[] syncPairRunIds = syncPairs.Select(s => s.CurrentSyncPairRunId).OfType<int>().ToArray();
+            IList<SyncPairRun> syncPairRuns = await database.SyncPairs.SelectSyncPairRuns(syncPairRunIds);
 
-            try
+            foreach (SyncPair syncPair in syncPairs)
             {
-                IList<SyncPair> syncPairs = await database.SyncPairs.SelectSyncPairs(server.Id);
-                int[] syncPairRunIds = syncPairs.Select(s => s.CurrentSyncPairRunId).OfType<int>().ToArray();
-                IList<SyncPairRun> syncPairRuns = await database.SyncPairs.SelectSyncPairRuns(syncPairRunIds);
+                StorageFolder localFolder = await GetStorageFolderOrDefault(syncPair.LocalFolderToken);
+                syncPair.LocalFolderPath = localFolder?.Path;
+            }
 
+            await UwpUtils.RunSafe(() =>
+            {
                 foreach (SyncPair syncPair in syncPairs)
                 {
+                    SyncPairRun syncPairRun = syncPairRuns.FirstOrDefault(run => run.Id == syncPair.CurrentSyncPairRunId);
+
                     SyncPairPageSyncViewModel sync;
                     if (!viewModel.Syncs.TryFirst(s => s.SyncPair.Id == syncPair.Id, out sync))
                     {
-                        sync = new SyncPairPageSyncViewModel();
+                        sync = new SyncPairPageSyncViewModel()
+                        {
+                            SyncPair = syncPair,
+                            Run = syncPairRun,
+                        };
                         viewModel.Syncs.Add(sync);
+                        return;
                     }
 
-                    StorageFolder localFolder = await GetStorageFolderOrDefault(syncPair.LocalFolderToken);
-                    syncPair.LocalFolderPath = localFolder?.Path;
-
-                    sync.UpdateSyncPair(syncPair);
-                    sync.UpdateRun(syncPairRuns.FirstOrDefault(run => run.Id == syncPair.CurrentSyncPairRunId));
+                    sync.SyncPair = sync.SyncPair.Update(syncPair);
+                    sync.Run = sync.Run.Update(syncPairRun);
                 }
 
                 foreach (SyncPairPageSyncViewModel sync in viewModel.Syncs.ToArray())
@@ -173,16 +130,7 @@ namespace FileSystemUWP.Sync.Definitions
                         viewModel.Syncs.Remove(sync);
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Debug.WriteLine("Update syncs error: " + e);
-            }
-            finally
-            {
-                isUpdatingSyncs = false;
-                lastUpdatedSyncs = DateTime.Now;
-            }
+            });
         }
 
         private object ServerPathConverter_ConvertEvent(object value, Type targetType, object parameter, string language)

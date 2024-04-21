@@ -21,106 +21,39 @@ namespace FileSystemUWP.Sync.Handling
     /// </summary>
     public sealed partial class SyncPairHandlingPage : Page
     {
-        private readonly TimeSpan lastUpdatedSyncsMinInterval = TimeSpan.FromMilliseconds(150);
-
-        private bool isUpdatingSyncs;
-        private DateTime lastUpdatedSyncs;
-        private readonly DispatcherTimer timer;
         private readonly BackgroundTaskHelper backgroundTaskHelper;
         private readonly AppDatabase database;
+        private readonly SyncPairRunProgressUpdater updater;
         private SyncPairRun viewModel;
 
         public SyncPairHandlingPage()
         {
             this.InitializeComponent();
 
-            timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(1000);
-            timer.Tick += Timer_Tick;
-
             backgroundTaskHelper = BackgroundTaskHelper.Current;
             database = ((App)Application.Current).Database;
+            updater = new SyncPairRunProgressUpdater(UpdateSyncRun);
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             DataContext = viewModel = (SyncPairRun)e.Parameter;
 
-            SubscribeProgress();
-
-            await UpdateSyncs();
+            await updater.Start();
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
-            UnsubscribeProgress();
+            updater.Stop();
         }
 
-        private void SubscribeProgress()
+        private async Task UpdateSyncRun()
         {
-            Application.Current.EnteredBackground += OnEnteredBackground;
-            Application.Current.LeavingBackground += OnLeavingBackground;
+            int[] syncPairRunIds = new int[] { viewModel.Id };
+            IList<SyncPairRun> syncPairRuns = await database.SyncPairs.SelectSyncPairRuns(syncPairRunIds);
+            SyncPairRun run = syncPairRuns.FirstOrDefault();
 
-            backgroundTaskHelper.SyncProgress += BackgroundTaskHelper_SyncProgress;
-            timer.Start();
-        }
-
-        private void UnsubscribeProgress()
-        {
-            Application.Current.EnteredBackground -= OnEnteredBackground;
-            Application.Current.LeavingBackground -= OnLeavingBackground;
-
-            backgroundTaskHelper.SyncProgress -= BackgroundTaskHelper_SyncProgress;
-            timer.Stop();
-        }
-
-        private void OnEnteredBackground(object sender, Windows.ApplicationModel.EnteredBackgroundEventArgs e)
-        {
-            backgroundTaskHelper.SyncProgress += BackgroundTaskHelper_SyncProgress;
-            timer.Stop();
-        }
-
-        private async void OnLeavingBackground(object sender, Windows.ApplicationModel.LeavingBackgroundEventArgs e)
-        {
-            backgroundTaskHelper.SyncProgress -= BackgroundTaskHelper_SyncProgress;
-            timer.Start();
-
-            await UpdateSyncs();
-        }
-
-        private async void Timer_Tick(object sender, object e)
-        {
-            await UpdateSyncs();
-        }
-
-        private async void BackgroundTaskHelper_SyncProgress(object sender, EventArgs e)
-        {
-            await UwpUtils.RunSafe(() => UpdateSyncs());
-        }
-
-        private async Task UpdateSyncs()
-        {
-            if (isUpdatingSyncs || DateTime.Now - lastUpdatedSyncs < lastUpdatedSyncsMinInterval) return;
-            isUpdatingSyncs = true;
-
-            try
-            {
-                int[] syncPairRunIds = new int[] { viewModel.Id };
-                IList<SyncPairRun> syncPairRuns = await database.SyncPairs.SelectSyncPairRuns(syncPairRunIds);
-                SyncPairRun run = syncPairRuns.FirstOrDefault();
-                if (run == null) return;
-
-                DataContext = viewModel = run;
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Debug.WriteLine("Update syncs error: " + e);
-            }
-            finally
-            {
-                isUpdatingSyncs = false;
-                lastUpdatedSyncs = DateTime.Now;
-            }
+            await UwpUtils.RunSafe(() => viewModel.Update(run));
         }
 
         private object ModeNameConverter_ConvertEvent(object value, Type targetType, object parameter, string language)

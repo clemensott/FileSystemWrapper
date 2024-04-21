@@ -205,6 +205,8 @@
     <Compile Include="Sync\Handling\SyncPairHandlingProgressbar.xaml.cs">
       <DependentUpon>SyncPairHandlingProgressbar.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Sync\SyncPairExtensions.cs" />
+    <Compile Include="Sync\SyncPairRunProgressSubscriber.cs" />
     <Compile Include="UiUtils.cs" />
     <Compile Include="Models\ViewModel.cs" />
     <Compile Include="Util\FileSystemItemComparer.cs" />

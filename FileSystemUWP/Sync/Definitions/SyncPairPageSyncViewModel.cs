@@ -34,58 +34,6 @@ namespace FileSystemUWP.Sync.Definitions
             }
         }
 
-        public void UpdateSyncPair(SyncPair syncPair)
-        {
-            if (SyncPair == null || syncPair == null)
-            {
-                SyncPair = syncPair;
-                return;
-            }
-
-            SyncPair.Id = syncPair.Id;
-            SyncPair.WithSubfolders = syncPair.WithSubfolders;
-            SyncPair.CurrentSyncPairRunId = syncPair.CurrentSyncPairRunId;
-            SyncPair.LastSyncPairResultId = syncPair.LastSyncPairResultId;
-            SyncPair.Name = syncPair.Name;
-            SyncPair.LocalFolderPath = syncPair.LocalFolderPath;
-            SyncPair.Mode = syncPair.Mode;
-            SyncPair.CompareType = syncPair.CompareType;
-            SyncPair.ConflictHandlingType = syncPair.ConflictHandlingType;
-
-            if (!SyncPair.ServerPath.BothNullOrSequenceEqual(syncPair.ServerPath)) SyncPair.ServerPath = syncPair.ServerPath;
-            if (!SyncPair.AllowList.BothNullOrSequenceEqual(syncPair.AllowList)) SyncPair.AllowList = syncPair.AllowList;
-            if (!SyncPair.DenyList.BothNullOrSequenceEqual(syncPair.DenyList)) SyncPair.AllowList = syncPair.DenyList;
-        }
-
-        public void UpdateRun(SyncPairRun run)
-        {
-            if (Run == null || run == null)
-            {
-                Run = run;
-                return;
-            }
-
-            Run.Id = run.Id;
-            Run.State = run.State;
-            Run.CurrentCount = run.CurrentCount;
-            Run.AllFilesCount = run.AllFilesCount;
-            Run.ComparedFilesCount = run.ComparedFilesCount;
-            Run.EqualFilesCount = run.EqualFilesCount;
-            Run.ConflictFilesCount = run.ConflictFilesCount;
-            Run.CopiedLocalFilesCount = run.CopiedLocalFilesCount;
-            Run.CopiedServerFilesCount = run.CopiedServerFilesCount;
-            Run.DeletedLocalFilesCount = run.DeletedLocalFilesCount;
-            Run.DeletedServerFilesCount = run.DeletedServerFilesCount;
-            Run.ErrorFilesCount = run.ErrorFilesCount;
-            Run.IgnoreFilesCount = run.IgnoreFilesCount;
-            Run.LocalFolderPath = run.LocalFolderPath;
-            Run.CurrentQueryFolderRelPath = run.CurrentQueryFolderRelPath;
-            Run.CurrentCopyToLocalRelPath = run.CurrentCopyToLocalRelPath;
-            Run.CurrentCopyToServerRelPath = run.CurrentCopyToServerRelPath;
-            Run.DeletedServerFilesCount = run.DeletedServerFilesCount;
-            Run.DeletedLocalFilesCount = run.DeletedLocalFilesCount;
-        }
-
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void OnPropertyChanged(string name)
