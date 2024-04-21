@@ -24,7 +24,6 @@ namespace FileSystemCommonUWP.Sync.Handling
         private const int partialHashSize = 10 * 1024; // 10 kB
 
         private readonly AppDatabase database;
-        private readonly int syncPairRunId;
 
         private readonly bool withSubfolders, isTestRun, requestedCancel;
         private readonly string serverPath;
@@ -39,6 +38,8 @@ namespace FileSystemCommonUWP.Sync.Handling
         private SyncPairHandlerState state;
         private readonly LockQueue<FilePair> bothFiles, singleFiles, copyToLocalFiles,
             copyToServerFiles, deleteLocalFiles, deleteSeverFiles;
+
+        public int SyncPairRunId { get; }
 
         public string RunToken { get; }
 
@@ -62,7 +63,7 @@ namespace FileSystemCommonUWP.Sync.Handling
             deleteSeverFiles = new LockQueue<FilePair>();
 
             this.database = database;
-            this.syncPairRunId = syncPairRunId;
+            this.SyncPairRunId = syncPairRunId;
             this.withSubfolders = withSubfolders;
             this.requestedCancel = requestedCancel;
             this.isTestRun = isTestRun;
@@ -133,55 +134,55 @@ namespace FileSystemCommonUWP.Sync.Handling
         private async Task SetState(SyncPairHandlerState state)
         {
             this.state = state;
-            await database.SyncPairs.UpdateSyncPairRunState(syncPairRunId, state);
+            await database.SyncPairs.UpdateSyncPairRunState(SyncPairRunId, state);
             Progress?.Invoke(this, EventArgs.Empty);
         }
 
         private async Task AddFileToAll(SyncPairRunFile file)
         {
-            await database.SyncPairs.InsertSyncPairRunFile(syncPairRunId, file);
+            await database.SyncPairs.InsertSyncPairRunFile(SyncPairRunId, file);
             Progress?.Invoke(this, EventArgs.Empty);
         }
 
         private async Task AddToList(FilePair pair, SyncPairRunFileType type, bool increaseCurrentCount)
         {
-            await database.SyncPairs.SetSyncPairRunFileType(syncPairRunId, pair.RelativePath, type, increaseCurrentCount);
+            await database.SyncPairs.SetSyncPairRunFileType(SyncPairRunId, pair.RelativePath, type, increaseCurrentCount);
             Progress?.Invoke(this, EventArgs.Empty);
         }
 
         private async Task ErrorFile(FilePair pair, string message, Exception e = null)
         {
-            await database.SyncPairs.SetSyncPairRunErrorFileType(syncPairRunId, pair.RelativePath, e, true);
+            await database.SyncPairs.SetSyncPairRunErrorFileType(SyncPairRunId, pair.RelativePath, e, true);
             Progress?.Invoke(this, EventArgs.Empty);
         }
 
         private async Task UpdateCurrentQueryFolderRelPath(string path)
         {
-            await database.SyncPairs.UpdateSyncPairRunCurrentQueryFolderRelPath(syncPairRunId, path);
+            await database.SyncPairs.UpdateSyncPairRunCurrentQueryFolderRelPath(SyncPairRunId, path);
             Progress?.Invoke(this, EventArgs.Empty);
         }
 
         private async Task UpdateCurrentCopyToLocalRelPath(string path)
         {
-            await database.SyncPairs.UpdateSyncPairRunCurrentCopyToLocalRelPath(syncPairRunId, path);
+            await database.SyncPairs.UpdateSyncPairRunCurrentCopyToLocalRelPath(SyncPairRunId, path);
             Progress?.Invoke(this, EventArgs.Empty);
         }
 
         private async Task UpdatCurrentCopyToServerRelPath(string path)
         {
-            await database.SyncPairs.UpdateSyncPairRunCurrentCopyToServerRelPath(syncPairRunId, path);
+            await database.SyncPairs.UpdateSyncPairRunCurrentCopyToServerRelPath(SyncPairRunId, path);
             Progress?.Invoke(this, EventArgs.Empty);
         }
 
         private async Task UpdateCurrentDeleteFromServerRelPath(string path)
         {
-            await database.SyncPairs.UpdateSyncPairRunCurrentDeleteFromServerRelPath(syncPairRunId, path);
+            await database.SyncPairs.UpdateSyncPairRunCurrentDeleteFromServerRelPath(SyncPairRunId, path);
             Progress?.Invoke(this, EventArgs.Empty);
         }
 
         private async Task UpdateCurrentDeleteFromLocalRelPath(string path)
         {
-            await database.SyncPairs.UpdateSyncPairRunCurrentDeleteFromLocalRelPath(syncPairRunId, path);
+            await database.SyncPairs.UpdateSyncPairRunCurrentDeleteFromLocalRelPath(SyncPairRunId, path);
             Progress?.Invoke(this, EventArgs.Empty);
         }
 
@@ -207,7 +208,7 @@ namespace FileSystemCommonUWP.Sync.Handling
 
         private async Task SaveNewResult()
         {
-            await database.SyncPairs.InsertSyncPairResult(syncPairRunId, newResult);
+            await database.SyncPairs.InsertSyncPairResult(SyncPairRunId, newResult);
         }
 
         private async Task QueryFiles()
@@ -604,8 +605,8 @@ namespace FileSystemCommonUWP.Sync.Handling
                     return;
                 }
 
-                await database.SyncPairs.ResetSyncPairRun(syncPairRunId);
-                await database.SyncPairs.UpdateSyncPairRunLocalFolderPath(syncPairRunId, localFolder.Path);
+                await database.SyncPairs.ResetSyncPairRun(SyncPairRunId);
+                await database.SyncPairs.UpdateSyncPairRunLocalFolderPath(SyncPairRunId, localFolder.Path);
 
                 await SetState(SyncPairHandlerState.Running);
 

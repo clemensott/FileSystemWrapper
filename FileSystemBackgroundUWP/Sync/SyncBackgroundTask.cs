@@ -22,13 +22,13 @@ namespace FileSystemBackgroundUWP.Sync
         {
             this.taskInstance = taskInstance;
             BackgroundTaskDeferral deferral = null;
-            Timer heartBeatTimer = null;
+            Timer timer = null;
 
             try
             {
                 System.Diagnostics.Debug.WriteLine("start background task");
                 deferral = taskInstance.GetDeferral();
-                heartBeatTimer = StartTimer(taskInstance);
+                timer = StartTimer(taskInstance);
 
                 database = await AppDatabase.OpenSqlite();
                 // Check regualy for requested cancel
@@ -51,7 +51,7 @@ namespace FileSystemBackgroundUWP.Sync
             }
             finally
             {
-                heartBeatTimer?.Dispose();
+                timer?.Dispose();
                 deferral?.Complete();
                 System.Diagnostics.Debug.WriteLine("end background task");
             }
@@ -106,7 +106,18 @@ namespace FileSystemBackgroundUWP.Sync
 
         private Timer StartTimer(IBackgroundTaskInstance taskInstance)
         {
-            return new Timer((_) => TriggerProgress(), null, TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(500));
+            return new Timer(OnTick, null, TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(500));
+        }
+
+        private async void OnTick(object state)
+        {
+            TriggerProgress();
+
+            if (currentSyncPairHandler != null && !currentSyncPairHandler.IsEnded)
+            {
+                SyncPairRun run = (await database.SyncPairs.SelectSyncPairRuns(new int[] { currentSyncPairHandler.SyncPairRunId })).First();
+                if (run.RequestedCancel) await currentSyncPairHandler.Cancel();
+            }
         }
 
         private void TriggerProgress()
