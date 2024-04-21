@@ -21,13 +21,11 @@ namespace FileSystemCommonUWP.Database.SyncPairs
         public async Task Init()
         {
             const string sql = @"
--- Drop table sync_pair_results;
                 CREATE TABLE IF NOT EXISTS sync_pair_results (
                     id                      INTEGER PRIMARY KEY AUTOINCREMENT,
                     created                 TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
--- Drop table sync_pair_result_files;
                 CREATE TABLE IF NOT EXISTS sync_pair_result_files (
                     id                      INTEGER PRIMARY KEY AUTOINCREMENT,
                     sync_pair_result_id     INTEGER NOT NULL REFERENCES sync_pair_results(id),
@@ -38,7 +36,6 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     UNIQUE(sync_pair_result_id, relative_path)
                 );
 
--- Drop table sync_pair_runs;
                 CREATE TABLE IF NOT EXISTS sync_pair_runs (
                     id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
                     with_sub_folders                    INTEGER NOT NULL,
@@ -75,7 +72,6 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     created                             TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
--- Drop table sync_pair_run_files;
                 CREATE TABLE IF NOT EXISTS sync_pair_run_files (
                     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
                     sync_pair_run_id    INTEGER NOT NULL REFERENCES sync_pair_runs(id),
@@ -89,7 +85,6 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     UNIQUE(sync_pair_run_id, relative_path)
                 );
 
--- Drop table sync_pairs;
                 CREATE TABLE IF NOT EXISTS sync_pairs (
                     id                          INTEGER PRIMARY KEY AUTOINCREMENT,
                     server_id                   INTEGER NOT NULL REFERENCES servers(id),
