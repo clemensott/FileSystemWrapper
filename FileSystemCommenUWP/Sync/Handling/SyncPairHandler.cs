@@ -185,6 +185,26 @@ namespace FileSystemCommonUWP.Sync.Handling
             Progress?.Invoke(this, EventArgs.Empty);
         }
 
+        private void AddResultFile(FilePair pair)
+        {
+            if (pair.ServerCompareValue == null || pair.LocalCompareValue == null)
+            {
+                SyncPairResultFile last;
+                if (lastResult.TryGetFile(pair.RelativePath, out last))
+                {
+                    if (pair.ServerCompareValue == null) pair.ServerCompareValue = last.ServerCompareValue;
+                    if (pair.LocalCompareValue == null) pair.LocalCompareValue = last.LocalCompareValue;
+                }
+            }
+
+            newResult.AddFile(new SyncPairResultFile()
+            {
+                RelativePath = pair.RelativePath,
+                LocalCompareValue = pair.LocalCompareValue,
+                ServerCompareValue = pair.ServerCompareValue,
+            });
+        }
+
         private async Task SaveNewResult()
         {
             await database.SyncPairs.InsertSyncPairResult(syncPairRunId, newResult);
@@ -381,22 +401,12 @@ namespace FileSystemCommonUWP.Sync.Handling
                     break;
 
                 case SyncActionType.Equal:
+                    AddResultFile(pair);
                     await AddToList(pair, SyncPairRunFileType.Equal, true);
                     break;
 
                 case SyncActionType.Ignore:
-                    SyncPairResultFile last;
-                    if (lastResult.TryGetFile(pair.RelativePath, out last))
-                    {
-                        if (pair.ServerCompareValue == null) pair.ServerCompareValue = last.ServerCompareValue;
-                        if (pair.LocalCompareValue == null) pair.LocalCompareValue = last.LocalCompareValue;
-                    }
-                    newResult.AddFile(new SyncPairResultFile()
-                    {
-                        RelativePath = pair.RelativePath,
-                        LocalCompareValue = pair.LocalCompareValue,
-                        ServerCompareValue = pair.ServerCompareValue,
-                    });
+                    AddResultFile(pair);
 
                     await AddToList(pair, SyncPairRunFileType.Ignore, true);
                     break;
@@ -444,6 +454,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                         if (pair.ServerCompareValue == null) pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
                     }
 
+                    AddResultFile(pair);
                     await AddToList(pair, SyncPairRunFileType.CopiedLocal, true);
                     continue;
                 }
@@ -505,6 +516,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                         pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
                     }
 
+                    AddResultFile(pair);
                     await AddToList(pair, SyncPairRunFileType.CopiedServer, true);
                 }
                 catch (Exception e)
