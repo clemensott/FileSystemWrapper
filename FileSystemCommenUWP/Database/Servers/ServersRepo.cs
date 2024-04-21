@@ -146,17 +146,54 @@ namespace FileSystemCommonUWP.Database.Servers
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
 
+        private async Task<IList<int>> SelectSyncPairValueIds(int serverId, string columnName)
+        {
+            string sql = $@"
+                SELECT {columnName} as value_id
+                FROM sync_pairs
+                WHERE server_id = @serverId
+                    AND {columnName} IS NOT NULL
+            ";
+            IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
+            {
+                CreateParam("serverId", serverId),
+            };
+
+            return await sqlExecuteService.ExecuteReadAllAsync(reader => (int)reader.GetInt64("value_id"), sql, parameters);
+        }
+
+        private async Task<IList<int>> SelecCurrentSyncPairRunIds(int serverId)
+        {
+            return await SelectSyncPairValueIds(serverId, "current_sync_pair_run_id");
+        }
+
+        private async Task<IList<int>> SelectLastSyncPairResultIds(int serverId)
+        {
+            return await SelectSyncPairValueIds(serverId, "last_sync_pair_result_id");
+        }
+
         public async Task DeleteServer(ServerInfo server)
         {
-            const string sql = @"
+            IList<int> syncPairRunIdsToDelete = await SelecCurrentSyncPairRunIds(server.Id);
+            IList<int> syncPairResultIdsToDelete = await SelectLastSyncPairResultIds(server.Id);
+
+            string syncPairRunIdsValues = string.Concat(syncPairRunIdsToDelete.Select((_, i) => $"@runId{i},"));
+            string syncPairResultIdsValues = string.Concat(syncPairResultIdsToDelete.Select((_, i) => $"@resultId{i},"));
+
+            string sql = $@"
                 DELETE FROM sync_pairs WHERE server_id = @serverId;
-                -- TODO: delete other tables
+                DELETE FROM sync_pair_result_files WHERE sync_pair_result_id IN ({syncPairResultIdsValues}0);
+                DELETE FROM sync_pair_results WHERE id IN ({syncPairResultIdsValues}0);
+                DELETE FROM sync_pair_run_files WHERE sync_pair_run_id IN ({syncPairRunIdsValues}0);
+                DELETE FROM sync_pair_runs WHERE id IN ({syncPairRunIdsValues}0);
                 DELETE FROM servers WHERE id = @serverId;
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
                 CreateParam("serverId", server.Id),
-            };
+            }
+            .Concat(syncPairRunIdsToDelete.Select((id, i) => CreateParam($"runId{i}", (long)id)))
+            .Concat(syncPairResultIdsToDelete.Select((id, i) => CreateParam($"resultId{i}", (long)id)));
 
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
