@@ -188,7 +188,7 @@ namespace FileSystemUWP.Sync.Handling
 
         public async Task Cancel(SyncPairRun run)
         {
-            await database.SyncPairs.UpdateSyncPairRunRequestCancel(run.Id);
+            await database.SyncPairs.UpdateSyncPairRunRequestedCancel(run.Id);
             await StartBackgroundTask();
         }
 

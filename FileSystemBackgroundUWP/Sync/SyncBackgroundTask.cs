@@ -115,8 +115,8 @@ namespace FileSystemBackgroundUWP.Sync
 
             if (currentSyncPairHandler != null && !currentSyncPairHandler.IsEnded)
             {
-                SyncPairRun run = (await database.SyncPairs.SelectSyncPairRuns(new int[] { currentSyncPairHandler.SyncPairRunId })).First();
-                if (run.RequestedCancel) await currentSyncPairHandler.Cancel();
+                bool requestedCancel = await database.SyncPairs.SelectSyncPairRunRequestedCanceled(currentSyncPairHandler.SyncPairRunId);
+                if (requestedCancel) await currentSyncPairHandler.Cancel();
             }
         }
 

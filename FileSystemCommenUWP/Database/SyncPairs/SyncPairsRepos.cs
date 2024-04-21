@@ -372,6 +372,18 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             pair.CurrentSyncPairRunId = run.Id = (int)syncPairRunId;
         }
 
+        public async Task<bool> SelectSyncPairRunRequestedCanceled(int syncPairRunId)
+        {
+            const string sql = "SELECT requested_cancel FROM sync_pair_runs WHERE id = @id;";
+            IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
+            {
+                CreateParam("id", syncPairRunId),
+            };
+
+            object result = await sqlExecuteService.ExecuteScalarAsync(sql, parameters);
+            return result is DBNull ? false : (long)result == 1L;
+        }
+
         private async Task UpdateSyncPairRunColumn(int syncPairRunId, string columnName, object value)
         {
             string sql = $@"
@@ -388,7 +400,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public async Task UpdateSyncPairRunRequestCancel(int syncPairRunId)
+        public async Task UpdateSyncPairRunRequestedCancel(int syncPairRunId)
         {
             await UpdateSyncPairRunColumn(syncPairRunId, "requested_cancel", 1L);
         }
