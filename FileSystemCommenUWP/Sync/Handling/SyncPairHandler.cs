@@ -334,7 +334,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                 try
                 {
                     SyncActionType action = await modeHandler.GetActionOfBothFiles(pair);
-                    await HandleAction(action, pair);
+                    HandleAction(action, pair);
                     AddToList(pair, SyncPairRunFileType.Compared, false);
                 }
                 catch (Exception e)
@@ -354,7 +354,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                 try
                 {
                     SyncActionType action = await modeHandler.GetActionOfSingleFiles(pair);
-                    await HandleAction(action, pair);
+                    HandleAction(action, pair);
                     AddToList(pair, SyncPairRunFileType.Compared, false);
                 }
                 catch (Exception e)
@@ -364,7 +364,7 @@ namespace FileSystemCommonUWP.Sync.Handling
             }
         }
 
-        private async Task HandleAction(SyncActionType action, FilePair pair)
+        private void HandleAction(SyncActionType action, FilePair pair)
         {
             switch (action)
             {
