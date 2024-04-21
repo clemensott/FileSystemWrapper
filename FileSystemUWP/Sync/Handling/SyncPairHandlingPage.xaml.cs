@@ -42,11 +42,13 @@ namespace FileSystemUWP.Sync.Handling
             database = ((App)Application.Current).Database;
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             DataContext = viewModel = (SyncPairRun)e.Parameter;
 
             SubscribeProgress();
+
+            await UpdateSyncs();
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
@@ -75,13 +77,15 @@ namespace FileSystemUWP.Sync.Handling
         private void OnEnteredBackground(object sender, Windows.ApplicationModel.EnteredBackgroundEventArgs e)
         {
             backgroundTaskHelper.SyncProgress += BackgroundTaskHelper_SyncProgress;
-            timer.Start();
+            timer.Stop();
         }
 
-        private void OnLeavingBackground(object sender, Windows.ApplicationModel.LeavingBackgroundEventArgs e)
+        private async void OnLeavingBackground(object sender, Windows.ApplicationModel.LeavingBackgroundEventArgs e)
         {
             backgroundTaskHelper.SyncProgress -= BackgroundTaskHelper_SyncProgress;
-            timer.Stop();
+            timer.Start();
+
+            await UpdateSyncs();
         }
 
         private async void Timer_Tick(object sender, object e)

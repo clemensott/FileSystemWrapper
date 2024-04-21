@@ -117,13 +117,15 @@ namespace FileSystemUWP.Sync.Definitions
         private void OnEnteredBackground(object sender, Windows.ApplicationModel.EnteredBackgroundEventArgs e)
         {
             backgroundTaskHelper.SyncProgress += BackgroundTaskHelper_SyncProgress;
-            timer.Start();
+            timer.Stop();
         }
 
-        private void OnLeavingBackground(object sender, Windows.ApplicationModel.LeavingBackgroundEventArgs e)
+        private async void OnLeavingBackground(object sender, Windows.ApplicationModel.LeavingBackgroundEventArgs e)
         {
             backgroundTaskHelper.SyncProgress -= BackgroundTaskHelper_SyncProgress;
-            timer.Stop();
+            timer.Start();
+
+            await UpdateSyncs();
         }
 
         private async void Timer_Tick(object sender, object e)
