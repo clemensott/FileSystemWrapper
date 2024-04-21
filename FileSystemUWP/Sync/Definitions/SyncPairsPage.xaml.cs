@@ -115,7 +115,7 @@ namespace FileSystemUWP.Sync.Definitions
                             Run = syncPairRun,
                         };
                         viewModel.Syncs.Add(sync);
-                        return;
+                        continue;
                     }
 
                     sync.SyncPair = sync.SyncPair.Update(syncPair);
