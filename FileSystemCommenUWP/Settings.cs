@@ -20,12 +20,6 @@ namespace FileSystemCommonUWP
             }
         }
 
-        public string SaveFileName
-        {
-            get => GetValue<string>(nameof(SaveFileName));
-            set => SetValue(nameof(SaveFileName), value);
-        }
-
         public Guid TimerBackgroundTaskRegistrationId
         {
             get
