@@ -116,7 +116,7 @@ namespace FileSystemUWP
                     BackgroundOperations = viewModel.BackgroundOperations,
                 };
                 viewModel.Servers.Add(server);
-                await database.Servers.InsertServer(server.ToInfo());
+                server.Id = await database.Servers.InsertServer(server.ToInfo());
             }
         }
 

@@ -84,7 +84,7 @@ namespace FileSystemCommonUWP.Database.Servers
             return await sqlExecuteService.ExecuteReadAllAsync(CreateServerObject, sql);
         }
 
-        public async Task InsertServer(ServerInfo server)
+        public async Task<int> InsertServer(ServerInfo server)
         {
             const string sql = @"
                 INSERT INTO servers (name, base_url, username, raw_cookies, current_folder_path, sort_by_type, sort_by_direction, 
@@ -109,7 +109,7 @@ namespace FileSystemCommonUWP.Database.Servers
             };
 
             long serverId = await sqlExecuteService.ExecuteScalarAsync<long>(sql, parameters);
-            server.Id = (int)serverId;
+            return (int)serverId;
         }
 
         public async Task UpdateServer(ServerInfo server)
