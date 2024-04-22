@@ -56,6 +56,7 @@ namespace FileSystemUWP.Sync.Definitions
             DataContext = viewModel;
 
             await updater.Start();
+            viewModel.IsLoading = false;
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)

@@ -156,9 +156,20 @@
             </ListView.ItemTemplate>
         </ListView>
 
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" Visibility="{Binding IsLoading,Converter={StaticResource colCon}}">
             <TextBlock Margin="5" Text="&lt;None&gt;" HorizontalAlignment="Center"
                        Visibility="{Binding Syncs.Count,Converter={StaticResource colCon}}"/>
+        </Grid>
+
+        <Grid Grid.Row="1" VerticalAlignment="Center"
+              Visibility="{Binding IsLoading,Converter={StaticResource visCon}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <ProgressRing Width="100" Height="100" IsActive="True" />
+            <TextBlock Grid.Row="1" Margin="5" Text="Loading Syncs" HorizontalAlignment="Center"/>
         </Grid>
     </Grid>
 

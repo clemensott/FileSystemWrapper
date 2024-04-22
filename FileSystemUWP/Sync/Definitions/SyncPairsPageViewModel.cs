@@ -5,7 +5,20 @@ namespace FileSystemUWP.Sync.Definitions
 {
     class SyncPairsPageViewModel : INotifyPropertyChanged
     {
+        private bool isLoading;
         private ObservableCollection<SyncPairPageSyncViewModel> syncs;
+
+        public bool IsLoading
+        {
+            get => isLoading;
+            set
+            {
+                if (value == isLoading) return;
+
+                isLoading = value;
+                OnPropertyChanged(nameof(IsLoading));
+            }
+        }
 
         public ObservableCollection<SyncPairPageSyncViewModel> Syncs
         {
@@ -17,6 +30,11 @@ namespace FileSystemUWP.Sync.Definitions
                 syncs = value;
                 OnPropertyChanged(nameof(Syncs));
             }
+        }
+
+        public SyncPairsPageViewModel()
+        {
+            IsLoading = true;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
