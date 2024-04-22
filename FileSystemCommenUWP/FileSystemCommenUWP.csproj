@@ -129,11 +129,16 @@
     <Compile Include="Database\BaseRepo.cs" />
     <Compile Include="Database\Servers\ServerInfo.cs" />
     <Compile Include="Database\Servers\ServersRepo.cs" />
+    <Compile Include="Sync\Handling\Progress\LatestValue.cs" />
+    <Compile Include="Sync\Handling\Progress\SyncPairProgressErrorFileUpdate.cs" />
+    <Compile Include="Sync\Handling\Progress\SyncPairProgressFileUpdate.cs" />
     <Compile Include="Database\SyncPairs\SyncPairsRepos.cs" />
     <Compile Include="Database\SqliteExecuteService.cs" />
     <Compile Include="HttpRandomAccessStream.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="Sync\Handling\Progress\SyncPairProgressHandler.cs" />
+    <Compile Include="Sync\Handling\Progress\SyncPairProgressRelPathType.cs" />
     <Compile Include="Sync\Handling\CompareType\ExistsComparer.cs" />
     <Compile Include="Sync\Handling\CompareType\HashComparer.cs" />
     <Compile Include="Sync\Handling\CompareType\ISyncFileComparer.cs" />
@@ -143,7 +148,6 @@
     <Compile Include="Sync\Definitions\SyncConflictHandlingType.cs" />
     <Compile Include="Sync\Definitions\SyncMode.cs" />
     <Compile Include="Sync\Definitions\SyncPair.cs" />
-    <Compile Include="Sync\Handling\ErrorFilePair.cs" />
     <Compile Include="Sync\Handling\FilePair.cs" />
     <Compile Include="Sync\Handling\SyncPairHandlerState.cs" />
     <Compile Include="Sync\Handling\Mode\LocalToServerCreateOnlyModeHandler.cs" />

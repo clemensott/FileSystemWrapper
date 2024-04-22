@@ -76,7 +76,7 @@ namespace FileSystemBackgroundUWP.Sync
                     run.RequestedCancel, lastResult, run.Mode, run.CompareType, run.ConflictHandlingType,
                     localFolder, run.ServerPath, run.AllowList, run.DenyList, api);
 
-                currentSyncPairHandler.Progress += CurrentSyncPairHandler_Progress;
+                currentSyncPairHandler.ProgressHandler.Progress += CurrentSyncPairHandler_Progress;
                 await currentSyncPairHandler.Run();
             }
             catch (Exception e)
@@ -85,7 +85,7 @@ namespace FileSystemBackgroundUWP.Sync
             }
             finally
             {
-                if (currentSyncPairHandler != null) currentSyncPairHandler.Progress += CurrentSyncPairHandler_Progress;
+                if (currentSyncPairHandler != null) currentSyncPairHandler.ProgressHandler.Progress += CurrentSyncPairHandler_Progress;
                 currentSyncPairHandler = null;
             }
         }

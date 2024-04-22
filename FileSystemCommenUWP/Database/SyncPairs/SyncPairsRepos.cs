@@ -1,6 +1,7 @@
 ﻿using FileSystemCommon.Models.FileSystem;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling;
+using FileSystemCommonUWP.Sync.Handling.Progress;
 using Newtonsoft.Json;
 using StdOttStandard.Linq;
 using System;
@@ -519,6 +520,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                 UPDATE sync_pair_runs
                 SET current_count = 0,
                     all_files_count = 0,
+                    compared_files_count = 0,
                     error_files_count = 0,
                     equal_files_count = 0,
                     conflict_files_count = 0,
@@ -526,6 +528,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
                     copied_server_files_count = 0,
                     deleted_local_files_count = 0,
                     deleted_server_files_count = 0,
+                    ignore_files_count = 0,
                     current_query_folder_rel_path = null,
                     current_copy_to_local_rel_path = null,
                     current_copy_to_server_rel_path = null,
@@ -580,78 +583,101 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             }
         }
 
-        private static string GetInscreaseFileCount(SyncPairRunFileType type, bool increaseCurrentCount)
+        private static string GetInscreaseFileCount(IList<SyncPairRunFileType> types, bool increaseCurrentCount)
         {
-            string countColumnName = GetCountColumnName(type);
-            string increaseCurrentCountSql = increaseCurrentCount ? "current_count = current_count + 1," : "";
+            string increaseCurrentCountSql = increaseCurrentCount ? "current_count = current_count + @increaseCurrentCount," : "";
+            string sets = string.Join(",", types.Select(type =>
+            {
+                string columnName = GetCountColumnName(type);
+                return $"{columnName} = {columnName} + @increase{type}";
+            }));
             return $@"
                 UPDATE sync_pair_runs
                 SET {increaseCurrentCountSql}
-                    {countColumnName} = {countColumnName} + 1
+                    {sets}
                 WHERE id = @syncPairRunId;
             ";
         }
 
-        public async Task InsertSyncPairRunFile(int syncPairRunId, SyncPairRunFile file)
+        public async Task InsertSyncPairRunFiles(int syncPairRunId, IList<SyncPairRunFile> files)
         {
+            if (files.Count == 0) return;
+
+            string values = string.Join(",", files.Select((_, i) => $"(@runId, @type, @name{i}, @rel{i})"));
             string sql = $@"
                 INSERT INTO sync_pair_run_files (sync_pair_run_id, type, name, relative_path)
-                VALUES (@syncPairRunId, @type, @name, @relativePath);
+                VALUES {values};
 
-                {GetInscreaseFileCount(SyncPairRunFileType.All, false)}
+                {GetInscreaseFileCount(new SyncPairRunFileType[] { SyncPairRunFileType.All }, false)}
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
+                CreateParam("runId", syncPairRunId),
                 CreateParam("syncPairRunId", syncPairRunId),
                 CreateParam("type", (long)SyncPairRunFileType.All),
-                CreateParam("name", file.Name),
-                CreateParam("relativePath", file.RelativePath),
-            };
+                CreateParam($"increase{SyncPairRunFileType.All}", (long)files.Count),
+            }
+            .Concat(files.SelectMany((file, i) => new KeyValuePair<string, object>[]
+            {
+                CreateParam($"name{i}", file.Name),
+                CreateParam($"rel{i}", file.RelativePath),
+            }));
 
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public async Task SetSyncPairRunFileType(int syncPairRunId, string relativePath, SyncPairRunFileType type, bool increaseCurrentCount)
+        public async Task SetSyncPairRunFileTypes(int syncPairRunId, IList<SyncPairProgressFileUpdate> updates)
         {
-            string countColumnName = GetCountColumnName(type);
-            string sql = $@"
-                UPDATE sync_pair_run_files
-                SET type = type | @type
-                WHERE sync_pair_run_id = @syncPairRunId AND relative_path = @relativePath;
+            if (updates.Count == 0) return;
 
-                {GetInscreaseFileCount(type, increaseCurrentCount)}
+            IEnumerable<IGrouping<SyncPairRunFileType, SyncPairProgressFileUpdate>> typeGroups = updates.GroupBy(update => update.Type);
+            string updateTypeSql = string.Concat(typeGroups.Select(typeGroup =>
+            {
+                string values = string.Join(",", typeGroup.Select((_, i) => $"@rel{typeGroup.Key}{i}"));
+                return $@"
+                    UPDATE sync_pair_run_files
+                    SET type = type | @type{typeGroup.Key}
+                    WHERE sync_pair_run_id = @syncPairRunId AND relative_path IN ({values});
+                ";
+            }));
+            string sql = $@"
+                {updateTypeSql}
+                {GetInscreaseFileCount(typeGroups.Select(group => group.Key).ToArray(), true)}
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
-                CreateParam("syncPairRunId", syncPairRunId),
-                CreateParam("relativePath", relativePath),
-                CreateParam("type", (long)type),
-            };
+                CreateParam("syncPairRunId", (long)syncPairRunId),
+                CreateParam("increaseCurrentCount", updates.LongCount(update => update.IncreaseCurrentCount)),
+            }
+            .Concat(typeGroups.Select(typeGroup => CreateParam($"type{typeGroup.Key}", (long)typeGroup.Key)))
+            .Concat(typeGroups.Select(typeGroup => CreateParam($"increase{typeGroup.Key}", typeGroup.LongCount())))
+            .Concat(typeGroups.SelectMany(typeGroup => typeGroup.Select((u, i) => CreateParam($"rel{typeGroup.Key}{i}", u.RelativePath))));
 
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public async Task SetSyncPairRunErrorFileType(int syncPairRunId, string relativePath, Exception exception, bool increaseCurrentCount)
+        public async Task SetSyncPairRunErrorFileTypes(int syncPairRunId, IList<SyncPairProgressErrorFileUpdate> updates)
         {
+            string updatesSql = string.Concat(updates.Select((u, i) =>
+                "UPDATE sync_pair_run_files "
+                + $"SET type=type|@t,error_message=@m{i},error_stackstrace=@s{i},error_exception=@e{i} "
+                + $"WHERE sync_pair_run_id = @id AND relative_path = @r{i};"
+                ));
             string sql = $@"
-                UPDATE sync_pair_run_files
-                SET type = type | @type
-                    error_message = @errorMessage,
-                    error_stackstrace = @errorStacktrace,
-                    error_exception = @errorException
-                WHERE sync_pair_run_id = @syncPairRunId AND relative_path = @relativePath;
-
-                {GetInscreaseFileCount(SyncPairRunFileType.Error, increaseCurrentCount)}
+                {updatesSql}
+                {GetInscreaseFileCount(new SyncPairRunFileType[] { SyncPairRunFileType.Error }, true)}
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
-                CreateParam("syncPairRunId", syncPairRunId),
-                CreateParam("relativePath", relativePath),
-                CreateParam("type", (long)SyncPairRunFileType.Error),
-                CreateParam("errorMessage", exception.Message),
-                CreateParam("errorStacktrace", exception.StackTrace),
-                CreateParam("errorException", exception.ToString()),
-            };
+                CreateParam("id", syncPairRunId),
+                CreateParam("t", (long)SyncPairRunFileType.Error),
+                CreateParam("increaseCurrentCount", (long)updates.Count),
+                CreateParam($"increase{SyncPairRunFileType.Error}", (long)updates.Count),
+            }
+            .Concat(updates.Select((u, i) => CreateParam($"r{i}", u.RelativePath)))
+            .Concat(updates.Select((u, i) => CreateParam($"m{i}", u.ErrorMessage)))
+            .Concat(updates.Select((u, i) => CreateParam($"s{i}", u.ErrorStacktrace)))
+            .Concat(updates.Select((u, i) => CreateParam($"e{i}", u.ErrorException)));
 
             await sqlExecuteService.ExecuteNonQueryAsync(sql, parameters);
         }
@@ -686,7 +712,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
 
         private async Task InsertSyncPairResultFiles(long syncPairResultId, SyncPairResult result)
         {
-            const int maxGroupSize = 5000;
+            const int maxGroupSize = 300;
             List<SyncPairResultFile> resultFilesGroup = new List<SyncPairResultFile>();
             foreach (SyncPairResultFile file in result)
             {
@@ -698,20 +724,20 @@ namespace FileSystemCommonUWP.Database.SyncPairs
 
             async Task InsertFiles()
             {
-                string syncPairResultFileValuesSql = string.Join(",", result
-                  .Select((_, i) => $"(@resId, @rel{i}, @local{i}, @server{i})"));
+                string syncPairResultFileValuesSql = string.Join(",", resultFilesGroup
+                  .Select((_, i) => $"(@id, @r{i}, @l{i}, @s{i})"));
                 string insertFilesSql = $@"
                     INSERT INTO sync_pair_result_files (sync_pair_result_id, relative_path, local_compare_value, server_compare_value)
                     VALUES {syncPairResultFileValuesSql};
                 ";
                 IEnumerable<KeyValuePair<string, object>> insertFilesParameters = new KeyValuePair<string, object>[]
                 {
-                    CreateParam("resId", syncPairResultId),
+                    CreateParam("id", syncPairResultId),
                 }.Concat(resultFilesGroup.SelectMany((f, i) => new KeyValuePair<string, object>[]
                 {
-                    CreateParam($"rel{i}", f.RelativePath),
-                    CreateParam($"local{i}", JsonConvert.SerializeObject(f.LocalCompareValue)),
-                    CreateParam($"server{i}", JsonConvert.SerializeObject(f.ServerCompareValue)),
+                    CreateParam($"r{i}", f.RelativePath),
+                    CreateParam($"l{i}", JsonConvert.SerializeObject(f.LocalCompareValue)),
+                    CreateParam($"s{i}", JsonConvert.SerializeObject(f.ServerCompareValue)),
                 }));
 
                 await sqlExecuteService.ExecuteNonQueryAsync(insertFilesSql, insertFilesParameters);

@@ -10,6 +10,8 @@ namespace FileSystemCommonUWP.Sync.Handling
 
         public int Id { get; set; }
 
+        public int Count => files.Count;
+
         public SyncPairResult()
         {
             files = new Dictionary<string, SyncPairResultFile>();
