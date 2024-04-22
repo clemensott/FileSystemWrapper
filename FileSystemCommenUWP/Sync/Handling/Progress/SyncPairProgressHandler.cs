@@ -9,8 +9,6 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
 {
     public class SyncPairProgressHandler
     {
-        const int maxBatchSize = 137;
-
         private readonly int syncPairRunId;
         private readonly AppDatabase database;
         private readonly SemaphoreSlim updateSlim;
@@ -105,6 +103,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
 
         private async Task CheckInsertFiles()
         {
+            const int maxBatchSize = 367;
+
             List<SyncPairRunFile> batch;
             lock (insertFileQueue)
             {
@@ -137,6 +137,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
 
         private async Task CheckUpateFiles()
         {
+            const int maxBatchSize = 713;
             List<SyncPairProgressFileUpdate> batch;
             lock (updateFileQueue)
             {
@@ -167,6 +168,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
 
         public async Task CheckUpdateErrorFiles()
         {
+            const int maxBatchSize = 213;
             List<SyncPairProgressErrorFileUpdate> batch;
             lock (updateErrorFileQueue)
             {
