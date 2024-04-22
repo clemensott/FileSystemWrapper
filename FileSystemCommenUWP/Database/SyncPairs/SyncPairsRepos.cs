@@ -411,6 +411,11 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             await UpdateSyncPairRunColumn(syncPairRunId, "state", (long)state);
         }
 
+        public async Task UpdateSyncPairRunAllFilesCount(int syncPairRunId, int totalFilesCount)
+        {
+            await UpdateSyncPairRunColumn(syncPairRunId, "all_files_count", (long)totalFilesCount);
+        }
+
         public async Task UpdateSyncPairRunLocalFolderPath(int syncPairRunId, string localFolderPath)
         {
             await UpdateSyncPairRunColumn(syncPairRunId, "local_folder_path", localFolderPath);
@@ -607,15 +612,11 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             string sql = $@"
                 INSERT INTO sync_pair_run_files (sync_pair_run_id, type, name, relative_path)
                 VALUES {values};
-
-                {GetInscreaseFileCount(new SyncPairRunFileType[] { SyncPairRunFileType.All }, false)}
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
                 CreateParam("runId", syncPairRunId),
-                CreateParam("syncPairRunId", syncPairRunId),
                 CreateParam("type", (long)SyncPairRunFileType.All),
-                CreateParam($"increase{SyncPairRunFileType.All}", (long)files.Count),
             }
             .Concat(files.SelectMany((file, i) => new KeyValuePair<string, object>[]
             {

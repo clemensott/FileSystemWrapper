@@ -13,6 +13,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
         private readonly AppDatabase database;
         private readonly SemaphoreSlim updateSlim;
         private readonly LatestValue<SyncPairHandlerState> latestState;
+        private readonly LatestValue<int> totalFilesCount;
         private readonly Queue<SyncPairRunFile> insertFileQueue;
         private readonly HashSet<string> insertedFiles;
         private readonly Queue<SyncPairProgressFileUpdate> updateFileQueue;
@@ -31,6 +32,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
             this.database = database;
             updateSlim = new SemaphoreSlim(0);
             latestState = new LatestValue<SyncPairHandlerState>();
+            totalFilesCount = new LatestValue<int>(0);
             insertFileQueue = new Queue<SyncPairRunFile>();
             insertedFiles = new HashSet<string>();
             updateFileQueue = new Queue<SyncPairProgressFileUpdate>();
@@ -74,6 +76,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
             try
             {
                 await CheckState();
+                await CheckTotalFilesCount();
                 await CheckInsertFiles();
                 await CheckUpateFiles();
                 await CheckUpdateErrorFiles();
@@ -99,6 +102,16 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
         {
             latestState.SetValue(state);
             updateSlim.Release();
+        }
+
+        private async Task CheckTotalFilesCount()
+        {
+            int totalFilesCount;
+            if (this.totalFilesCount.TryGetNewValue(out totalFilesCount))
+            {
+                await database.SyncPairs.UpdateSyncPairRunAllFilesCount(syncPairRunId, totalFilesCount);
+                Progress?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         private async Task CheckInsertFiles()
@@ -132,6 +145,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
             {
                 insertFileQueue.Enqueue(file);
             }
+            totalFilesCount.SetValue(count => count + 1);
             updateSlim.Release();
         }
 
