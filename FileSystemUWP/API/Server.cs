@@ -1,11 +1,11 @@
 ﻿using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommonUWP.API;
+using FileSystemCommonUWP.Database.Servers;
 using FileSystemUWP.Controls;
 using FileSystemUWP.FileViewers;
 using FileSystemUWP.Picker;
-using System.Collections.Generic;
 using System.ComponentModel;
-using FileSystemCommonUWP.Sync.Definitions;
+using System.Linq;
 
 namespace FileSystemUWP
 {
@@ -89,24 +89,42 @@ namespace FileSystemUWP
             }
         }
 
+        public int Id { get; set; }
+
         internal FilesViewing LastFilesViewing { get; set; }
 
-        public SyncPairs Syncs { get; }
+        public BackgroundOperations BackgroundOperations { get; set; }
 
-        public BackgroundOperations BackgroundOperations { get; }
-
-        public string[] LoadedSyncPairTokens { get; set; }
-
-        public Server(BackgroundOperations backgroundOperations)
+        public Server()
         {
-            Syncs = new SyncPairs();
-            BackgroundOperations = backgroundOperations;
         }
 
-        public Server(BackgroundOperations backgroundOperations, IEnumerable<SyncPair> pairs)
+        public Server(ServerInfo server)
         {
-            Syncs = new SyncPairs(pairs);
-            BackgroundOperations = backgroundOperations;
+            Id = server.Id;
+            Api = server.Api;
+            SortBy = server.SortBy;
+            CurrentFolderPath = server.CurrentFolderPath;
+
+            if (server.RestoreIsFile.HasValue && server.RestoreName != null)
+            {
+                var sortKeys = server.RestoreSortKeys?.ToList().AsReadOnly();
+                RestoreFileSystemItem = new FileSystemSortItem(server.RestoreIsFile.Value, server.RestoreName, sortKeys);
+            }
+        }
+
+        public ServerInfo ToInfo()
+        {
+            return new ServerInfo()
+            {
+                Id = Id,
+                Api = Api,
+                SortBy = SortBy,
+                CurrentFolderPath = CurrentFolderPath,
+                RestoreIsFile = RestoreFileSystemItem?.IsFile,
+                RestoreName = RestoreFileSystemItem?.Name,
+                RestoreSortKeys = RestoreFileSystemItem?.SortKeys?.ToArray(),
+            };
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

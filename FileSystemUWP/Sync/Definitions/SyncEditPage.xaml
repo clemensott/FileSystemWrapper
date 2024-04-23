@@ -28,10 +28,10 @@
 
         <ScrollViewer Grid.Row="1" Margin="5">
             <StackPanel>
-                <TextBlock Text="Name:" Margin="5" FontWeight="Bold" />
+                <TextBlock Text="Name: *" Margin="5" FontWeight="Bold" />
                 <TextBox Margin="3" Text="{Binding Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
 
-                <TextBlock Text="Server path:" Margin="5,10,5,5" FontWeight="Bold" />
+                <TextBlock Text="Server path: *" Margin="5,10,5,5" FontWeight="Bold" />
                 <Grid Margin="3">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -49,37 +49,37 @@
                     <SymbolIcon Name="sinServerPathValid" Grid.Column="1" Symbol="Help" Margin="8,0"/>
                 </Grid>
 
-                <TextBlock Text="Local path:" Margin="5,10,5,5" FontWeight="Bold"/>
+                <TextBlock Text="Local path: *" Margin="5,10,5,5" FontWeight="Bold"/>
                 <Grid Margin="3">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock VerticalAlignment="Center" Margin="5,0,0,0" Text="{Binding LocalFolder.Path}"/>
+                    <TextBlock VerticalAlignment="Center" Margin="5,0,0,0" Text="{Binding LocalFolderPath}"/>
                     <ctl:IconButton Grid.Column="1" Symbol="Folder" Margin="8,0" Click="IbnSelectLocalFolder_Click"/>
                 </Grid>
 
                 <CheckBox Content="With subfolders" Margin="5,10,5,5" IsChecked="{Binding WithSubfolders,Mode=TwoWay}"/>
 
-                <TextBlock Text="Mode:" Margin="3,10,3,3" FontWeight="Bold" />
+                <TextBlock Text="Mode: *" Margin="3,10,3,3" FontWeight="Bold" />
                 <ctl:EnumComboBox x:Name="ecbMode" Margin="5" SelectedItem="{Binding Path=Mode,Mode=TwoWay}"/>
 
-                <TextBlock Text="Files Compare Type:" Margin="3,10,3,3" FontWeight="Bold" />
+                <TextBlock Text="Files Compare Type: *" Margin="3,10,3,3" FontWeight="Bold" />
                 <ctl:EnumComboBox x:Name="ecbCompareType" Margin="5" 
                                   SelectedItem="{Binding Path=CompareType,Mode=TwoWay}"/>
 
-                <TextBlock Text="Conflict handling:" Margin="3,10,3,3" FontWeight="Bold" />
+                <TextBlock Text="Conflict handling: *" Margin="3,10,3,3" FontWeight="Bold" />
                 <ctl:EnumComboBox x:Name="ecbConflictHandlingType" Margin="5"
                                   SelectedItem="{Binding Path=ConflictHandlingType,Mode=TwoWay}"/>
 
                 <TextBlock Text="Extensions allow list:" Margin="3,10,3,3" FontWeight="Bold" />
                 <TextBox Margin="5" AcceptsReturn="True" 
-                         Text="{Binding Whitelist,Mode=TwoWay,Converter={StaticResource linesConverter}}"/>
+                         Text="{Binding AllowList,Mode=TwoWay,Converter={StaticResource linesConverter}}"/>
 
                 <TextBlock Text="Extensions deny list:" Margin="3,10,3,3" FontWeight="Bold" />
                 <TextBox Margin="5" AcceptsReturn="True" 
-                         Text="{Binding Blacklist,Mode=TwoWay,Converter={StaticResource linesConverter}}"/>
+                         Text="{Binding DenyList,Mode=TwoWay,Converter={StaticResource linesConverter}}"/>
             </StackPanel>
         </ScrollViewer>
     </Grid>

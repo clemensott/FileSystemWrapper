@@ -1,5 +1,4 @@
 ﻿using FileSystemCommonUWP.Sync.Handling;
-using FileSystemCommonUWP.Sync.Handling.Communication;
 using System.ComponentModel;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -10,7 +9,7 @@ namespace FileSystemUWP.Sync.Handling
 {
     public sealed partial class SyncPairHandlingProgressbar : UserControl
     {
-        private SyncPairResponseInfo response;
+        private SyncPairRun run;
 
         public SyncPairHandlingProgressbar()
         {
@@ -21,9 +20,9 @@ namespace FileSystemUWP.Sync.Handling
 
         private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            if (response != null) response.PropertyChanged -= Response_PropertyChanged;
-            response = (SyncPairResponseInfo)args.NewValue;
-            if (response != null) response.PropertyChanged += Response_PropertyChanged;
+            if (run != null) run.PropertyChanged -= Response_PropertyChanged;
+            run = (SyncPairRun)args.NewValue;
+            if (run != null) run.PropertyChanged += Response_PropertyChanged;
 
             SetProgress();
         }
@@ -32,9 +31,9 @@ namespace FileSystemUWP.Sync.Handling
         {
             switch (e.PropertyName)
             {
-                case nameof(SyncPairResponseInfo.State):
-                case nameof(SyncPairResponseInfo.CurrentCount):
-                case nameof(SyncPairResponseInfo.TotalCount):
+                case nameof(SyncPairRun.State):
+                case nameof(SyncPairRun.CurrentCount):
+                case nameof(SyncPairRun.AllFilesCount):
                     SetProgress();
                     break;
             }
@@ -43,12 +42,12 @@ namespace FileSystemUWP.Sync.Handling
         private void SetProgress()
         {
             bool isWaiting;
-            if (response == null) isWaiting = true;
+            if (run == null) isWaiting = true;
             else
             {
-                isWaiting = response.State == SyncPairHandlerState.Loading ||
-                  response.State == SyncPairHandlerState.WaitForStart ||
-                  (response.State == SyncPairHandlerState.Running && response.TotalCount == 0);
+                isWaiting = run.State == SyncPairHandlerState.Loading ||
+                  run.State == SyncPairHandlerState.WaitForStart ||
+                  (run.State == SyncPairHandlerState.Running && run.AllFilesCount == 0);
             }
 
             if (isWaiting)
@@ -59,10 +58,10 @@ namespace FileSystemUWP.Sync.Handling
             }
             else
             {
-                tblCurrent.Text = response.CurrentCount.ToString();
-                tblTotal.Text = response.TotalCount.ToString();
-                pgbProgress.Value = response.CurrentCount;
-                pgbProgress.Maximum = response.TotalCount;
+                tblCurrent.Text = run.CurrentCount.ToString();
+                tblTotal.Text = run.AllFilesCount.ToString();
+                pgbProgress.Value = run.CurrentCount;
+                pgbProgress.Maximum = run.AllFilesCount;
 
                 tblCurrent.Visibility = Visibility.Visible;
                 tblTotal.Visibility = Visibility.Visible;

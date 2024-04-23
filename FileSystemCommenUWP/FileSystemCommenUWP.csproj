@@ -122,12 +122,23 @@
   <ItemGroup>
     <Compile Include="API\Api.cs" />
     <Compile Include="API\ApiExtensions.cs" />
+    <Compile Include="BackgroundTaskStatus.cs" />
+    <Compile Include="Database\AppDatabase.cs" />
+    <Compile Include="Database\DbDataReaderExtensions.cs" />
+    <Compile Include="Database\ISqlExecuteService.cs" />
+    <Compile Include="Database\BaseRepo.cs" />
+    <Compile Include="Database\Servers\ServerInfo.cs" />
+    <Compile Include="Database\Servers\ServersRepo.cs" />
+    <Compile Include="Sync\Handling\Progress\LatestValue.cs" />
+    <Compile Include="Sync\Handling\Progress\SyncPairProgressErrorFileUpdate.cs" />
+    <Compile Include="Sync\Handling\Progress\SyncPairProgressFileUpdate.cs" />
+    <Compile Include="Database\SyncPairs\SyncPairsRepos.cs" />
+    <Compile Include="Database\SqliteExecuteService.cs" />
     <Compile Include="HttpRandomAccessStream.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="Sync\Handling\Communication\ProgressUpdatesSyncPairRunEventArgs.cs" />
-    <Compile Include="Sync\Handling\Communication\SyncPairProgressUpdateAction.cs" />
-    <Compile Include="Sync\Handling\Communication\SyncPairProgressUpdate.cs" />
+    <Compile Include="Sync\Handling\Progress\SyncPairProgressHandler.cs" />
+    <Compile Include="Sync\Handling\Progress\SyncPairProgressRelPathType.cs" />
     <Compile Include="Sync\Handling\CompareType\ExistsComparer.cs" />
     <Compile Include="Sync\Handling\CompareType\HashComparer.cs" />
     <Compile Include="Sync\Handling\CompareType\ISyncFileComparer.cs" />
@@ -137,18 +148,7 @@
     <Compile Include="Sync\Definitions\SyncConflictHandlingType.cs" />
     <Compile Include="Sync\Definitions\SyncMode.cs" />
     <Compile Include="Sync\Definitions\SyncPair.cs" />
-    <Compile Include="Sync\Definitions\SyncPairs.cs" />
-    <Compile Include="Sync\Handling\Communication\CanceledSyncPairRunEventArgs.cs" />
-    <Compile Include="Sync\Handling\Communication\RequestedProgressSyncPairRunEventArgs.cs" />
-    <Compile Include="Sync\Handling\Communication\ProgressSyncPairRunEventArgs.cs" />
-    <Compile Include="Sync\Handling\Communication\ErrorFilePairInfo.cs" />
-    <Compile Include="Sync\Handling\Communication\FilePairInfo.cs" />
-    <Compile Include="Sync\Handling\Communication\SyncPairForegroundContainer.cs" />
-    <Compile Include="Sync\Handling\Communication\SyncPairResponseInfo.cs" />
-    <Compile Include="Sync\Handling\Communication\SyncPairRequestInfo.cs" />
-    <Compile Include="Sync\Handling\ErrorFilePair.cs" />
     <Compile Include="Sync\Handling\FilePair.cs" />
-    <Compile Include="Sync\Handling\Communication\SyncPairCommunicator.cs" />
     <Compile Include="Sync\Handling\SyncPairHandlerState.cs" />
     <Compile Include="Sync\Handling\Mode\LocalToServerCreateOnlyModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\LocalToServerModeHandler.cs" />
@@ -156,13 +156,20 @@
     <Compile Include="Sync\Handling\Mode\ServerToLocalModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\SyncModeHandler.cs" />
     <Compile Include="Sync\Handling\Mode\TwoWayModeHandler.cs" />
-    <Compile Include="Sync\Result\SyncedItem.cs" />
-    <Compile Include="Sync\Result\SyncedItems.cs" />
+    <Compile Include="Sync\Handling\SyncPairResult.cs" />
+    <Compile Include="Sync\Handling\SyncPairResultFile.cs" />
+    <Compile Include="Sync\Handling\SyncPairRun.cs" />
+    <Compile Include="Sync\Handling\SyncPairRunErrorFile.cs" />
+    <Compile Include="Sync\Handling\SyncPairRunFile.cs" />
+    <Compile Include="Sync\Handling\SyncPairRunFileType.cs" />
     <Compile Include="Sync\Handling\SyncPairHandler.cs" />
-    <Compile Include="Sync\Handling\SyncPairHandlerExtension.cs" />
+    <Compile Include="Sync\SyncLocalFoldeHelper.cs" />
     <EmbeddedResource Include="Properties\FileSystemCommenUWP.rd.xml" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite">
+      <Version>1.1.1</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
     </PackageReference>
@@ -184,6 +191,7 @@
       <Name>StdOttUwpLib</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

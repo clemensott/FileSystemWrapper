@@ -1,6 +1,4 @@
-﻿using FileSystemCommon;
-using System.IO;
-using Windows.Storage;
+﻿using Windows.Storage;
 
 namespace FileSystemCommonUWP.Sync.Handling
 {
