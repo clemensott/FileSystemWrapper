@@ -24,6 +24,8 @@ namespace FileSystemUWP.Picker
 {
     public sealed partial class PickerControl : UserControl
     {
+        private const int maxUpdateItemsSize = 100;
+
         public static readonly DependencyProperty IsUpdatingProperty = DependencyProperty.Register("IsUpdating",
             typeof(bool), typeof(PickerControl), new PropertyMetadata(false));
 
@@ -77,7 +79,7 @@ namespace FileSystemUWP.Picker
 
         private long updateCount = 0;
         private string currentUpdatePath;
-        private readonly FileSystemItemCollection currentItems;
+        private FileSystemItemCollection currentItems;
         private ScrollViewer svrItems;
 
         public event EventHandler<FileSystemItem> FileSelected;
@@ -267,10 +269,20 @@ namespace FileSystemUWP.Picker
             FolderContent content = await api.FolderContent(path, SortBy.Type, SortBy.Direction);
             if (path != currentUpdatePath) return;
 
-            currentItems.SetFolders((content?.Folders).ToNotNull()
+            int itemCount = (content?.Folders.Length ?? 0) + (content?.Files.Length ?? 0);
+            // for performance reasosns: create new collection if lots of items have to be shown and folder changed.
+            // if folder stayed the same its very likely that the content has only slightly changed.
+            // creating a new list allows for bulk update of lvwItems.ItemsSource and not one by one
+            FileSystemItemCollection updateCurrentItems = itemCount > maxUpdateItemsSize && path != currentItems.ContentPath
+                ? new FileSystemItemCollection() : currentItems;
+
+            updateCurrentItems.SetFolders((content?.Folders).ToNotNull()
                 .Select(f => FileSystemItem.FromFolder(f, content.Path)));
-            currentItems.SetFiles((content?.Files).ToNotNull()
+            updateCurrentItems.SetFiles((content?.Files).ToNotNull()
                 .Select(f => FileSystemItem.FromFile(f, content.Path)));
+            updateCurrentItems.ContentPath = path;
+
+            lvwItems.ItemsSource = currentItems = updateCurrentItems;
             CurrentFolder = content != null ? (FileSystemItem?)FileSystemItem.FromFolderContent(content) : null;
         }
 

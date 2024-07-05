@@ -35,16 +35,32 @@
                   Loaded="LvwItems_Loaded">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <ListViewItemPresenter HorizontalContentAlignment="Stretch"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
             </ListView.ItemContainerStyle>
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ItemsStackPanel Orientation="Vertical"/>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Background="Transparent"
-                                Holding="SplItem_Holding" RightTapped="SplItem_RightTapped">
-                        <SymbolIcon Margin="5" Symbol="{Binding Converter={StaticResource symCon}}"/>
-                        <TextBlock VerticalAlignment="Center" Text="{Binding Name}"/>
-                    </StackPanel>
+                    <Grid HorizontalAlignment="Stretch" Background="Transparent"
+                          Holding="SplItem_Holding" RightTapped="SplItem_RightTapped">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <SymbolIcon Grid.Column="0" Margin="5" Symbol="{Binding Converter={StaticResource symCon}}"/>
+                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding Name}"/>
+                    </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
