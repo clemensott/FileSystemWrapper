@@ -77,7 +77,7 @@ namespace FileSystemUWP.Picker
 
         private long updateCount = 0;
         private string currentUpdatePath;
-        private readonly FileSystemItemCollection currentItems;
+        private FileSystemItemCollection currentItems;
         private ScrollViewer svrItems;
 
         public event EventHandler<FileSystemItem> FileSelected;
@@ -134,6 +134,7 @@ namespace FileSystemUWP.Picker
         {
             this.InitializeComponent();
 
+            //currentItems = new FileSystemItemCollection();
             lvwItems.ItemsSource = currentItems = new FileSystemItemCollection();
         }
 
@@ -199,6 +200,7 @@ namespace FileSystemUWP.Picker
         {
             FileSystemItem? item = currentItems.GetNearestItem(itemName);
             if (item.HasValue) lvwItems.ScrollIntoView(item, ScrollIntoViewAlignment.Leading);
+            System.Diagnostics.Debug.WriteLine($"itemName={itemName.Name} item={item?.Name}");
         }
 
         public Task SetParent()
@@ -267,10 +269,20 @@ namespace FileSystemUWP.Picker
             FolderContent content = await api.FolderContent(path, SortBy.Type, SortBy.Direction);
             if (path != currentUpdatePath) return;
 
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var currentItems = new FileSystemItemCollection();
             currentItems.SetFolders((content?.Folders).ToNotNull()
                 .Select(f => FileSystemItem.FromFolder(f, content.Path)));
+            System.Diagnostics.Debug.WriteLine($"set folders: {sw.ElapsedMilliseconds}ms");
             currentItems.SetFiles((content?.Files).ToNotNull()
                 .Select(f => FileSystemItem.FromFile(f, content.Path)));
+            System.Diagnostics.Debug.WriteLine($"set files: {sw.ElapsedMilliseconds}ms");
+            var list = (content?.Folders).ToNotNull()
+                .Select(f => FileSystemItem.FromFolder(f, content.Path)).Concat((content?.Files).ToNotNull()
+                .Select(f => FileSystemItem.FromFile(f, content.Path))).ToList();
+            System.Diagnostics.Debug.WriteLine($"create list: {sw.ElapsedMilliseconds}ms");
+            lvwItems.ItemsSource = this.currentItems = currentItems;
+            System.Diagnostics.Debug.WriteLine($"set item source: {sw.ElapsedMilliseconds}ms");
             CurrentFolder = content != null ? (FileSystemItem?)FileSystemItem.FromFolderContent(content) : null;
         }
 
