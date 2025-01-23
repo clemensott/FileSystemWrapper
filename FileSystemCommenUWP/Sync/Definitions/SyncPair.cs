@@ -2,23 +2,18 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
-using Windows.Storage;
-using Windows.Storage.AccessCache;
 
 namespace FileSystemCommonUWP.Sync.Definitions
 {
     public class SyncPair : INotifyPropertyChanged
     {
-        private bool withSubfolders, isLocalFolderLoaded;
-        private string name;
+        private bool withSubfolders;
+        private string name, localFolderPath;
         private PathPart[] serverPath;
-        private StorageFolder localFolder;
         private SyncMode mode;
         private SyncCompareType compareType;
         private SyncConflictHandlingType conflictHandlingType;
-        private ObservableCollection<string> whitelist, blacklist;
+        private ObservableCollection<string> allowList, denyList;
 
         public bool WithSubfolders
         {
@@ -32,22 +27,15 @@ namespace FileSystemCommonUWP.Sync.Definitions
             }
         }
 
-        [XmlIgnore]
-        public bool IsLocalFolderLoaded
-        {
-            get => isLocalFolderLoaded;
-            private set
-            {
-                if (value == isLocalFolderLoaded) return;
+        public int Id { get; set; }
 
-                isLocalFolderLoaded = value;
-                OnPropertyChanged(nameof(IsLocalFolderLoaded));
-            }
-        }
+        public int ServerId { get; }
 
-        public string Token { get; }
+        public int? CurrentSyncPairRunId { get; set; }
 
-        public string ResultToken { get; }
+        public int? LastSyncPairResultId { get; set; }
+
+        public string LocalFolderToken { get; }
 
         public string Name
         {
@@ -73,16 +61,15 @@ namespace FileSystemCommonUWP.Sync.Definitions
             }
         }
 
-        [XmlIgnore]
-        public StorageFolder LocalFolder
+        public string LocalFolderPath
         {
-            get => localFolder;
+            get => localFolderPath;
             set
             {
-                if (value == localFolder) return;
+                if (value == localFolderPath) return;
 
-                localFolder = value;
-                OnPropertyChanged(nameof(LocalFolder));
+                localFolderPath = value;
+                OnPropertyChanged(nameof(LocalFolderPath));
             }
         }
 
@@ -122,87 +109,55 @@ namespace FileSystemCommonUWP.Sync.Definitions
             }
         }
 
-        public ObservableCollection<string> Whitelist
+        public ObservableCollection<string> AllowList
         {
-            get => whitelist;
+            get => allowList;
             set
             {
-                if (value == whitelist) return;
+                if (value == allowList) return;
 
-                whitelist = value;
-                OnPropertyChanged(nameof(Whitelist));
+                allowList = value;
+                OnPropertyChanged(nameof(AllowList));
             }
         }
 
-        public ObservableCollection<string> Blacklist
+        public ObservableCollection<string> DenyList
         {
-            get => blacklist;
+            get => denyList;
             set
             {
-                if (value == blacklist) return;
+                if (value == denyList) return;
 
-                blacklist = value;
-                OnPropertyChanged(nameof(Blacklist));
+                denyList = value;
+                OnPropertyChanged(nameof(DenyList));
             }
         }
 
-        public SyncPair() : this(null, null)
+        public SyncPair(int serverId) : this(serverId, Guid.NewGuid().ToString())
         {
         }
 
-        public SyncPair(string resultToken) : this(null, resultToken)
+        public SyncPair(int serverId, string localFolderToken)
         {
-        }
-
-        public SyncPair(string token, string resultToken)
-        {
-            Token = token ?? Guid.NewGuid().ToString();
-            ResultToken = resultToken ?? Guid.NewGuid().ToString();
-        }
-
-        public async Task LoadLocalFolder()
-        {
-            if (StorageApplicationPermissions.FutureAccessList.ContainsItem(Token))
-            {
-                LocalFolder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(Token);
-            }
-            IsLocalFolderLoaded = true;
-        }
-
-        public void SaveLocalFolder()
-        {
-            if (LocalFolder != null)
-            {
-                StorageApplicationPermissions.FutureAccessList.AddOrReplace(Token, LocalFolder);
-                IsLocalFolderLoaded = true;
-            }
-            else if (IsLocalFolderLoaded)
-            {
-                try
-                {
-                    if (StorageApplicationPermissions.FutureAccessList.ContainsItem(Token))
-                    {
-                        StorageApplicationPermissions.FutureAccessList.Remove(Token);
-                    }
-                }
-                catch { }
-            }
-
+            ServerId = serverId;
+            LocalFolderToken = localFolderToken;
         }
 
         public SyncPair Clone()
         {
-            return new SyncPair(ResultToken)
+            return new SyncPair(ServerId, LocalFolderToken)
             {
+                Id = Id,
+                CurrentSyncPairRunId = CurrentSyncPairRunId,
+                LastSyncPairResultId = LastSyncPairResultId,
                 WithSubfolders = WithSubfolders,
                 Name = Name,
                 ServerPath = ServerPath,
-                LocalFolder = LocalFolder,
                 Mode = Mode,
                 CompareType = CompareType,
                 ConflictHandlingType = ConflictHandlingType,
-                Whitelist = Whitelist != null ? new ObservableCollection<string>(Whitelist) : null,
-                Blacklist = Blacklist != null ? new ObservableCollection<string>(Blacklist) : null,
+                AllowList = AllowList != null ? new ObservableCollection<string>(AllowList) : null,
+                DenyList = DenyList != null ? new ObservableCollection<string>(DenyList) : null,
             };
         }
 

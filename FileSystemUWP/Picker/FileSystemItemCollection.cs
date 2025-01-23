@@ -13,6 +13,8 @@ namespace FileSystemUWP.Picker
     {
         private int filesBeginIndex = 0;
 
+        public string ContentPath { get; set; }
+
         public void SetFolders(IEnumerable<FileSystemItem> folders)
         {
             int index = 0;

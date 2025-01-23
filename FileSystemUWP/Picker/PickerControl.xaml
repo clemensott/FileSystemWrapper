@@ -52,7 +52,7 @@
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Grid HorizontalAlignment="Stretch" Background="Transparent"
-                                     Holding="SplItem_Holding" RightTapped="SplItem_RightTapped">
+                          Holding="SplItem_Holding" RightTapped="SplItem_RightTapped">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />

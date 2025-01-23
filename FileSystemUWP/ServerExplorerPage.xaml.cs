@@ -1,6 +1,7 @@
 ﻿using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommonUWP.API;
+using FileSystemCommonUWP.Database;
 using FileSystemUWP.API;
 using FileSystemUWP.FileViewers;
 using FileSystemUWP.Models;
@@ -30,11 +31,14 @@ namespace FileSystemUWP
     public sealed partial class ServerExplorerPage : Page
     {
         private bool isAway = false;
+        private readonly AppDatabase database;
         private Server viewModel;
 
         public ServerExplorerPage()
         {
             this.InitializeComponent();
+
+            database = ((App)Application.Current).Database;
         }
 
         protected async override void OnNavigatedTo(NavigationEventArgs e)
@@ -122,6 +126,7 @@ namespace FileSystemUWP
             if (await edit.Task)
             {
                 viewModel.Api = newApi;
+                await database.Servers.UpdateServer(viewModel.ToInfo());
             }
         }
 

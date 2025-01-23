@@ -1,10 +1,10 @@
 ﻿using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem;
+using FileSystemCommonUWP.Database;
+using FileSystemCommonUWP.Sync;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling;
-using FileSystemCommonUWP.Sync.Handling.Communication;
 using FileSystemUWP.Sync.Handling;
-using StdOttStandard.CollectionSubscriber;
 using StdOttStandard.Converter.MultipleInputs;
 using StdOttStandard.Linq;
 using StdOttUwp;
@@ -14,6 +14,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Devices.Input;
+using Windows.Storage;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -30,76 +31,107 @@ namespace FileSystemUWP.Sync.Definitions
     /// </summary>
     public sealed partial class SyncPairsPage : Page
     {
+        private readonly BackgroundTaskHelper backgroundTaskHelper;
+        private readonly AppDatabase database;
+        private readonly SyncPairsPageViewModel viewModel;
+        private readonly SyncPairRunProgressUpdater updater;
         private Server server;
-        private SyncPairsPageViewModel viewModel;
-        private SimpleObservableCollectionSubscriber<SyncPair> serverSyncsSubscriber;
 
         public SyncPairsPage()
         {
             this.InitializeComponent();
+
+            backgroundTaskHelper = BackgroundTaskHelper.Current;
+            database = ((App)Application.Current).Database;
+            viewModel = new SyncPairsPageViewModel()
+            {
+                Syncs = new ObservableCollection<SyncPairPageSyncViewModel>(),
+            };
+            updater = new SyncPairRunProgressUpdater(UpdateSyncs);
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             server = (Server)e.Parameter;
+            DataContext = viewModel;
 
-            IEnumerable<SyncPairPageSyncViewModel> syncs = server.Syncs.Select(CreateSyncViewModel);
-            DataContext = viewModel = new SyncPairsPageViewModel()
-            {
-                Syncs = new ObservableCollection<SyncPairPageSyncViewModel>(syncs),
-            };
-
-            SetupSyncingSyncs();
-            await LoadLocalFolders();
-        }
-
-        private static SyncPairPageSyncViewModel CreateSyncViewModel(SyncPair sync)
-        {
-            SyncPairForegroundContainer container = BackgroundTaskHelper.Current.GetContainersFromToken(sync.Token).FirstOrDefault();
-
-            return new SyncPairPageSyncViewModel()
-            {
-                SyncPair = sync,
-                Run = container,
-            };
-        }
-
-        private void SetupSyncingSyncs()
-        {
-            serverSyncsSubscriber = new SimpleObservableCollectionSubscriber<SyncPair>(server.Syncs);
-            serverSyncsSubscriber.Added += ServerSyncsSubscriber_Added;
-            serverSyncsSubscriber.Removed += ServerSyncsSubscriber_Removed;
-        }
-
-        private void ServerSyncsSubscriber_Added(object sender, ChangedEventArgs<SyncPair> e)
-        {
-            viewModel.Syncs.Insert(e.Index, new SyncPairPageSyncViewModel() { SyncPair = e.Item });
-        }
-
-        private void ServerSyncsSubscriber_Removed(object sender, ChangedEventArgs<SyncPair> e)
-        {
-            viewModel.Syncs.RemoveAt(e.Index);
-        }
-
-        private async Task LoadLocalFolders()
-        {
-            foreach (SyncPair pair in viewModel.Syncs.Select(s => s.SyncPair))
-            {
-                if (!pair.IsLocalFolderLoaded)
-                {
-                    try
-                    {
-                        await pair.LoadLocalFolder();
-                    }
-                    catch { }
-                }
-            }
+            await updater.Start();
+            viewModel.IsLoading = false;
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            serverSyncsSubscriber.Added -= ServerSyncsSubscriber_Added;
-            serverSyncsSubscriber.Removed -= ServerSyncsSubscriber_Removed;
+            updater.Stop();
+        }
+
+        private async Task<StorageFolder> GetStorageFolderOrDefault(string token)
+        {
+            try
+            {
+                return await SyncLocalFolderHelper.GetLocalFolder(token);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task<IEnumerable<SyncPairPageSyncViewModel>> LoadSyncPairs()
+        {
+            IList<SyncPair> syncPairs = await database.SyncPairs.SelectSyncPairs(server.Id);
+            int[] syncPairRunIds = syncPairs.Select(s => s.CurrentSyncPairRunId).OfType<int>().ToArray();
+            IList<SyncPairRun> syncPairRuns = await database.SyncPairs.SelectSyncPairRuns(syncPairRunIds);
+
+            return syncPairs.Select(syncPair => new SyncPairPageSyncViewModel()
+            {
+                SyncPair = syncPair,
+                Run = syncPairRuns.FirstOrDefault(run => run.Id == syncPair.CurrentSyncPairRunId),
+            });
+        }
+
+        private async Task UpdateSyncs()
+        {
+            IList<SyncPair> syncPairs = await database.SyncPairs.SelectSyncPairs(server.Id);
+            int[] syncPairRunIds = syncPairs.Select(s => s.CurrentSyncPairRunId).OfType<int>().ToArray();
+            IList<SyncPairRun> syncPairRuns = await database.SyncPairs.SelectSyncPairRuns(syncPairRunIds);
+
+            foreach (SyncPair syncPair in syncPairs)
+            {
+                StorageFolder localFolder = await GetStorageFolderOrDefault(syncPair.LocalFolderToken);
+                syncPair.LocalFolderPath = localFolder?.Path;
+            }
+
+            await UwpUtils.RunSafe(() =>
+            {
+                foreach (SyncPair syncPair in syncPairs)
+                {
+                    SyncPairRun syncPairRun = syncPairRuns.FirstOrDefault(run => run.Id == syncPair.CurrentSyncPairRunId);
+
+                    SyncPairPageSyncViewModel sync;
+                    if (!viewModel.Syncs.TryFirst(s => s.SyncPair.Id == syncPair.Id, out sync))
+                    {
+                        sync = new SyncPairPageSyncViewModel()
+                        {
+                            SyncPair = syncPair,
+                            Run = syncPairRun,
+                        };
+                        viewModel.Syncs.Add(sync);
+                        continue;
+                    }
+
+                    sync.SyncPair = sync.SyncPair.Update(syncPair);
+                    sync.Run = sync.Run.Update(syncPairRun);
+                }
+
+                foreach (SyncPairPageSyncViewModel sync in viewModel.Syncs.ToArray())
+                {
+                    SyncPair syncPair;
+                    if (!syncPairs.TryFirst(s => s.Id == sync.SyncPair.Id, out syncPair))
+                    {
+                        viewModel.Syncs.Remove(sync);
+                    }
+                }
+            });
         }
 
         private object ServerPathConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
@@ -150,15 +182,17 @@ namespace FileSystemUWP.Sync.Definitions
         {
             SyncPairPageSyncViewModel sync = UwpUtils.GetDataContext<SyncPairPageSyncViewModel>(sender);
             SyncPair newSync = sync.SyncPair.Clone();
-            SyncPairEdit edit = new SyncPairEdit(newSync, server.Api, false);
+            StorageFolder localFolder = await GetStorageFolderOrDefault(newSync.LocalFolderToken);
+            string[] otherNames = viewModel.Syncs.Select(s => s.SyncPair.Name).Where(n => n != newSync.Name).ToArray();
+            SyncPairEdit edit = new SyncPairEdit(newSync, otherNames, localFolder, server.Api, false);
 
             Frame.Navigate(typeof(SyncEditPage), edit);
 
-            int index;
-            if (await edit.Task && server.Syncs.TryIndexOf(s => s.Token == sync.SyncPair.Token, out index))
+            if (await edit.Task)
             {
-                server.Syncs[index] = newSync;
-                await App.SaveViewModel("edited sync pair");
+                sync.SyncPair = newSync;
+                await database.SyncPairs.UpdateSyncPair(newSync);
+                SyncLocalFolderHelper.SaveLocalFolder(newSync.LocalFolderToken, edit.LocalFolder);
             }
         }
 
@@ -168,20 +202,16 @@ namespace FileSystemUWP.Sync.Definitions
 
             if (await DialogUtils.ShowTwoOptionsAsync(sync.SyncPair.Name ?? string.Empty, "Delete?", "Yes", "No"))
             {
-                await BackgroundTaskHelper.Current.RemoveSyncPairRuns(sync.SyncPair.Token);
-                server.Syncs.Remove(sync.SyncPair);
-                await App.SaveViewModel("removed sync pair");
+                viewModel.Syncs.Remove(sync);
+                await database.SyncPairs.DeleteSyncPair(sync.SyncPair);
+
             }
         }
 
         private async Task StartSyncRun(SyncPairPageSyncViewModel sync, bool isTestRun = false, SyncMode? mode = null)
         {
-            if (sync.Run?.IsEnded == false) await BackgroundTaskHelper.Current.Cancel(sync.Run.Request.RunToken);
-            else
-            {
-                await BackgroundTaskHelper.Current.RemoveSyncPairRuns(sync.SyncPair.Token);
-                sync.Run = await BackgroundTaskHelper.Current.Start(sync.SyncPair, server.Api, isTestRun);
-            }
+            if (sync.Run?.IsEnded == false) await backgroundTaskHelper.Cancel(sync.Run);
+            else sync.Run = await backgroundTaskHelper.StartSyncPairRun(sync.SyncPair, server.Api, isTestRun);
         }
 
         private async void MfiTestRun_Click(object sender, RoutedEventArgs e)
@@ -205,17 +235,16 @@ namespace FileSystemUWP.Sync.Definitions
                 {
                     Text = text,
                 };
-                item.Click += (clickSender, clickArgs) => MfiRunWIthModeItem_Click(clickSender, clickArgs, mode);
+                item.Click += (clickSender, clickArgs) => MfiRunWithModeItem_Click(clickSender, clickArgs, mode);
                 container.Items.Add(item);
             }
         }
 
-        private async void MfiRunWIthModeItem_Click(object sender, RoutedEventArgs e, SyncMode mode)
+        private async void MfiRunWithModeItem_Click(object sender, RoutedEventArgs e, SyncMode mode)
         {
             SyncPairPageSyncViewModel sync = UwpUtils.GetDataContext<SyncPairPageSyncViewModel>(sender);
 
-            await BackgroundTaskHelper.Current.RemoveSyncPairRuns(sync.SyncPair.Token);
-            sync.Run = await BackgroundTaskHelper.Current.Start(sync.SyncPair, server.Api, mode: mode);
+            sync.Run = await backgroundTaskHelper.StartSyncPairRun(sync.SyncPair, server.Api, mode: mode);
         }
 
         private async void IbnRunSync_Click(object sender, RoutedEventArgs e)
@@ -244,25 +273,31 @@ namespace FileSystemUWP.Sync.Definitions
 
         private async void AbbAddSyncPair_Click(object sender, RoutedEventArgs e)
         {
-            SyncPair newSync = new SyncPair();
-            SyncPairEdit edit = new SyncPairEdit(newSync, server.Api, true);
+            SyncPair newSync = new SyncPair(server.Id);
+            string[] otherNames = viewModel.Syncs.Select(s => s.SyncPair.Name).ToArray();
+            SyncPairEdit edit = new SyncPairEdit(newSync, otherNames, null, server.Api, true);
 
             Frame.Navigate(typeof(SyncEditPage), edit);
 
             if (await edit.Task)
             {
-                server.Syncs.Add(newSync);
-                await App.SaveViewModel("added sync pair");
+                viewModel.Syncs.Add(new SyncPairPageSyncViewModel()
+                {
+                    SyncPair = newSync,
+                });
+                await database.SyncPairs.InsertSyncPair(newSync);
+                SyncLocalFolderHelper.SaveLocalFolder(newSync.LocalFolderToken, edit.LocalFolder);
             }
         }
 
         private async void AbbRunSync_Click(object sender, RoutedEventArgs e)
         {
-            IEnumerable<SyncPairForegroundContainer> containers = await BackgroundTaskHelper.Current.Start(server.Syncs, server.Api);
-            foreach (SyncPairForegroundContainer container in containers)
+            IEnumerable<SyncPair> syncs = viewModel.Syncs.Select(s => s.SyncPair);
+            IEnumerable<(int syncPairId, SyncPairRun run)> containers = await backgroundTaskHelper.StartSyncPairRuns(syncs, server.Api);
+            foreach ((int syncPairId, SyncPairRun run) in containers)
             {
-                SyncPairPageSyncViewModel syncModel = viewModel.Syncs.FirstOrDefault(s => s.SyncPair.Token == container.Request.Token);
-                if (syncModel != null) syncModel.Run = container;
+                SyncPairPageSyncViewModel syncModel = viewModel.Syncs.FirstOrDefault(s => s.SyncPair.Id == syncPairId);
+                if (syncModel != null) syncModel.Run = run;
             }
         }
     }

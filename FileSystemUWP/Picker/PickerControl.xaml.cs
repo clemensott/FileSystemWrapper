@@ -24,6 +24,8 @@ namespace FileSystemUWP.Picker
 {
     public sealed partial class PickerControl : UserControl
     {
+        private const int maxUpdateItemsSize = 100;
+
         public static readonly DependencyProperty IsUpdatingProperty = DependencyProperty.Register("IsUpdating",
             typeof(bool), typeof(PickerControl), new PropertyMetadata(false));
 
@@ -269,20 +271,17 @@ namespace FileSystemUWP.Picker
             FolderContent content = await api.FolderContent(path, SortBy.Type, SortBy.Direction);
             if (path != currentUpdatePath) return;
 
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            var currentItems = new FileSystemItemCollection();
-            currentItems.SetFolders((content?.Folders).ToNotNull()
+            int itemCount = (content?.Folders.Length ?? 0) + (content?.Files.Length ?? 0);
+            // for performance reasosns: create new collection if lots of items have to be shown and folder changed.
+            // if folder stayed the same its very likely that the content has only slightly changed.
+            // creating a new list allows for bulk update of lvwItems.ItemsSource and not one by one
+            FileSystemItemCollection updateCurrentItems = itemCount > maxUpdateItemsSize && path != currentItems.ContentPath
+                ? new FileSystemItemCollection() : currentItems;
+
+            updateCurrentItems.SetFolders((content?.Folders).ToNotNull()
                 .Select(f => FileSystemItem.FromFolder(f, content.Path)));
-            System.Diagnostics.Debug.WriteLine($"set folders: {sw.ElapsedMilliseconds}ms");
             currentItems.SetFiles((content?.Files).ToNotNull()
                 .Select(f => FileSystemItem.FromFile(f, content.Path)));
-            System.Diagnostics.Debug.WriteLine($"set files: {sw.ElapsedMilliseconds}ms");
-            var list = (content?.Folders).ToNotNull()
-                .Select(f => FileSystemItem.FromFolder(f, content.Path)).Concat((content?.Files).ToNotNull()
-                .Select(f => FileSystemItem.FromFile(f, content.Path))).ToList();
-            System.Diagnostics.Debug.WriteLine($"create list: {sw.ElapsedMilliseconds}ms");
-            lvwItems.ItemsSource = this.currentItems = currentItems;
-            System.Diagnostics.Debug.WriteLine($"set item source: {sw.ElapsedMilliseconds}ms");
             CurrentFolder = content != null ? (FileSystemItem?)FileSystemItem.FromFolderContent(content) : null;
         }
 

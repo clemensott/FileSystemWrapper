@@ -10,6 +10,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using FileSystemCommonUWP;
+using FileSystemCommonUWP.Database;
 
 // Die Elementvorlage "Leere Seite" wird unter https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x407 dokumentiert.
 
@@ -20,11 +21,14 @@ namespace FileSystemUWP
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        private readonly AppDatabase database;
         private ViewModel viewModel;
 
         public MainPage()
         {
             this.InitializeComponent();
+
+            database = ((App)Application.Current).Database;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -77,7 +81,7 @@ namespace FileSystemUWP
             if (await edit.Task)
             {
                 server.Api = newApi;
-                await App.SaveViewModel("edited server");
+                await database.Servers.UpdateServer(server.ToInfo());
             }
         }
 
@@ -88,7 +92,7 @@ namespace FileSystemUWP
             if (delete)
             {
                 viewModel.Servers.Remove(server);
-                await App.SaveViewModel("deleted server");
+                await database.Servers.DeleteServer(server.ToInfo());
             }
         }
 
@@ -101,7 +105,7 @@ namespace FileSystemUWP
 
             if (await edit.Task)
             {
-                Server server = new Server(viewModel.BackgroundOperations)
+                Server server = new Server()
                 {
                     SortBy = new FileSystemItemSortBy()
                     {
@@ -109,9 +113,10 @@ namespace FileSystemUWP
                         Direction = FileSystemItemSortDirection.ASC,
                     },
                     Api = newApi,
+                    BackgroundOperations = viewModel.BackgroundOperations,
                 };
                 viewModel.Servers.Add(server);
-                await App.SaveViewModel("added server");
+                server.Id = await database.Servers.InsertServer(server.ToInfo());
             }
         }
 

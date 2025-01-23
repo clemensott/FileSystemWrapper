@@ -5,10 +5,10 @@ using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemCommonUWP.Sync.Definitions;
 using StdOttStandard.Linq;
+using StdOttUwp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -176,17 +176,29 @@ namespace FileSystemUWP.Sync.Definitions
             picker.FileTypeFilter.Add("*");
             StorageFolder localFolder = await picker.PickSingleFolderAsync();
 
-            try
-            {
-                if (localFolder != null) edit.Sync.LocalFolder = localFolder;
-            }
-            catch { }
+            if (localFolder != null) edit.LocalFolder = localFolder;
+        }
+
+        private bool Validate()
+        {
+            SyncPair sync = edit.Sync;
+            return !string.IsNullOrWhiteSpace(sync.Name)
+                && !edit.InvalidNames.Contains(sync.Name)
+                && edit.LocalFolder != null
+                && sync.ServerPath != null
+                && sync.ServerPath.Length > 0;
         }
 
         private async void AbbApply_Click(object sender, RoutedEventArgs e)
         {
             tblTitlePrefix.Focus(FocusState.Pointer);
             await Task.Delay(50);
+
+            if (!Validate())
+            {
+                await DialogUtils.ShowSafeAsync("Form not valid. Please fill out all required fields.");
+                return;
+            }
 
             edit.SetResult(true);
             Frame.GoBack();

@@ -185,10 +185,6 @@
       <DependentUpon>ServerExplorerPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="API\Server.cs" />
-    <Compile Include="SettingsStorage\FileSystemSortItemStore.cs" />
-    <Compile Include="SettingsStorage\ServerStore.cs" />
-    <Compile Include="SettingsStorage\Store.cs" />
-    <Compile Include="SettingsStorage\SyncPairStore.cs" />
     <Compile Include="Sync\Definitions\SyncPairPageSyncViewModel.cs" />
     <Compile Include="Sync\Definitions\SyncPairsPageViewModel.cs" />
     <Compile Include="Sync\Handling\BackgroundTaskHelper.cs" />
@@ -205,6 +201,8 @@
     <Compile Include="Sync\Handling\SyncPairHandlingProgressbar.xaml.cs">
       <DependentUpon>SyncPairHandlingProgressbar.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Sync\SyncPairExtensions.cs" />
+    <Compile Include="Sync\SyncPairRunProgressSubscriber.cs" />
     <Compile Include="UiUtils.cs" />
     <Compile Include="Models\ViewModel.cs" />
     <Compile Include="Util\FileSystemItemComparer.cs" />
@@ -355,6 +353,9 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite">
+      <Version>1.1.1</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
     </PackageReference>
