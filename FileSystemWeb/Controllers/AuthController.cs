@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using FileSystemCommon.Models.Auth;
 using FileSystemWeb.Models;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
@@ -12,10 +13,12 @@ namespace FileSystemWeb.Controllers
     public class AuthController : ControllerBase
     {
         private readonly SignInManager<AppUser> signInManager;
+        private readonly IAntiforgery antiforgery;
 
-        public AuthController(SignInManager<AppUser> signInManager)
+        public AuthController(SignInManager<AppUser> signInManager, IAntiforgery antiforgery)
         {
             this.signInManager = signInManager;
+            this.antiforgery = antiforgery;
         }
 
         [HttpPost("login")]
@@ -32,6 +35,12 @@ namespace FileSystemWeb.Controllers
         {
             await signInManager.SignOutAsync();
             return Ok();
+        }
+
+        [HttpGet("antiforgary")]
+        public ActionResult GetAntiforgary()
+        {
+            return Ok(antiforgery.GetAndStoreTokens(HttpContext).RequestToken);
         }
     }
 }

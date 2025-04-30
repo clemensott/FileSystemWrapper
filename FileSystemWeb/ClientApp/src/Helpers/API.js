@@ -1,16 +1,32 @@
 ﻿import formatUrl from './formatUrl';
 
 export default class API {
+    static antiforgaryToken = null;
     static config = null;
 
-    static fetch(resource, { path, query, method, body, headers, ...options } = {}) {
+    static async fetch(resource, { path, query, method = 'GET', body, headers, ...options } = {}) {
+        let antiforgaryHeaders = null;
+        if (method !== 'GET') {
+            if (!API.antiforgaryToken || true) {
+                const antiforgary = await API.getAntiforgary();
+                if (!antiforgary.ok) {
+                    return antiforgary;
+                }
+                API.antiforgaryToken = await antiforgary.text();
+            }
+            antiforgaryHeaders = {
+                'X-CSRF-TOKEN-HEADERNAME': API.antiforgaryToken,
+            };
+        }
+
         const isFormData = body instanceof FormData;
-        const contentType = (!isFormData && method && method !== 'GET' && body) ? 'application/json;charset=utf-8' : undefined;
+        const contentType = (!isFormData && method !== 'GET' && body) ? 'application/json;charset=utf-8' : undefined;
         return window.fetch(`/api${formatUrl({ resource, path, query })}`, {
             credentials: 'include',
             method,
             headers: {
                 ...(contentType ? { 'Content-Type': contentType } : null),
+                ...antiforgaryHeaders,
                 ...headers,
             },
             body: body && !isFormData ? JSON.stringify(body) : body,
@@ -18,20 +34,36 @@ export default class API {
         });
     }
 
-    static login(username, password, keepLoggedIn) {
-        return this.fetch('/auth/login', {
-            method: 'POST',
-            body: {
-                Username: username,
-                Password: password,
-                KeepLoggedIn: keepLoggedIn,
-            },
-        });
+    static async login(username, password, keepLoggedIn) {
+        try {
+            API.antiforgaryToken = null;
+            return await this.fetch('/auth/login', {
+                method: 'POST',
+                body: {
+                    Username: username,
+                    Password: password,
+                    KeepLoggedIn: keepLoggedIn,
+                },
+            });
+        } finally {
+            API.antiforgaryToken = null;
+        }
     }
 
-    static logout() {
-        return this.fetch('/auth/logout', {
-            method: 'POST',
+    static async logout() {
+        try {
+            API.antiforgaryToken = null;
+            return await this.fetch('/auth/logout', {
+                method: 'POST',
+            });
+        } finally {
+            API.antiforgaryToken = null;
+        }
+    }
+
+    static getAntiforgary() {
+        return this.fetch('/auth/antiforgary', {
+            method: 'GET',
         });
     }
 
