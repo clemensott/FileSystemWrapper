@@ -80,16 +80,15 @@ namespace FileSystemWeb.Controllers
             return System.IO.File.Exists(file.PhysicalPath);
         }
 
-        [HttpGet("existsMany")]
-        public async Task ExistMany([FromQuery] string[] encodedVirtualPaths)
+        [HttpPost("existsMany")]
+        public async Task ExistMany([FromBody] FilesExistsManyBody body)
         {
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (encodedVirtualPaths.Length == 0) throw new BadRequestException("No encodedVirtualPaths.", 9034);
+            if (body.Paths.Length == 0) throw new BadRequestException("No encodedVirtualPaths.", 9034);
 
-            foreach (string encodedVirtualPath in encodedVirtualPaths)
+            foreach (string path in body.Paths)
             {
-                string virtualPath = Utils.DecodePath(encodedVirtualPath);
                 bool? exists = null;
                 HttpStatusCode statusCode;
                 string errorMessage = null;
@@ -97,8 +96,8 @@ namespace FileSystemWeb.Controllers
 
                 try
                 {
-                    if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9013);
-                    InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
+                    if (path == null) throw new BadRequestException("Path encoding error.", 9013);
+                    InternalFile file = await ShareFileHelper.GetFileItem(path, dbContext, userId);
 
                     if (!file.Permission.Info) throw new ForbiddenException("No hash permission.", 9035);
 
@@ -125,7 +124,7 @@ namespace FileSystemWeb.Controllers
                 }
 
                 if (!HttpContext.Response.HasStarted) HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
-                FileExistsManyItem response = new FileExistsManyItem(virtualPath, exists, statusCode, errorMessage, errorCode);
+                FileExistsManyItem response = new FileExistsManyItem(path, exists, statusCode, errorMessage, errorCode);
                 await HttpContext.Response.WriteAsync(JsonSerializer.Serialize(response));
             }
         }
@@ -155,15 +154,14 @@ namespace FileSystemWeb.Controllers
         }
 
         [HttpGet("infoMany")]
-        public async Task GetInfo([FromQuery] string[] encodedVirtualPaths)
+        public async Task GetInfo([FromBody] FilesInfoManyBody body)
         {
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (encodedVirtualPaths.Length == 0) throw new BadRequestException("No encodedVirtualPaths.", 9034);
+            if (body.Paths.Length == 0) throw new BadRequestException("No encodedVirtualPaths.", 9034);
 
-            foreach (string encodedVirtualPath in encodedVirtualPaths)
+            foreach (string path in body.Paths)
             {
-                string virtualPath = Utils.DecodePath(encodedVirtualPath);
                 FileItemInfo? fileItemInfo = null;
                 HttpStatusCode statusCode;
                 string errorMessage = null;
@@ -171,8 +169,8 @@ namespace FileSystemWeb.Controllers
 
                 try
                 {
-                    if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9013);
-                    InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
+                    if (path == null) throw new BadRequestException("Path encoding error.", 9013);
+                    InternalFile file = await ShareFileHelper.GetFileItem(path, dbContext, userId);
 
                     if (!file.Permission.Info) throw new ForbiddenException("No hash permission.", 9035);
 
@@ -201,7 +199,7 @@ namespace FileSystemWeb.Controllers
                 }
 
                 if (!HttpContext.Response.HasStarted) HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
-                FileInfoManyItem response = new FileInfoManyItem(virtualPath, fileItemInfo, statusCode, errorMessage, errorCode);
+                FileInfoManyItem response = new FileInfoManyItem(path, fileItemInfo, statusCode, errorMessage, errorCode);
                 await HttpContext.Response.WriteAsync(JsonSerializer.Serialize(response));
             }
         }
@@ -239,16 +237,15 @@ namespace FileSystemWeb.Controllers
             }
         }
 
-        [HttpGet("hashMany")]
-        public async Task GetHashes([FromQuery] string[] encodedVirtualPaths, [FromQuery] int partialSize)
+        [HttpPost("hashMany")]
+        public async Task GetHashes([FromBody] FilesHashManyBody body)
         {
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (encodedVirtualPaths.Length == 0) throw new BadRequestException("No encodedVirtualPaths.", 9033);
+            if (body.Paths.Length == 0) throw new BadRequestException("No encodedVirtualPaths.", 9033);
 
-            foreach (string encodedVirtualPath in encodedVirtualPaths)
+            foreach (string path in body.Paths)
             {
-                string virtualPath = Utils.DecodePath(encodedVirtualPath);
                 string hash = null;
                 HttpStatusCode statusCode;
                 string errorMessage = null;
@@ -256,8 +253,7 @@ namespace FileSystemWeb.Controllers
 
                 try
                 {
-                    if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9013);
-                    InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
+                    InternalFile file = await ShareFileHelper.GetFileItem(path, dbContext, userId);
 
                     if (!file.Permission.Hash) throw new ForbiddenException("No hash permission.", 9014);
 
@@ -265,9 +261,9 @@ namespace FileSystemWeb.Controllers
                     using FileStream stream = System.IO.File.OpenRead(file.PhysicalPath);
 
                     byte[] hashBytes;
-                    if (partialSize > 0)
+                    if (body.PartialSize > 0)
                     {
-                        byte[] partialData = await Utils.GetPartialBinary(stream, partialSize);
+                        byte[] partialData = await Utils.GetPartialBinary(stream, body.PartialSize.Value);
                         hashBytes = hasher.ComputeHash(partialData);
                     }
                     else hashBytes = await hasher.ComputeHashAsync(stream);
@@ -295,7 +291,7 @@ namespace FileSystemWeb.Controllers
                 }
 
                 if (!HttpContext.Response.HasStarted) HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
-                FileHashManyItem response = new FileHashManyItem(virtualPath, hash, statusCode, errorMessage, errorCode);
+                FileHashManyItem response = new FileHashManyItem(path, hash, statusCode, errorMessage, errorCode);
                 await HttpContext.Response.WriteAsync(JsonSerializer.Serialize(response));
             }
         }
