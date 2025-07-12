@@ -5,23 +5,21 @@ using System.Linq;
 using System.Threading.Tasks;
 using FileSystemCommon;
 using FileSystemWeb.Data;
-using FileSystemWeb.Exceptions;
 using FileSystemWeb.Models;
+using FileSystemWeb.Models.Exceptions;
 using FileSystemWeb.Models.Internal;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FileSystemWeb.Helpers
 {
     public static class ShareFolderHelper
     {
-        public static async Task<InternalFolder> GetFolderItem(string virtualPath, AppDbContext dbContext,
-            string userId, ControllerBase controller)
+        public static async Task<InternalFolder> GetFolderItem(string virtualPath, AppDbContext dbContext, string userId)
         {
             string[] parts = ConfigHelper.Public.SplitVirtualPath(virtualPath);
             if (!Guid.TryParse(parts[0], out Guid uuid))
             {
-                throw (HttpResultException)controller.BadRequest("Can't parse uuid");
+                throw new BadRequestException("Can't parse uuid.", 6001);
             }
 
             ShareFolder folder = await dbContext.ShareFolders
@@ -29,7 +27,7 @@ namespace FileSystemWeb.Helpers
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
             if (folder == null || (folder.UserId != null && folder.UserId != userId))
             {
-                throw (HttpResultException)controller.NotFound("Share folder not found.");
+                throw new NotFoundException("Share folder not found.", 6002);
             }
 
             Guid? sharedId = null;
@@ -44,7 +42,7 @@ namespace FileSystemWeb.Helpers
             }
             else if (!FileHelper.IsPathAllowed(physicalPath))
             {
-                throw (HttpResultException)controller.BadRequest("Path is not fully qualified");
+                throw new BadRequestException("Path is not fully qualified", 6003);
             }
 
             return new InternalFolder()

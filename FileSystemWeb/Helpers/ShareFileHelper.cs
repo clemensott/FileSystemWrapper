@@ -5,22 +5,20 @@ using System.Linq;
 using System.Threading.Tasks;
 using FileSystemCommon;
 using FileSystemWeb.Data;
-using FileSystemWeb.Exceptions;
 using FileSystemWeb.Models;
-using Microsoft.AspNetCore.Mvc;
+using FileSystemWeb.Models.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace FileSystemWeb.Helpers
 {
     public static class ShareFileHelper
     {
-        public static async Task<InternalFile> GetFileItem(string virtualPath, AppDbContext dbContext, string userId,
-            ControllerBase controller)
+        public static async Task<InternalFile> GetFileItem(string virtualPath, AppDbContext dbContext, string userId)
         {
             string[] parts = ConfigHelper.Public.SplitVirtualPath(virtualPath);
             if (!Guid.TryParse(parts[0], out Guid uuid))
             {
-                throw (HttpResultException)controller.BadRequest("Can't parse uuid");
+                throw new BadRequestException("Can't parse uuid", 4001);
             }
 
             if (parts.Length == 1)
@@ -31,7 +29,7 @@ namespace FileSystemWeb.Helpers
 
                 if (shareFile == null || (shareFile.UserId != null && shareFile.UserId != userId))
                 {
-                    throw (HttpResultException)controller.NotFound("Share file not found.");
+                    throw new NotFoundException("Share file not found.", 4002);
                 }
 
                 return new InternalFile()
@@ -50,14 +48,14 @@ namespace FileSystemWeb.Helpers
 
             if (folder == null || (folder.UserId != null && folder.UserId != userId))
             {
-                throw (HttpResultException)controller.NotFound("Share folder not found.");
+                throw new NotFoundException("Share folder not found.", 4003);
             }
 
             IEnumerable<string> allPhysicalPathParts = new string[] { folder.GetPath() }.Concat(parts[1..]);
             string physicalPath = FileHelper.ToFilePath(allPhysicalPathParts);
             if (!FileHelper.IsPathAllowed(physicalPath))
             {
-                throw (HttpResultException)controller.BadRequest("Path is not fully qualified");
+                throw new BadRequestException("Path is not fully qualified.", 4004);
             }
 
             return new InternalFile()

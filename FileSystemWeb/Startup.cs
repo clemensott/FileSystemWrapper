@@ -2,6 +2,7 @@ using System.IO;
 using FileSystemWeb.Constants;
 using FileSystemWeb.Data;
 using FileSystemWeb.Helpers;
+using FileSystemWeb.Middlewares;
 using FileSystemWeb.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -80,6 +81,7 @@ namespace FileSystemWeb
             }
             else
             {
+                app.UseMiddleware<ExceptionMiddleware>();
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();

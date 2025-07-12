@@ -1,8 +1,8 @@
 ﻿using FileSystemCommon;
 using FileSystemWeb.Data;
-using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
+using FileSystemWeb.Models.Exceptions;
 using FileSystemWeb.Models.RequestBodies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,21 +30,12 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<string>> StartUpload(string encodedVirtualPath, [FromQuery] string path)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
-            if (virtualPath == null) return BadRequest("Path encoding error");
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 5006);
 
-            string userId;
-            InternalFile file;
-            try
-            {
-                userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (!file.Permission.Write) return Forbid();
+            if (!file.Permission.Write) throw new ForbiddenException("No write permission.", 5005);
 
             BigFileUpload upload = new BigFileUpload()
             {
@@ -69,12 +60,12 @@ namespace FileSystemWeb.Controllers
 
             if (upload == null)
             {
-                throw (HttpResultException)NotFound("Upload not found.");
+                throw new NotFoundException("Upload not found.", 5001);
             }
 
             if (validateFileExists && !System.IO.File.Exists(upload.TempPath))
             {
-                throw (HttpResultException)NotFound("Temporary file not found.");
+                throw new NotFoundException("Temporary file not found.", 5002);
             }
 
             return upload;
@@ -84,18 +75,10 @@ namespace FileSystemWeb.Controllers
         [HttpPost("{uuid}/append")]
         public async Task<ActionResult> AppendUpload(Guid uuid, [FromForm] AppendBigFileBody form)
         {
-            if (form.PartialFile == null) return BadRequest("No data or file");
+            if (form.PartialFile == null) throw new BadRequestException("No data or file.", 5003);
 
-            BigFileUpload upload;
-            try
-            {
-                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                upload = await GetValidBigFileUpload(uuid, userId);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            BigFileUpload upload = await GetValidBigFileUpload(uuid, userId);
 
             await using FileStream dest = System.IO.File.Open(upload.TempPath, FileMode.Append);
             await form.PartialFile.CopyToAsync(dest);
@@ -110,17 +93,8 @@ namespace FileSystemWeb.Controllers
         [HttpPut("{uuid}/finish")]
         public async Task<ActionResult> FinishUpload(Guid uuid)
         {
-            BigFileUpload upload;
-
-            try
-            {
-                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                upload = await GetValidBigFileUpload(uuid, userId);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            BigFileUpload upload = await GetValidBigFileUpload(uuid, userId);
 
             if (upload.TempPath != upload.DestinationPath)
             {
@@ -137,17 +111,8 @@ namespace FileSystemWeb.Controllers
         [HttpDelete("{uuid}")]
         public async Task<ActionResult> CancelUpload(Guid uuid)
         {
-            BigFileUpload upload;
-
-            try
-            {
-                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                upload = await GetValidBigFileUpload(uuid, userId, false);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            BigFileUpload upload = await GetValidBigFileUpload(uuid, userId, false);
 
             System.IO.File.Delete(upload.TempPath);
 

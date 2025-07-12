@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using FileSystemCommon.Models.Users;
 using FileSystemWeb.Constants;
 using FileSystemWeb.Models;
+using FileSystemWeb.Models.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -42,8 +41,8 @@ namespace FileSystemWeb.Controllers
         [Authorize(Policy = Permissions.Users.PostUser)]
         public async Task<ActionResult> Add([FromBody] AddUserBody body)
         {
-            if (string.IsNullOrWhiteSpace(body.UserName)) return BadRequest("UserName is required");
-            if (string.IsNullOrWhiteSpace(body.Password)) return BadRequest("Password is required");
+            if (string.IsNullOrWhiteSpace(body.UserName)) throw new BadRequestException("UserName is required.", 1101);
+            if (string.IsNullOrWhiteSpace(body.Password)) throw new BadRequestException("Password is required", 1102);
 
             AppUser user = new AppUser()
             {
@@ -60,7 +59,7 @@ namespace FileSystemWeb.Controllers
         [Authorize(Policy = Permissions.Users.DeleteUser)]
         public async Task<ActionResult> Delete([FromBody] DeleteUserBody body)
         {
-            if (string.IsNullOrWhiteSpace(body.UserName)) return BadRequest("UserName is required");
+            if (string.IsNullOrWhiteSpace(body.UserName)) throw new BadRequestException("UserName is required.", 1103);
 
             AppUser user = await userManager.FindByNameAsync(body.UserName);
             IdentityResult result = await userManager.DeleteAsync(user);

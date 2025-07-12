@@ -8,9 +8,9 @@ using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemCommon.Models.Share;
 using FileSystemWeb.Constants;
 using FileSystemWeb.Data;
-using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
+using FileSystemWeb.Models.Exceptions;
 using FileSystemWeb.Models.Internal;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,19 +33,11 @@ namespace FileSystemWeb.Controllers
         [Authorize(Policy = Permissions.Share.PostShareFile)]
         public async Task<ActionResult<FileItem>> AddShareFile([FromBody] AddFileShareBody body)
         {
-            InternalFile file;
-            try
-            {
-                file = await ValidateAddFileShare(body);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            InternalFile file = await ValidateAddFileShare(body);
 
             if (await dbContext.ShareFiles.AnyAsync(f => f.Name == body.Name && f.UserId == body.UserId))
             {
-                return BadRequest("File with this name is already shared");
+                throw new BadRequestException("File with this name is already shared.", 8001);
             }
 
             ShareFile shareFile = new ShareFile()
@@ -81,7 +73,7 @@ namespace FileSystemWeb.Controllers
             ShareFile shareFile = await dbContext.ShareFiles
                 .Include(f => f.Permission)
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
-            if (shareFile == null) return NotFound("Share file not found");
+            if (shareFile == null) throw new NotFoundException("Share file not found.", 8002);
 
             return shareFile.ToShareItem(shareFile.GetExists());
         }
@@ -90,25 +82,18 @@ namespace FileSystemWeb.Controllers
         [Authorize(Policy = Permissions.Share.PutShareFile)]
         public async Task<ActionResult<FileItem>> EditShareFile(Guid uuid, [FromBody] EditFileSystemItemShareBody body)
         {
-            try
-            {
-                await ValidateFileSystemItemShare(body);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            await ValidateFileSystemItemShare(body);
 
             if (await dbContext.ShareFiles.AnyAsync(f =>
                 f.Uuid != uuid && f.Name == body.Name && f.UserId == body.UserId))
             {
-                return BadRequest("File with this name is already shared");
+                throw new BadRequestException("File with this name is already shared.", 8003);
             }
 
             ShareFile shareFile = await dbContext.ShareFiles
                 .Include(f => f.Permission)
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
-            if (shareFile == null) return NotFound("Share file not found");
+            if (shareFile == null) throw new NotFoundException("Share file not found.", 8004);
 
             shareFile.Name = body.Name;
             shareFile.IsListed = body.IsListed;
@@ -124,21 +109,21 @@ namespace FileSystemWeb.Controllers
             await ValidateFileSystemItemShare(body);
 
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFile file = await ShareFileHelper.GetFileItem(body.Path, dbContext, userId, this);
+            InternalFile file = await ShareFileHelper.GetFileItem(body.Path, dbContext, userId);
 
-            if (!HasPermission(file.Permission, body.Permission)) throw (HttpResultException)Forbid();
-            if (!System.IO.File.Exists(file.PhysicalPath)) throw (HttpResultException)NotFound("File not found");
+            if (!HasPermission(file.Permission, body.Permission)) throw new ForbiddenException("Needed permissions are missing.", 8001);
+            if (!System.IO.File.Exists(file.PhysicalPath)) throw new NotFoundException("File not found.", 8018);
 
             return file;
         }
 
         private async Task ValidateFileSystemItemShare(EditFileSystemItemShareBody body)
         {
-            if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException)BadRequest("Name missing");
+            if (string.IsNullOrWhiteSpace(body.Name)) throw new BadRequestException("Name missing.", 8019);
 
             if (!string.IsNullOrWhiteSpace(body.UserId) && !await dbContext.Users.AnyAsync(u => u.Id == body.UserId))
             {
-                throw (HttpResultException)BadRequest("User not found");
+                throw new BadRequestException("User not found.", 8020);
             }
         }
 
@@ -159,7 +144,7 @@ namespace FileSystemWeb.Controllers
             ShareFile shareFile = await dbContext.ShareFiles
                 .Include(f => f.Permission)
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
-            if (shareFile == null) return NotFound("Share file not found");
+            if (shareFile == null) throw new NotFoundException("Share file not found.", 8005);
 
             dbContext.ShareFiles.Remove(shareFile);
             await dbContext.SaveChangesAsync();
@@ -171,30 +156,22 @@ namespace FileSystemWeb.Controllers
         [Authorize(Policy = Permissions.Share.PostShareFolder)]
         public async Task<ActionResult<FolderItem>> AddFolderShare([FromBody] AddFolderShareBody body)
         {
-            InternalFolder folder;
-            try
-            {
-                folder = await ValidateAddFolderShare(body);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            InternalFolder folder = await ValidateAddFolderShare(body);
 
-            if (!HasPermission(folder.Permission, body.Permission)) return Forbid();
+            if (!HasPermission(folder.Permission, body.Permission)) throw new ForbiddenException("Needed permissions are missing.", 8006);
             if (!string.IsNullOrWhiteSpace(folder.PhysicalPath) && !System.IO.Directory.Exists(folder.PhysicalPath))
             {
-                return NotFound("Folder not found");
+                throw new NotFoundException("Folder not found.", 8007);
             }
 
             if (body.UserId != null && !await dbContext.Users.AnyAsync(u => u.Id == body.UserId))
             {
-                return BadRequest("User not found");
+                throw new BadRequestException("User not found.", 8008);
             }
 
             if (await dbContext.ShareFolders.AnyAsync(f => f.Name == body.Name && f.UserId == body.UserId))
             {
-                return BadRequest("Folder with this name is already shared");
+                throw new BadRequestException("Folder with this name is already shared.", 8009);
             }
 
             ShareFolder shareFolder = new ShareFolder()
@@ -230,7 +207,7 @@ namespace FileSystemWeb.Controllers
             ShareFolder shareFolder = await dbContext.ShareFolders
                 .Include(f => f.Permission)
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
-            if (shareFolder == null) return NotFound("Share folder not found");
+            if (shareFolder == null) throw new NotFoundException("Share folder not found.", 8010);
 
             return shareFolder.ToShareItem(shareFolder.GetExists());
         }
@@ -240,25 +217,18 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<FolderItem>> EditFolderShare(Guid uuid,
             [FromBody] EditFileSystemItemShareBody body)
         {
-            try
-            {
-                await ValidateFileSystemItemShare(body);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            await ValidateFileSystemItemShare(body);
 
             if (await dbContext.ShareFolders.AnyAsync(f =>
                 f.Uuid != uuid && f.Name == body.Name && f.UserId == body.UserId))
             {
-                return BadRequest("Folder with this name is already shared");
+                throw new BadRequestException("Folder with this name is already shared.", 8011);
             }
 
             ShareFolder shareFolder = await dbContext.ShareFolders
                 .Include(f => f.Permission)
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
-            if (shareFolder == null) return NotFound("Share folder not found");
+            if (shareFolder == null) throw new NotFoundException("Share folder not found.", 8012);
 
             shareFolder.Name = body.Name;
             shareFolder.IsListed = body.IsListed;
@@ -271,21 +241,21 @@ namespace FileSystemWeb.Controllers
 
         private async Task<InternalFolder> ValidateAddFolderShare(AddFolderShareBody body)
         {
-            if (string.IsNullOrWhiteSpace(body.Name)) throw (HttpResultException)BadRequest("Name missing");
+            if (string.IsNullOrWhiteSpace(body.Name)) throw new BadRequestException("Name missing.", 8013);
 
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            InternalFolder folder = await ShareFolderHelper.GetFolderItem(body.Path, dbContext, userId, this);
+            InternalFolder folder = await ShareFolderHelper.GetFolderItem(body.Path, dbContext, userId);
 
-            if (folder == null) throw (HttpResultException)NotFound("Base not found");
-            if (!HasPermission(folder.Permission, body.Permission)) throw (HttpResultException)Forbid();
+            if (folder == null) throw new NotFoundException("Base not found.", 8014);
+            if (!HasPermission(folder.Permission, body.Permission)) throw new ForbiddenException("Needed permissions are missing.", 8014);
             if (!string.IsNullOrWhiteSpace(folder.PhysicalPath) && !System.IO.Directory.Exists(folder.PhysicalPath))
             {
-                throw (HttpResultException)NotFound("Folder not found");
+                throw new NotFoundException("Folder not found.", 8015);
             }
 
             if (body.UserId != null && !await dbContext.Users.AnyAsync(u => u.Id == body.UserId))
             {
-                throw (HttpResultException)BadRequest("User not found");
+                throw new BadRequestException("User not found.", 8016);
             }
 
             return folder;
@@ -309,7 +279,7 @@ namespace FileSystemWeb.Controllers
             ShareFolder shareFolder = await dbContext.ShareFolders
                 .Include(f => f.Permission)
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
-            if (shareFolder == null) return NotFound("Share folder not found");
+            if (shareFolder == null) throw new NotFoundException("Share folder not found.", 8017);
 
             dbContext.ShareFolders.Remove(shareFolder);
             await dbContext.SaveChangesAsync();

@@ -1,14 +1,17 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem.Files;
+using FileSystemCommon.Models.FileSystem.Files.Many;
 using FileSystemWeb.Data;
-using FileSystemWeb.Exceptions;
 using FileSystemWeb.Helpers;
 using FileSystemWeb.Models;
+using FileSystemWeb.Models.Exceptions;
 using FileSystemWeb.Models.RequestBodies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -31,24 +34,16 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Get(string encodedVirtualPath, [FromQuery] string path)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
-            if (virtualPath == null) return BadRequest("Path encoding error");
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9001);
 
-            InternalFile file;
-            try
-            {
-                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (!file.Permission.Read) return Forbid();
-            if (!System.IO.File.Exists(file.PhysicalPath)) return NotFound();
+            if (!file.Permission.Read) throw new ForbiddenException("No read permission.", 9002);
+            if (!System.IO.File.Exists(file.PhysicalPath)) throw new NotFoundException("File not found.", 9003);
 
             string fileName = Utils.ReplaceNonAscii(file.Name);
-            Response.Headers.Add(HeaderNames.ContentDisposition, $"inline; filename=\"{fileName}\"");
+            Response.Headers.Append(HeaderNames.ContentDisposition, $"inline; filename=\"{fileName}\"");
             string contentType = Utils.GetContentType(Path.GetExtension(file.Name));
             return PhysicalFile(file.PhysicalPath, contentType, true);
         }
@@ -58,21 +53,13 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Download(string encodedVirtualPath, [FromQuery] string path)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
-            if (virtualPath == null) return BadRequest("Path encoding error");
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9004);
 
-            InternalFile file;
-            try
-            {
-                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (!file.Permission.Read) return Forbid();
-            if (!System.IO.File.Exists(file.PhysicalPath)) return NotFound();
+            if (!file.Permission.Read) throw new ForbiddenException("No read permission.", 9005);
+            if (!System.IO.File.Exists(file.PhysicalPath)) throw new NotFoundException("File not found.", 9006);
 
             string contentType = Utils.GetContentType(Path.GetExtension(file.Name));
             return PhysicalFile(file.PhysicalPath, contentType, file.Name);
@@ -83,22 +70,64 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<bool>> Exists(string encodedVirtualPath, [FromQuery] string path)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
-            if (virtualPath == null) return BadRequest("Path encoding error");
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9007);
 
-            InternalFile file;
-            try
-            {
-                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
-            }
-            catch (HttpResultException exc)
-            {
-                return false;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (!file.Permission.Info) return Forbid();
+            if (!file.Permission.Info) throw new ForbiddenException("No info permission.", 9008);
 
             return System.IO.File.Exists(file.PhysicalPath);
+        }
+
+        [HttpGet("existsMany")]
+        public async Task ExistMany([FromQuery] string[] encodedVirtualPaths)
+        {
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (encodedVirtualPaths.Length == 0) throw new BadRequestException("No encodedVirtualPaths.", 9034);
+
+            foreach (string encodedVirtualPath in encodedVirtualPaths)
+            {
+                string virtualPath = Utils.DecodePath(encodedVirtualPath);
+                bool? exists = null;
+                HttpStatusCode statusCode;
+                string errorMessage = null;
+                int? errorCode = null;
+
+                try
+                {
+                    if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9013);
+                    InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
+
+                    if (!file.Permission.Info) throw new ForbiddenException("No hash permission.", 9035);
+
+                    exists = System.IO.File.Exists(file.PhysicalPath);
+                    statusCode = HttpStatusCode.OK;
+                }
+                catch (FileNotFoundException)
+                {
+                    statusCode = HttpStatusCode.NotFound;
+                    errorMessage = "File not found.";
+                    errorCode = 9015;
+                }
+                catch (HttpException exc)
+                {
+                    statusCode = exc.Status;
+                    errorMessage = exc.Message;
+                    errorCode = exc.Code;
+                }
+                catch (Exception exc)
+                {
+                    statusCode = HttpStatusCode.InternalServerError;
+                    errorMessage = exc.Message;
+                    errorCode = 9034;
+                }
+
+                if (!HttpContext.Response.HasStarted) HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
+                FileExistsManyItem response = new FileExistsManyItem(virtualPath, exists, statusCode, errorMessage, errorCode);
+                await HttpContext.Response.WriteAsync(JsonSerializer.Serialize(response));
+            }
         }
 
         [HttpGet("info")]
@@ -106,30 +135,74 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<FileItemInfo>> GetInfo(string encodedVirtualPath, [FromQuery] string path)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
-            if (virtualPath == null) return BadRequest("Path encoding error");
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9009);
 
-            InternalFile file;
-            try
-            {
-                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (!file.Permission.Info) return Forbid();
+            if (!file.Permission.Info) throw new ForbiddenException("No info permission.", 9010);
 
             try
             {
                 FileInfo info = new FileInfo(file.PhysicalPath);
-                if (!info.Exists) return NotFound();
+                if (!info.Exists) throw new NotFoundException("File not found.", 9011);
                 return FileHelper.GetInfo(file, info);
             }
             catch (FileNotFoundException)
             {
-                return NotFound();
+                throw new NotFoundException("File not found.", 9012);
+            }
+        }
+
+        [HttpGet("infoMany")]
+        public async Task GetInfo([FromQuery] string[] encodedVirtualPaths)
+        {
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (encodedVirtualPaths.Length == 0) throw new BadRequestException("No encodedVirtualPaths.", 9034);
+
+            foreach (string encodedVirtualPath in encodedVirtualPaths)
+            {
+                string virtualPath = Utils.DecodePath(encodedVirtualPath);
+                FileItemInfo? fileItemInfo = null;
+                HttpStatusCode statusCode;
+                string errorMessage = null;
+                int? errorCode = null;
+
+                try
+                {
+                    if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9013);
+                    InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
+
+                    if (!file.Permission.Info) throw new ForbiddenException("No hash permission.", 9035);
+
+                    FileInfo info = new FileInfo(file.PhysicalPath);
+                    if (!info.Exists) throw new NotFoundException("File not found.", 9011);
+                    fileItemInfo= FileHelper.GetInfo(file, info);
+                    statusCode = HttpStatusCode.OK;
+                }
+                catch (FileNotFoundException)
+                {
+                    statusCode = HttpStatusCode.NotFound;
+                    errorMessage = "File not found.";
+                    errorCode = 9015;
+                }
+                catch (HttpException exc)
+                {
+                    statusCode = exc.Status;
+                    errorMessage = exc.Message;
+                    errorCode = exc.Code;
+                }
+                catch (Exception exc)
+                {
+                    statusCode = HttpStatusCode.InternalServerError;
+                    errorMessage = exc.Message;
+                    errorCode = 9034;
+                }
+
+                if (!HttpContext.Response.HasStarted) HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
+                FileInfoManyItem response = new FileInfoManyItem(virtualPath, fileItemInfo, statusCode, errorMessage, errorCode);
+                await HttpContext.Response.WriteAsync(JsonSerializer.Serialize(response));
             }
         }
 
@@ -138,20 +211,12 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult<string>> GetHash(string encodedVirtualPath, [FromQuery] string path, [FromQuery] int partialSize)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
-            if (virtualPath == null) return BadRequest("Path encoding error");
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9016);
 
-            InternalFile file;
-            try
-            {
-                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (!file.Permission.Hash) return Forbid();
+            if (!file.Permission.Hash) throw new ForbiddenException("No hash permission.", 9017);
 
             try
             {
@@ -170,7 +235,68 @@ namespace FileSystemWeb.Controllers
             }
             catch (FileNotFoundException)
             {
-                return NotFound();
+                throw new NotFoundException("File not found.", 9018);
+            }
+        }
+
+        [HttpGet("hashMany")]
+        public async Task GetHashes([FromQuery] string[] encodedVirtualPaths, [FromQuery] int partialSize)
+        {
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (encodedVirtualPaths.Length == 0) throw new BadRequestException("No encodedVirtualPaths.", 9033);
+
+            foreach (string encodedVirtualPath in encodedVirtualPaths)
+            {
+                string virtualPath = Utils.DecodePath(encodedVirtualPath);
+                string hash = null;
+                HttpStatusCode statusCode;
+                string errorMessage = null;
+                int? errorCode = null;
+
+                try
+                {
+                    if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9013);
+                    InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
+
+                    if (!file.Permission.Hash) throw new ForbiddenException("No hash permission.", 9014);
+
+                    using HashAlgorithm hasher = SHA1.Create();
+                    using FileStream stream = System.IO.File.OpenRead(file.PhysicalPath);
+
+                    byte[] hashBytes;
+                    if (partialSize > 0)
+                    {
+                        byte[] partialData = await Utils.GetPartialBinary(stream, partialSize);
+                        hashBytes = hasher.ComputeHash(partialData);
+                    }
+                    else hashBytes = await hasher.ComputeHashAsync(stream);
+
+                    hash = Convert.ToBase64String(hashBytes);
+                    statusCode = HttpStatusCode.OK;
+                }
+                catch (FileNotFoundException)
+                {
+                    statusCode = HttpStatusCode.NotFound;
+                    errorMessage = "File not found.";
+                    errorCode = 9015;
+                }
+                catch (HttpException exc)
+                {
+                    statusCode = exc.Status;
+                    errorMessage = exc.Message;
+                    errorCode = exc.Code;
+                }
+                catch (Exception exc)
+                {
+                    statusCode = HttpStatusCode.InternalServerError;
+                    errorMessage = exc.Message;
+                    errorCode = 9034;
+                }
+
+                if (!HttpContext.Response.HasStarted) HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
+                FileHashManyItem response = new FileHashManyItem(virtualPath, hash, statusCode, errorMessage, errorCode);
+                await HttpContext.Response.WriteAsync(JsonSerializer.Serialize(response));
             }
         }
 
@@ -179,24 +305,16 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Copy(string encodedVirtualSrcPath, string encodedVirtualDestPath, [FromQuery] string srcPath, [FromQuery] string destPath)
         {
             string virtualSrcPath = Utils.DecodePath(encodedVirtualSrcPath ?? srcPath);
-            if (virtualSrcPath == null) return BadRequest("Src encoding error");
+            if (virtualSrcPath == null) throw new BadRequestException("Src encoding error.", 9019);
             string virtualDestPath = Utils.DecodePath(encodedVirtualDestPath ?? destPath);
-            if (virtualDestPath == null) return BadRequest("Dest encoding error");
+            if (virtualDestPath == null) throw new BadRequestException("Dest encoding error.", 9020);
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            InternalFile srcFile, destFile;
-            try
-            {
-                srcFile = await ShareFileHelper.GetFileItem(virtualSrcPath, dbContext, userId, this);
-                destFile = await ShareFileHelper.GetFileItem(virtualDestPath, dbContext, userId, this);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            InternalFile srcFile = await ShareFileHelper.GetFileItem(virtualSrcPath, dbContext, userId);
+            InternalFile destFile = await ShareFileHelper.GetFileItem(virtualDestPath, dbContext, userId);
 
-            if (!srcFile.Permission.Write) return Forbid();
-            if (!destFile.Permission.Write) return Forbid();
+            if (!srcFile.Permission.Read) throw new ForbiddenException("No read permission for src file.", 9021);
+            if (!destFile.Permission.Write) throw new ForbiddenException("No write permission for dest file.", 9022);
 
             try
             {
@@ -206,7 +324,7 @@ namespace FileSystemWeb.Controllers
             }
             catch (FileNotFoundException)
             {
-                return NotFound();
+                throw new NotFoundException("File not found.", 9023);
             }
 
             return Ok();
@@ -217,24 +335,16 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Move(string encodedVirtualSrcPath, string encodedVirtualDestPath, [FromQuery] string srcPath, [FromQuery] string destPath)
         {
             string virtualSrcPath = Utils.DecodePath(encodedVirtualSrcPath ?? srcPath);
-            if (virtualSrcPath == null) return BadRequest("Src encoding error");
+            if (virtualSrcPath == null) throw new BadRequestException("Src encoding error.", 9023);
             string virtualDestPath = Utils.DecodePath(encodedVirtualDestPath ?? destPath);
-            if (virtualDestPath == null) return BadRequest("Dest encoding error");
+            if (virtualDestPath == null) throw new BadRequestException("Dest encoding error.", 9024);
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            InternalFile srcFile, destFile;
-            try
-            {
-                srcFile = await ShareFileHelper.GetFileItem(virtualSrcPath, dbContext, userId, this);
-                destFile = await ShareFileHelper.GetFileItem(virtualDestPath, dbContext, userId, this);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            InternalFile srcFile = await ShareFileHelper.GetFileItem(virtualSrcPath, dbContext, userId);
+            InternalFile destFile = await ShareFileHelper.GetFileItem(virtualDestPath, dbContext, userId);
 
-            if (!srcFile.Permission.Write) return Forbid();
-            if (!destFile.Permission.Write) return Forbid();
+            if (!srcFile.Permission.Write) throw new ForbiddenException("No write permission for src file.", 9025);
+            if (!destFile.Permission.Write) throw new ForbiddenException("No write permission for dest file.", 9026);
 
             try
             {
@@ -242,7 +352,7 @@ namespace FileSystemWeb.Controllers
             }
             catch (FileNotFoundException)
             {
-                return NotFound();
+                throw new NotFoundException("File not found.", 9027);
             }
 
             return Ok();
@@ -254,21 +364,13 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Write(string encodedVirtualPath, [FromQuery] string path, [FromForm] WriteFileBody form)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
-            if (virtualPath == null) return BadRequest("Path encoding error");
-            if (form?.FileContent == null) return BadRequest("Missing file content");
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9027);
+            if (form?.FileContent == null) throw new BadRequestException("Missing file content.", 9028);
 
-            InternalFile file;
-            try
-            {
-                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (!file.Permission.Write) return Forbid();
+            if (!file.Permission.Write) throw new ForbiddenException("No write permission.", 9029);
 
             string physicalPath = file.PhysicalPath;
             string tmpPath = FileHelper.GenerateUniqueFileName(physicalPath);
@@ -304,20 +406,12 @@ namespace FileSystemWeb.Controllers
         public async Task<ActionResult> Delete(string encodedVirtualPath, [FromQuery] string path)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
-            if (virtualPath == null) return BadRequest("Path encoding error");
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 9030);
 
-            InternalFile file;
-            try
-            {
-                string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId, this);
-            }
-            catch (HttpResultException exc)
-            {
-                return exc.Result;
-            }
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFile file = await ShareFileHelper.GetFileItem(virtualPath, dbContext, userId);
 
-            if (!file.Permission.Write) return Forbid();
+            if (!file.Permission.Write) throw new ForbiddenException("No write permission.", 9031);
 
             try
             {
@@ -325,7 +419,7 @@ namespace FileSystemWeb.Controllers
             }
             catch (FileNotFoundException)
             {
-                return NotFound();
+                throw new NotFoundException("File not found.", 9032);
             }
 
             return Ok();
