@@ -1,4 +1,4 @@
-FROM node:lts AS node_builder
+FROM node:lts as node_builder
 
 WORKDIR /app
 COPY ./FileSystemWeb/ClientApp .
