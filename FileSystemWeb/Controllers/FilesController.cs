@@ -153,7 +153,7 @@ namespace FileSystemWeb.Controllers
             }
         }
 
-        [HttpGet("infoMany")]
+        [HttpPost("infoMany")]
         public async Task GetInfo([FromBody] FilesInfoManyBody body)
         {
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
