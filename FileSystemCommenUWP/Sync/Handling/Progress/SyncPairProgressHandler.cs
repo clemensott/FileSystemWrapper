@@ -198,6 +198,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
                 }
             }
 
+            if (batch.Count == 0) return;
+
             await database.SyncPairs.SetSyncPairRunErrorFileTypes(syncPairRunId, batch);
             Progress?.Invoke(this, EventArgs.Empty);
         }

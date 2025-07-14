@@ -1,5 +1,4 @@
-﻿using FileSystemCommonUWP.API;
-using FileSystemCommonUWP.Sync.Definitions;
+﻿using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling.CompareType;
 using System.Threading.Tasks;
 
@@ -9,20 +8,16 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
     {
         public override SyncMode Mode => SyncMode.LocalToServer;
 
-        public LocalToServerModeHandler(ISyncFileComparer fileComparer, SyncConflictHandlingType conflictHandlingType, Api api) 
-            : base(fileComparer, conflictHandlingType, api)
+        public LocalToServerModeHandler(BaseSyncFileComparer fileComparer, SyncConflictHandlingType conflictHandlingType) 
+            : base(fileComparer, conflictHandlingType)
         {
         }
 
         public override async Task<SyncActionType> GetActionOfBothFiles(FilePair pair)
         {
-            Task<object> serverCompareValueTask = fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
-            Task<object> localCompareValueTask = fileComparer.GetLocalCompareValue(pair.LocalFile);
+            pair.LocalCompareValue = await fileComparer.GetLocalCompareValue(pair.LocalFile);
 
-            pair.ServerCompareValue = await serverCompareValueTask;
-            pair.LocalCompareValue = await localCompareValueTask;
-
-            return fileComparer.Equals(pair.ServerCompareValue, pair.LocalCompareValue) ?
+            return fileComparer.EqualsValue(pair.ServerCompareValue, pair.LocalCompareValue) ?
                 SyncActionType.Equal : SyncActionType.CopyToServer;
         }
 

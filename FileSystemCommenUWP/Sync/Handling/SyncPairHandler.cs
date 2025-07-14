@@ -30,11 +30,12 @@ namespace FileSystemCommonUWP.Sync.Handling
         private readonly string serverPath;
         private readonly StorageFolder localFolder;
         private readonly SyncModeHandler modeHandler;
-        private readonly ISyncFileComparer fileComparer;
+        private readonly BaseSyncFileComparer fileComparer;
         private readonly SyncConflictHandlingType conlictHandlingType;
         private readonly string[] allowList, denialList;
         private readonly Api api;
         private readonly SyncPairResult lastResult, newResult;
+        private readonly HashSet<string> serverFolderExistsCache;
 
         private SyncPairHandlerState state;
         private readonly LockQueue<FilePair> bothFiles, singleFiles, copyToLocalFiles,
@@ -64,15 +65,16 @@ namespace FileSystemCommonUWP.Sync.Handling
             deleteSeverFiles = new LockQueue<FilePair>();
             newResult = new SyncPairResult();
             ProgressHandler = new SyncPairProgressHandler(syncPairRunId, database);
+            serverFolderExistsCache = new HashSet<string>();
 
             this.database = database;
             this.SyncPairRunId = syncPairRunId;
             this.withSubfolders = withSubfolders;
             this.requestedCancel = requestedCancel;
             this.isTestRun = isTestRun;
-            fileComparer = GetFileComparer(compareType);
+            fileComparer = GetFileComparer(compareType, api);
             conlictHandlingType = conflictHandlingType;
-            modeHandler = GetSyncModeHandler(mode, fileComparer, lastResult, conflictHandlingType, api);
+            modeHandler = GetSyncModeHandler(mode, fileComparer, lastResult, conflictHandlingType);
             this.localFolder = localFolder;
             this.serverPath = serverPath;
             this.allowList = allowList?.ToArray() ?? new string[0];
@@ -81,45 +83,45 @@ namespace FileSystemCommonUWP.Sync.Handling
             this.lastResult = lastResult;
         }
 
-        private static SyncModeHandler GetSyncModeHandler(SyncMode mode, ISyncFileComparer fileComparer,
-            SyncPairResult lastResult, SyncConflictHandlingType conflictHandlingType, Api api)
+        private static SyncModeHandler GetSyncModeHandler(SyncMode mode, BaseSyncFileComparer fileComparer,
+            SyncPairResult lastResult, SyncConflictHandlingType conflictHandlingType)
         {
             switch (mode)
             {
                 case SyncMode.ServerToLocalCreateOnly:
-                    return new ServerToLocalCreateOnlyModeHandler(fileComparer, conflictHandlingType, api);
+                    return new ServerToLocalCreateOnlyModeHandler(fileComparer, conflictHandlingType);
 
                 case SyncMode.ServerToLocal:
-                    return new ServerToLocalModeHandler(fileComparer, conflictHandlingType, api);
+                    return new ServerToLocalModeHandler(fileComparer, conflictHandlingType);
 
                 case SyncMode.LocalToServerCreateOnly:
-                    return new LocalToServerCreateOnlyModeHandler(fileComparer, conflictHandlingType, api);
+                    return new LocalToServerCreateOnlyModeHandler(fileComparer, conflictHandlingType);
 
                 case SyncMode.LocalToServer:
-                    return new LocalToServerModeHandler(fileComparer, conflictHandlingType, api);
+                    return new LocalToServerModeHandler(fileComparer, conflictHandlingType);
 
                 case SyncMode.TwoWay:
-                    return new TwoWayModeHandler(fileComparer, lastResult, conflictHandlingType, api);
+                    return new TwoWayModeHandler(fileComparer, lastResult, conflictHandlingType);
             }
 
             throw new ArgumentException("Value not Implemented: " + mode, nameof(mode));
         }
 
-        private static ISyncFileComparer GetFileComparer(SyncCompareType type)
+        private static BaseSyncFileComparer GetFileComparer(SyncCompareType type, Api api)
         {
             switch (type)
             {
                 case SyncCompareType.Exists:
-                    return new ExistsComparer();
+                    return new ExistsComparer(api);
 
                 case SyncCompareType.Size:
-                    return new SizeComparer();
+                    return new SizeComparer(api);
 
                 case SyncCompareType.Hash:
-                    return new HashComparer();
+                    return new HashComparer(api);
 
                 case SyncCompareType.PartialHash:
-                    return new HashComparer(partialHashSize);
+                    return new HashComparer(api, partialHashSize);
             }
 
             throw new ArgumentException("Value not Implemented:" + type, nameof(type));
@@ -284,42 +286,101 @@ namespace FileSystemCommonUWP.Sync.Handling
             return allowList.Length == 0 || allowList.Any(e => path.EndsWith(e));
         }
 
-        private async Task CompareBothFiles()
+        private async Task CompareFilesBatch(IEnumerable<FilePair> pairs, Func<FilePair, Task<SyncActionType>> getActionFunc)
         {
-            while (true)
+            Dictionary<string, FilePair> dict = pairs.ToDictionary(p => p.ServerFullPath);
+
+            await fileComparer.GetServerCompareValues(dict.Keys.ToArray(), async (path, value, errorMessage) =>
             {
-                (bool isEnd, FilePair pair) = bothFiles.Dequeue();
-                if (isEnd || IsCanceled) break;
+                if (!dict.TryGetValue(path, out FilePair pair)) return;
+
+                if (value == null)
+                {
+                    ProgressHandler.AddFileToErrorList(pair, "Compare files batch no value: " + errorMessage);
+                    return;
+                }
 
                 try
                 {
-                    SyncActionType action = await modeHandler.GetActionOfBothFiles(pair);
+                    pair.ServerCompareValue = value;
+                    SyncActionType action = await getActionFunc(pair);
                     HandleAction(action, pair);
                     ProgressHandler.AddFileToList(pair, SyncPairRunFileType.Compared, false);
                 }
                 catch (Exception e)
                 {
-                    ProgressHandler.AddFileToErrorList(pair, "Compare both file error", e);
+                    ProgressHandler.AddFileToErrorList(pair, "Compare files batch error", e);
                 }
+                finally
+                {
+                    dict.Remove(path);
+                }
+            });
+
+            foreach (FilePair pair in dict.Values)
+            {
+                ProgressHandler.AddFileToErrorList(pair, "Compare files batch no response");
+            }
+        }
+
+        private async Task CompareBothFiles()
+        {
+            List<FilePair> batch = new List<FilePair>();
+            while (true)
+            {
+                (bool isEnd, FilePair pair) = bothFiles.Dequeue();
+                if (IsCanceled) break;
+
+                if (!isEnd) batch.Add(pair);
+                if (bothFiles.Count > 0) continue;
+                if (batch.Count > 0)
+                {
+                    await CompareFilesBatch(batch, modeHandler.GetActionOfBothFiles);
+                    batch.Clear();
+                }
+
+                if (isEnd) break;
             }
         }
 
         private async Task CompareSingleFiles()
         {
-            while (true)
+            if (modeHandler.PreloadServerCompareValue)
             {
-                (bool isEnd, FilePair pair) = singleFiles.Dequeue();
-                if (isEnd || IsCanceled) break;
+                List<FilePair> batch = new List<FilePair>();
+                while (true)
+                {
+                    (bool isEnd, FilePair pair) = singleFiles.Dequeue();
+                    if (IsCanceled) break;
 
-                try
-                {
-                    SyncActionType action = await modeHandler.GetActionOfSingleFiles(pair);
-                    HandleAction(action, pair);
-                    ProgressHandler.AddFileToList(pair, SyncPairRunFileType.Compared, false);
+                    if (!isEnd) batch.Add(pair);
+                    if (singleFiles.Count > 0) continue;
+                    if (batch.Count > 0)
+                    {
+                        await CompareFilesBatch(batch, modeHandler.GetActionOfSingleFiles);
+                        batch.Clear();
+                    }
+
+                    if (isEnd) break;
                 }
-                catch (Exception e)
+            }
+            else
+            {
+                while (true)
                 {
-                    ProgressHandler.AddFileToErrorList(pair, "Compare single file error", e);
+                    (bool isEnd, FilePair pair) = singleFiles.Dequeue();
+                    if (isEnd || IsCanceled) break;
+
+                    try
+                    {
+                        SyncActionType action = await modeHandler.GetActionOfSingleFiles(pair);
+                        HandleAction(action, pair);
+                        ProgressHandler.AddFileToList(pair, SyncPairRunFileType.Compared, false);
+                    }
+                    catch (Exception e)
+                    {
+                        ProgressHandler.AddFileToErrorList(pair, "Compare single file error", e);
+                    }
                 }
             }
         }
@@ -405,7 +466,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                         }
 
                         pair.LocalCompareValue = localCompareValue;
-                        if (pair.ServerCompareValue == null) pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
+                        if (pair.ServerCompareValue == null) pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath);
                     }
 
                     AddResultFile(pair);
@@ -467,7 +528,7 @@ namespace FileSystemCommonUWP.Sync.Handling
                         }
 
                         if (pair.LocalCompareValue == null) pair.LocalCompareValue = await fileComparer.GetLocalCompareValue(pair.LocalFile);
-                        pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
+                        pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath);
                     }
 
                     AddResultFile(pair);
@@ -484,7 +545,13 @@ namespace FileSystemCommonUWP.Sync.Handling
 
         private async Task<bool> TryCreateServerFolder(string serverFilePath)
         {
-            if (await api.FolderExists(api.Config.GetParentPath(serverFilePath))) return true;
+            string parentPath = api.Config.GetParentPath(serverFilePath);
+            if (serverFolderExistsCache.Contains(parentPath)) return true;
+            if (await api.FolderExists(parentPath))
+            {
+                serverFolderExistsCache.Add(parentPath);
+                return true;
+            }
 
             string[] parts = serverFilePath.Split(api.Config.DirectorySeparatorChar);
             string currentFolderPath = string.Empty;
@@ -493,8 +560,15 @@ namespace FileSystemCommonUWP.Sync.Handling
             {
                 currentFolderPath = api.Config.JoinPaths(currentFolderPath, parts[i]);
 
-                if (await api.FolderExists(currentFolderPath)) continue;
+                if (serverFolderExistsCache.Contains(currentFolderPath)) continue;
+                if (await api.FolderExists(currentFolderPath))
+                {
+                    serverFolderExistsCache.Add(currentFolderPath);
+                    continue;
+                }
                 if (i == 0 || !await api.CreateFolder(currentFolderPath)) return false;
+
+                serverFolderExistsCache.Add(currentFolderPath);
             }
 
             return true;

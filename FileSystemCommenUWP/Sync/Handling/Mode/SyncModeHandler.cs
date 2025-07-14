@@ -8,17 +8,18 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
 {
     abstract class SyncModeHandler
     {
-        protected readonly ISyncFileComparer fileComparer;
+        protected readonly BaseSyncFileComparer fileComparer;
         protected readonly SyncConflictHandlingType conflictHandlingType;
-        protected readonly Api api;
+
+        public bool PreloadServerCompareValue { get; }
 
         public abstract SyncMode Mode { get; }
 
-        protected SyncModeHandler(ISyncFileComparer fileComparer, SyncConflictHandlingType conflictHandlingType, Api api)
+        protected SyncModeHandler(BaseSyncFileComparer fileComparer, SyncConflictHandlingType conflictHandlingType, bool preLoadServerCompareValue = false)
         {
             this.fileComparer = fileComparer;
             this.conflictHandlingType = conflictHandlingType;
-            this.api = api;
+            PreloadServerCompareValue = preLoadServerCompareValue;
         }
 
         public abstract Task<SyncActionType> GetActionOfBothFiles(FilePair pair);

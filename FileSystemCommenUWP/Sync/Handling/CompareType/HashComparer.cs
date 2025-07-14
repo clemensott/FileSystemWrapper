@@ -9,25 +9,21 @@ using Windows.Storage;
 
 namespace FileSystemCommonUWP.Sync.Handling.CompareType
 {
-    class HashComparer : ISyncFileComparer
+    class HashComparer : BaseSyncFileComparer
     {
         private readonly int? partialSize;
 
-        public SyncCompareType Type => IsPartial ? SyncCompareType.PartialHash : SyncCompareType.Hash;
-
-        public bool IsPartial => partialSize.HasValue;
-
-        public HashComparer(int? partialSize = null)
+        public HashComparer(Api api, int? partialSize = null) : base(api, partialSize.HasValue ? SyncCompareType.PartialHash : SyncCompareType.Hash)
         {
             this.partialSize = partialSize;
         }
 
-        public new bool Equals(object obj1, object obj2)
+        public override bool EqualsValue(object obj1, object obj2)
         {
             return obj1 is string value1 && obj2 is string value2 && value1 == value2;
         }
 
-        public Task<object> GetLocalCompareValue(StorageFile localFile)
+        public override Task<object> GetLocalCompareValue(StorageFile localFile)
         {
             return GetFileHash(localFile, partialSize);
         }
@@ -51,9 +47,14 @@ namespace FileSystemCommonUWP.Sync.Handling.CompareType
             }
         }
 
-        public async Task<object> GetServerCompareValue(string serverFilePath, Api api)
+        public override async Task<object> GetServerCompareValue(string serverFilePath)
         {
             return await api.GetFileHash(serverFilePath, partialSize);
+        }
+
+        public override async Task GetServerCompareValues(string[] serverFilePaths, Func<string, object, string, Task> onValueAction)
+        {
+            await api.GetFilesHash(serverFilePaths, partialSize, item => onValueAction(item.FilePath, item.Hash, item.ErrorMessage));
         }
     }
 }

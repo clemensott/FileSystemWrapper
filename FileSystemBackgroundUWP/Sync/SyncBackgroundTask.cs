@@ -81,6 +81,7 @@ namespace FileSystemBackgroundUWP.Sync
             }
             catch (Exception e)
             {
+                await database.SyncPairs.UpdateSyncPairRunState(syncPairRunId, SyncPairHandlerState.Error);
                 System.Diagnostics.Debug.WriteLine("HandleRequest error:" + e);
             }
             finally
@@ -101,6 +102,9 @@ namespace FileSystemBackgroundUWP.Sync
             {
                 BaseUrl = baseUrl,
             };
+
+            if (!await api.Ping()) throw new Exception("API is not reachable");
+
             return await api.LoadConfig() ? api : throw new Exception("Couldn't load config from API");
         }
 

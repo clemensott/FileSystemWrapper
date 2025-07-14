@@ -12,8 +12,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
 
         public override SyncMode Mode => SyncMode.TwoWay;
 
-        public TwoWayModeHandler(ISyncFileComparer fileComparer, SyncPairResult lastResult,
-            SyncConflictHandlingType conflictHandlingType, Api api) : base(fileComparer, conflictHandlingType, api)
+        public TwoWayModeHandler(BaseSyncFileComparer fileComparer, SyncPairResult lastResult, SyncConflictHandlingType conflictHandlingType)
+            : base(fileComparer, conflictHandlingType, true)
         {
             this.lastResult = lastResult;
         }
@@ -22,23 +22,19 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
         {
             SyncPairResultFile last;
 
-            Task<object> serverCompareValueTask = fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
-            Task<object> localCompareValueTask = fileComparer.GetLocalCompareValue(pair.LocalFile);
+            pair.LocalCompareValue = await fileComparer.GetLocalCompareValue(pair.LocalFile);
 
-            pair.ServerCompareValue = await serverCompareValueTask;
-            pair.LocalCompareValue = await localCompareValueTask;
-
-            if (fileComparer.Equals(pair.ServerCompareValue, pair.LocalCompareValue))
+            if (fileComparer.EqualsValue(pair.ServerCompareValue, pair.LocalCompareValue))
             {
                 return SyncActionType.Equal;
             }
             else if (lastResult.TryGetFile(pair.RelativePath, out last))
             {
-                if (fileComparer.Equals(last.ServerCompareValue, pair.ServerCompareValue))
+                if (fileComparer.EqualsValue(last.ServerCompareValue, pair.ServerCompareValue))
                 {
                     return SyncActionType.CopyToServer;
                 }
-                else if (fileComparer.Equals(last.LocalCompareValue, pair.LocalCompareValue))
+                else if (fileComparer.EqualsValue(last.LocalCompareValue, pair.LocalCompareValue))
                 {
                     return SyncActionType.CopyToLocal;
                 }
@@ -53,10 +49,8 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
 
             if (pair.ServerFileExists)
             {
-                pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath, api);
-
                 if (lastResult.TryGetFile(pair.RelativePath, out last) &&
-                    fileComparer.Equals(last.ServerCompareValue, pair.ServerCompareValue))
+                    fileComparer.EqualsValue(last.ServerCompareValue, pair.ServerCompareValue))
                 {
                     return SyncActionType.DeleteFromServer;
                 }
@@ -67,7 +61,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
                 pair.LocalCompareValue = await fileComparer.GetLocalCompareValue(pair.LocalFile);
 
                 if (lastResult.TryGetFile(pair.RelativePath, out last) &&
-                    fileComparer.Equals(last.LocalCompareValue, pair.LocalCompareValue))
+                    fileComparer.EqualsValue(last.LocalCompareValue, pair.LocalCompareValue))
                 {
                     return SyncActionType.DeleteFromLocal;
                 }

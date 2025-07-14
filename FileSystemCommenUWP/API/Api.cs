@@ -3,6 +3,7 @@ using FileSystemCommon.Models.Auth;
 using FileSystemCommon.Models.Configuration;
 using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Files;
+using FileSystemCommon.Models.FileSystem.Files.Many;
 using FileSystemCommon.Models.FileSystem.Folders;
 using Newtonsoft.Json;
 using StdOttStandard.Linq;
@@ -10,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Security.Cryptography.Certificates;
 using Windows.Storage;
@@ -161,10 +163,38 @@ namespace FileSystemCommonUWP.API
             return Request<bool>(uri, HttpMethod.Get);
         }
 
+        public async Task<bool> GetFilesExits(string[] paths, Func<FileExistsManyItem, Task> onFileExistsFunc)
+        {
+            FilesExistsManyBody body = new FilesExistsManyBody()
+            {
+                Paths = paths,
+            };
+
+            using (IHttpContent content = new HttpStringContent(JsonConvert.SerializeObject(body), UnicodeEncoding.Utf8, "application/json"))
+            {
+                Uri uri = GetUri("/api/files/existsMany");
+                return await RequestMany(uri, HttpMethod.Post, content, onFileExistsFunc);
+            }
+        }
+
         public Task<FileItemInfo> GetFileInfo(string path)
         {
             Uri uri = GetUri("/api/files/info", KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(path)));
             return Request<FileItemInfo>(uri, HttpMethod.Get);
+        }
+
+        public async Task<bool> GetFilesInfo(string[] paths, Func<FileInfoManyItem, Task> onFileInfoFunc)
+        {
+            FilesInfoManyBody body = new FilesInfoManyBody()
+            {
+                Paths = paths,
+            };
+
+            using (IHttpContent content = new HttpStringContent(JsonConvert.SerializeObject(body), UnicodeEncoding.Utf8, "application/json"))
+            {
+                Uri uri = GetUri("/api/files/infoMany");
+                return await RequestMany(uri, HttpMethod.Post, content, onFileInfoFunc);
+            }
         }
 
         public Task<string> GetFileHash(string path, int? partialSize = null)
@@ -179,6 +209,21 @@ namespace FileSystemCommonUWP.API
 
             Uri uri = GetUri("/api/files/hash", values);
             return RequestString(uri, HttpMethod.Get);
+        }
+
+        public async Task<bool> GetFilesHash(string[] paths, int? partialSize, Func<FileHashManyItem, Task> onFileHashFunc)
+        {
+            FilesHashManyBody body = new FilesHashManyBody()
+            {
+                Paths = paths,
+                PartialSize = partialSize,
+            };
+
+            using (IHttpContent content = new HttpStringContent(JsonConvert.SerializeObject(body), UnicodeEncoding.Utf8, "application/json"))
+            {
+                Uri uri = GetUri("/api/files/hashMany");
+                return await RequestMany(uri, HttpMethod.Post, content, onFileHashFunc);
+            }
         }
 
         public Task<bool> CopyFile(string srcPath, string destPath)
@@ -363,6 +408,77 @@ namespace FileSystemCommonUWP.API
             {
                 System.Diagnostics.Debug.WriteLine(e);
                 return false;
+            }
+        }
+
+        private async Task<bool> RequestMany<TItem>(Uri uri, HttpMethod method, IHttpContent content, Func<TItem, Task> onItemFunc)
+        {
+            string responseText = string.Empty;
+
+            try
+            {
+                using (HttpClient client = GetClient())
+                {
+                    using (HttpRequestMessage request = new HttpRequestMessage(method, uri))
+                    {
+                        if (content != null) request.Content = content;
+
+                        using (HttpResponseMessage response = await client.SendRequestAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                        {
+                            if (!response.IsSuccessStatusCode) return false;
+                            IInputStream stream = await response.Content.ReadAsInputStreamAsync();
+
+                            const uint capacity = 1000;
+                            Windows.Storage.Streams.Buffer buffer = new Windows.Storage.Streams.Buffer(capacity);
+                            while (true)
+                            {
+                                await stream.ReadAsync(buffer, capacity, InputStreamOptions.ReadAhead);
+                                if (buffer.Length == 0) break;
+
+                                responseText += System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+                                await TryParseResponse();
+                            }
+
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine(e);
+                return false;
+            }
+
+            async Task TryParseResponse()
+            {
+                int endIndex = -1;
+
+                while (endIndex + 1 < responseText.Length)
+                {
+                    endIndex = responseText.IndexOf('}', endIndex + 1);
+                    if (endIndex == -1) break;
+
+                    string json = responseText.Substring(0, endIndex + 1);
+
+                    TItem item;
+                    try
+                    {
+                        item = JsonConvert.DeserializeObject<TItem>(json);
+                        responseText = responseText.Substring(json.Length);
+                        endIndex = -1;
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        await onItemFunc(item);
+                    }
+                    catch { }
+                }
             }
         }
 

@@ -494,9 +494,9 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             {
                 Name = reader.GetString("name"),
                 RelativePath = reader.GetString("relative_path"),
-                Message = reader.GetString("error_message"),
-                Stacktrace = reader.GetString("error_stackstrace"),
-                Exception = reader.GetString("error_exception"),
+                Message = reader.GetStringNullable("error_message"),
+                Stacktrace = reader.GetStringNullable("error_stackstrace"),
+                Exception = reader.GetStringNullable("error_exception"),
             };
         }
 
@@ -662,7 +662,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             string updatesSql = string.Concat(updates.Select((u, i) =>
                 "UPDATE sync_pair_run_files "
                 + $"SET type=type|@t,error_message=@m{i},error_stackstrace=@s{i},error_exception=@e{i} "
-                + $"WHERE sync_pair_run_id = @id AND relative_path = @r{i};"
+                + $"WHERE sync_pair_run_id = @syncPairRunId AND relative_path = @r{i};"
                 ));
             string sql = $@"
                 {updatesSql}
@@ -670,7 +670,7 @@ namespace FileSystemCommonUWP.Database.SyncPairs
             ";
             IEnumerable<KeyValuePair<string, object>> parameters = new KeyValuePair<string, object>[]
             {
-                CreateParam("id", syncPairRunId),
+                CreateParam("syncPairRunId", syncPairRunId),
                 CreateParam("t", (long)SyncPairRunFileType.Error),
                 CreateParam("increaseCurrentCount", (long)updates.Count),
                 CreateParam($"increase{SyncPairRunFileType.Error}", (long)updates.Count),
