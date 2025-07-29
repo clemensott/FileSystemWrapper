@@ -52,8 +52,14 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
         public async Task End()
         {
             isEnded = true;
-            updateSlim.Release();
+            TriggerUpdate();
             await task;
+        }
+
+        private void TriggerUpdate()
+        {
+            if (updateSlim.CurrentCount == 0) updateSlim.Release();
+            else { }
         }
 
         private async Task Run()
@@ -78,7 +84,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
                 await CheckState();
                 await CheckTotalFilesCount();
                 await CheckInsertFiles();
-                await CheckUpateFiles();
+                await CheckUpdateFiles();
                 await CheckUpdateErrorFiles();
                 await CheckRelPaths();
             }
@@ -101,7 +107,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
         public void SetState(SyncPairHandlerState state)
         {
             latestState.SetValue(state);
-            updateSlim.Release();
+            TriggerUpdate();
         }
 
         private async Task CheckTotalFilesCount()
@@ -146,10 +152,10 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
                 insertFileQueue.Enqueue(file);
             }
             totalFilesCount.SetValue(count => count + 1);
-            updateSlim.Release();
+            TriggerUpdate();
         }
 
-        private async Task CheckUpateFiles()
+        private async Task CheckUpdateFiles()
         {
             const int maxBatchSize = 713;
             List<SyncPairProgressFileUpdate> batch;
@@ -177,7 +183,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
             {
                 updateFileQueue.Enqueue(new SyncPairProgressFileUpdate(pair.RelativePath, type, increaseCurrentCount));
             }
-            updateSlim.Release();
+            TriggerUpdate();
         }
 
         public async Task CheckUpdateErrorFiles()
@@ -198,8 +204,6 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
                 }
             }
 
-            if (batch.Count == 0) return;
-
             await database.SyncPairs.SetSyncPairRunErrorFileTypes(syncPairRunId, batch);
             Progress?.Invoke(this, EventArgs.Empty);
         }
@@ -210,7 +214,7 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
             {
                 updateErrorFileQueue.Enqueue(new SyncPairProgressErrorFileUpdate(pair.RelativePath, message, e));
             }
-            updateSlim.Release();
+            TriggerUpdate();
         }
 
         private async Task CheckRelPaths()
@@ -246,31 +250,31 @@ namespace FileSystemCommonUWP.Sync.Handling.Progress
         public void UpdateCurrentQueryFolderRelPath(string relPath)
         {
             latestCurrentQueryFolderRelPath.SetValue(relPath);
-            updateSlim.Release();
+            TriggerUpdate();
         }
 
         public void UpdateCurrentCopyToLocalRelPath(string relPath)
         {
             latestCurrentCopyToLocalRelPath.SetValue(relPath);
-            updateSlim.Release();
+            TriggerUpdate();
         }
 
         public void UpdateCurrentCopyToServerRelPath(string relPath)
         {
             latestCurrentCopyToServerRelPath.SetValue(relPath);
-            updateSlim.Release();
+            TriggerUpdate();
         }
 
         public void UpdateCurrentDeleteFromServerRelPath(string relPath)
         {
             latestCurrentDeleteFromServerRelPath.SetValue(relPath);
-            updateSlim.Release();
+            TriggerUpdate();
         }
 
         public void UpdateCurrentDeleteFromLocalRelPath(string relPath)
         {
             latestCurrentDeleteFromLocalRelPath.SetValue(relPath);
-            updateSlim.Release();
+            TriggerUpdate();
         }
     }
 }

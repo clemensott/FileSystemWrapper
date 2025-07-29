@@ -202,6 +202,8 @@ namespace FileSystemCommonUWP.Sync.Handling
                 IDictionary<string, StorageFile> localFiles = localFilesTask != null
                     ? (await localFilesTask).ToDictionary(f => f.Name)
                     : new Dictionary<string, StorageFile>();
+                List<FilePair> newBothFiles = new List<FilePair>();
+                List<FilePair> newSingleFiles = new List<FilePair>();
 
                 if (IsCanceled) return;
 
@@ -221,9 +223,9 @@ namespace FileSystemCommonUWP.Sync.Handling
                     if (localFiles.TryGetValue(serverFile.Name, out localFile))
                     {
                         localFiles.Remove(serverFile.Name);
-                        bothFiles.Enqueue(CreateFilePair(serverPath, relFilePath, localFile, true));
+                        newBothFiles.Add(CreateFilePair(serverPath, relFilePath, localFile, true));
                     }
-                    else singleFiles.Enqueue(CreateFilePair(serverPath, relFilePath, null, true));
+                    else newSingleFiles.Add(CreateFilePair(serverPath, relFilePath, null, true));
                 }
 
                 foreach (StorageFile localFile in localFiles.Values)
@@ -239,8 +241,11 @@ namespace FileSystemCommonUWP.Sync.Handling
                         RelativePath = relFilePath,
                     });
 
-                    singleFiles.Enqueue(CreateFilePair(serverPath, relFilePath, localFile, false));
+                    newSingleFiles.Add(CreateFilePair(serverPath, relFilePath, localFile, false));
                 }
+
+                if (newBothFiles.Count > 0) bothFiles.Enqueue(newBothFiles);
+                if (newSingleFiles.Count > 0) singleFiles.Enqueue(newSingleFiles);
 
                 if (!withSubfolders) return;
 
@@ -286,8 +291,10 @@ namespace FileSystemCommonUWP.Sync.Handling
             return allowList.Length == 0 || allowList.Any(e => path.EndsWith(e));
         }
 
-        private async Task CompareFilesBatch(IEnumerable<FilePair> pairs, Func<FilePair, Task<SyncActionType>> getActionFunc)
+        private async Task CompareFilesBatch(ICollection<FilePair> pairs, Func<FilePair, Task<SyncActionType>> getActionFunc)
         {
+            if (pairs.Count == 0) return;
+
             Dictionary<string, FilePair> dict = pairs.ToDictionary(p => p.ServerFullPath);
 
             await fileComparer.GetServerCompareValues(dict.Keys.ToArray(), async (path, value, errorMessage) =>
@@ -325,19 +332,12 @@ namespace FileSystemCommonUWP.Sync.Handling
 
         private async Task CompareBothFiles()
         {
-            List<FilePair> batch = new List<FilePair>();
             while (true)
             {
-                (bool isEnd, FilePair pair) = bothFiles.Dequeue();
+                (bool isEnd, FilePair[] batch) = bothFiles.DequeueBatch();
                 if (IsCanceled) break;
 
-                if (!isEnd) batch.Add(pair);
-                if (bothFiles.Count > 0) continue;
-                if (batch.Count > 0)
-                {
-                    await CompareFilesBatch(batch, modeHandler.GetActionOfBothFiles);
-                    batch.Clear();
-                }
+                await CompareFilesBatch(batch, modeHandler.GetActionOfBothFiles);
 
                 if (isEnd) break;
             }
@@ -345,32 +345,23 @@ namespace FileSystemCommonUWP.Sync.Handling
 
         private async Task CompareSingleFiles()
         {
-            if (modeHandler.PreloadServerCompareValue)
+            while (true)
             {
-                List<FilePair> batch = new List<FilePair>();
-                while (true)
+                (bool isEnd, FilePair[] batch) = singleFiles.DequeueBatch();
+                if (IsCanceled) break;
+
+                IEnumerable<FilePair> singleComparePairs;
+                if (modeHandler.PreloadServerCompareValue)
                 {
-                    (bool isEnd, FilePair pair) = singleFiles.Dequeue();
-                    if (IsCanceled) break;
+                    FilePair[] batchComparePairs = batch.Where(f => f.ServerFileExists).ToArray();
+                    singleComparePairs = batch.Where(f => !f.ServerFileExists);
 
-                    if (!isEnd) batch.Add(pair);
-                    if (singleFiles.Count > 0) continue;
-                    if (batch.Count > 0)
-                    {
-                        await CompareFilesBatch(batch, modeHandler.GetActionOfSingleFiles);
-                        batch.Clear();
-                    }
-
-                    if (isEnd) break;
+                    await CompareFilesBatch(batchComparePairs, modeHandler.GetActionOfSingleFiles);
                 }
-            }
-            else
-            {
-                while (true)
-                {
-                    (bool isEnd, FilePair pair) = singleFiles.Dequeue();
-                    if (isEnd || IsCanceled) break;
+                else singleComparePairs = batch;
 
+                foreach (FilePair pair in singleComparePairs)
+                {
                     try
                     {
                         SyncActionType action = await modeHandler.GetActionOfSingleFiles(pair);
@@ -382,6 +373,8 @@ namespace FileSystemCommonUWP.Sync.Handling
                         ProgressHandler.AddFileToErrorList(pair, "Compare single file error", e);
                     }
                 }
+
+                if (isEnd) break;
             }
         }
 
