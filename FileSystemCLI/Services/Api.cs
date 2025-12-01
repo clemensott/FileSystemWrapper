@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using FileSystemCommon;
@@ -31,6 +32,13 @@ public class Api : IDisposable
         Client = new HttpClient()
         {
             BaseAddress = new Uri(BaseUrl),
+            DefaultRequestHeaders =
+            {
+                CacheControl = new CacheControlHeaderValue()
+                {
+                    NoCache = true,
+                }
+            },
         };
     }
 
