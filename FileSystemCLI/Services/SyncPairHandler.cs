@@ -22,7 +22,9 @@ public class SyncPairHandler
         copyToLocalFiles = new(),
         copyToServerFiles = new(),
         deleteLocalFiles = new(),
-        deleteSeverFiles = new();
+        deleteServerFiles = new();
+    
+    private int totalFilesCount, equalFilesCount, ignoreFilesCount;
 
     private readonly HashSet<string> serverFolderExistsCache = new();
 
@@ -100,6 +102,16 @@ public class SyncPairHandler
         await DeleteServerFiles();
 
         Console.WriteLine("SyncPairHandler is finished");
+        Console.WriteLine($"Total files: {totalFilesCount}");
+        Console.WriteLine($"Equal files: {equalFilesCount}");
+        Console.WriteLine($"Ignore files: {ignoreFilesCount}");
+        Console.WriteLine($"Both files: {bothFiles.Count}");
+        Console.WriteLine($"Single files: {singleFiles.Count}");
+        Console.WriteLine($"Copy to local files: {copyToLocalFiles.Count}");
+        Console.WriteLine($"Copy to server files: {copyToServerFiles.Count}");
+        Console.WriteLine($"Delete local files: {deleteLocalFiles.Count}");
+        Console.WriteLine($"Delete server files: {deleteServerFiles.Count}");
+        
         if (isTestRun) Console.WriteLine("THIS WAS A TEST RUN!!");
     }
 
@@ -167,6 +179,8 @@ public class SyncPairHandler
                     localFilePath = Path.Combine(localFolderPath, serverFile.Name);
                     singleFiles.Enqueue(CreateFilePair(relFilePath, localFilePath, false, serverFile.Path, true));
                 }
+
+                totalFilesCount++;
             }
 
             foreach (KeyValuePair<string, string> localFile in localFiles)
@@ -177,6 +191,7 @@ public class SyncPairHandler
                 if (!CheckAllowAndDenyList(serverFilePath)) continue;
 
                 singleFiles.Enqueue(CreateFilePair(relFilePath, localFile.Value, true, serverFilePath, false));
+                totalFilesCount++;
             }
 
             if (!syncPair.WithSubfolders) return;
@@ -305,16 +320,18 @@ public class SyncPairHandler
                 break;
 
             case SyncActionType.DeleteFromServer:
-                deleteSeverFiles.Enqueue(pair);
+                deleteServerFiles.Enqueue(pair);
                 break;
 
             case SyncActionType.Equal:
                 Console.WriteLine($"File equal: {pair.RelativePath}");
                 CurrentState.AddFile(pair.ToState());
+                equalFilesCount++;
                 break;
 
             case SyncActionType.Ignore:
                 Console.WriteLine($"File ignore: {pair.RelativePath}");
+                ignoreFilesCount++;
                 break;
         }
     }
@@ -463,7 +480,7 @@ public class SyncPairHandler
 
     private async Task DeleteServerFiles()
     {
-        foreach (FilePairModel pair in deleteSeverFiles)
+        foreach (FilePairModel pair in deleteServerFiles)
         {
             try
             {
