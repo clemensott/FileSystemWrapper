@@ -148,7 +148,19 @@ sealed class Program
         await api.LoadConfig();
 
         SyncPairHandler handler = new SyncPairHandler(parsedArgs.IsTestRun, syncPair, api, lastSyncPairState);
+
+        Console.CancelKeyPress += (_, e) =>
+        {
+            if (handler.IsCancelled) return;
+
+            Console.WriteLine("Cancel sync!");
+            handler.Cancel();
+            e.Cancel = true;
+        };
+
         await handler.Run();
+
+        if (handler.IsCancelled) return;
 
         if (!parsedArgs.IsTestRun) WriteSyncPairState(syncPair.StateFilePath, handler.CurrentState);
 

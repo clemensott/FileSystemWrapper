@@ -23,7 +23,7 @@ public class SyncPairHandler
         copyToServerFiles = new(),
         deleteLocalFiles = new(),
         deleteServerFiles = new();
-    
+
     private int totalFilesCount, equalFilesCount, ignoreFilesCount;
 
     private readonly HashSet<string> serverFolderExistsCache = new();
@@ -34,6 +34,8 @@ public class SyncPairHandler
     private readonly Api api;
 
     public SyncPairState CurrentState { get; } = new SyncPairState();
+
+    public bool IsCancelled { get; private set; }
 
     public SyncPairHandler(bool isTestRun, SyncPairModel syncPair, Api api, SyncPairState lastState)
     {
@@ -89,17 +91,30 @@ public class SyncPairHandler
         throw new ArgumentException("Value not Implemented:" + type, nameof(type));
     }
 
+    public void Cancel()
+    {
+        IsCancelled = true;
+    }
+
     public async Task Run()
     {
         Console.WriteLine("SyncPairHandler is running");
 
         await QueryFiles();
+        if (IsCancelled) return;
         await CompareSingleFiles();
+        if (IsCancelled) return;
         await CompareBothFiles();
+        if (IsCancelled) return;
         await CopyFilesToLocal();
+        if (IsCancelled) return;
         await CopyFilesToServer();
+        if (IsCancelled) return;
         DeleteLocalFiles();
+        if (IsCancelled) return;
         await DeleteServerFiles();
+        if (IsCancelled) return;
+
 
         Console.WriteLine("SyncPairHandler is finished");
         Console.WriteLine($"Total files: {totalFilesCount}");
@@ -111,7 +126,7 @@ public class SyncPairHandler
         Console.WriteLine($"Copy to server files: {copyToServerFiles.Count}");
         Console.WriteLine($"Delete local files: {deleteLocalFiles.Count}");
         Console.WriteLine($"Delete server files: {deleteServerFiles.Count}");
-        
+
         if (isTestRun) Console.WriteLine("THIS WAS A TEST RUN!!");
     }
 
@@ -153,6 +168,8 @@ public class SyncPairHandler
         async Task Query(string relPath, string localFolderPath, bool localFolderExists, string serverFolderPath,
             bool serverFolderExists)
         {
+            if (IsCancelled) return;
+
             Console.WriteLine($"Query folder: ./{relPath}");
 
             Task<FolderContent>? serverFolderContentTask =
@@ -163,6 +180,8 @@ public class SyncPairHandler
                 : new Dictionary<string, string>();
 
             FolderContent? serverFolderContent = serverFolderContentTask is null ? null : await serverFolderContentTask;
+
+            if (IsCancelled) return;
 
             foreach (FileSortItem serverFile in (serverFolderContent?.Files).ToNotNull())
             {
@@ -239,9 +258,12 @@ public class SyncPairHandler
 
         foreach (FilePairModel pair in singleComparePairs)
         {
+            if (IsCancelled) return;
+
             try
             {
                 SyncActionType action = await modeHandler.GetActionOfSingleFiles(pair);
+                if (IsCancelled) return;
                 HandleAction(action, pair);
             }
             catch (Exception e)
@@ -265,7 +287,7 @@ public class SyncPairHandler
 
         await fileComparer.GetServerCompareValues(dict.Keys.ToArray(), async (path, value, errorMessage) =>
         {
-            if (!dict.TryGetValue(path, out FilePairModel? pair)) return;
+            if (IsCancelled || !dict.TryGetValue(path, out FilePairModel? pair)) return;
 
             if (value == null)
             {
@@ -288,6 +310,8 @@ public class SyncPairHandler
                 dict.Remove(path);
             }
         });
+
+        if (IsCancelled) return;
 
         foreach (FilePairModel pair in dict.Values)
         {
@@ -340,6 +364,8 @@ public class SyncPairHandler
     {
         foreach (FilePairModel pair in copyToLocalFiles)
         {
+            if (IsCancelled) return;
+
             string errorMessage = "Unkown";
             string? downloadFilePath = null;
             bool isTmpFile = false;
@@ -358,6 +384,7 @@ public class SyncPairHandler
 
                     errorMessage = "Copy file to local error";
                     await api.DownloadFile(pair.ServerFullPath, downloadFilePath);
+                    if (IsCancelled) return;
                     object localCompareValue = await fileComparer.GetLocalCompareValue(downloadFilePath);
 
                     if (isTmpFile)
@@ -368,7 +395,8 @@ public class SyncPairHandler
 
                     pair.LocalCompareValue = localCompareValue;
                     pair.ServerCompareValue ??= await fileComparer.GetServerCompareValue(pair.ServerFullPath);
-                    
+                    if (IsCancelled) return;
+
                     CurrentState.AddFile(pair.ToState());
                 }
 
@@ -402,6 +430,8 @@ public class SyncPairHandler
     {
         foreach (FilePairModel pair in copyToServerFiles)
         {
+            if (IsCancelled) return;
+
             try
             {
                 if (!isTestRun)
@@ -412,11 +442,15 @@ public class SyncPairHandler
                         continue;
                     }
 
+                    if (IsCancelled) return;
+
                     await api.UploadFile(pair.ServerFullPath, pair.LocalFilePath);
+                    if (IsCancelled) return;
 
                     pair.LocalCompareValue ??= await fileComparer.GetLocalCompareValue(pair.LocalFilePath);
                     pair.ServerCompareValue = await fileComparer.GetServerCompareValue(pair.ServerFullPath);
-                    
+                    if (IsCancelled) return;
+
                     CurrentState.AddFile(pair.ToState());
                 }
 
@@ -438,6 +472,9 @@ public class SyncPairHandler
             serverFolderExistsCache.Add(parentPath);
             return true;
         }
+
+        // act like folder was created successfully to prevent error message
+        if (IsCancelled) return true;
 
         string[] parts = serverFilePath.Split(api.Config.DirectorySeparatorChar);
         string currentFolderPath = string.Empty;
@@ -466,6 +503,8 @@ public class SyncPairHandler
     {
         foreach (FilePairModel pair in deleteLocalFiles)
         {
+            if (IsCancelled) return;
+
             try
             {
                 if (!isTestRun) File.Delete(pair.LocalFilePath);
@@ -482,6 +521,8 @@ public class SyncPairHandler
     {
         foreach (FilePairModel pair in deleteServerFiles)
         {
+            if (IsCancelled) return;
+
             try
             {
                 if (isTestRun || await api.DeleteFile(pair.ServerFullPath))
