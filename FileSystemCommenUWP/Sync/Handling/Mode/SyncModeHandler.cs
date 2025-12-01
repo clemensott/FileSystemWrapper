@@ -29,12 +29,12 @@ namespace FileSystemCommonUWP.Sync.Handling.Mode
             switch (conflictHandlingType)
             {
                 case SyncConflictHandlingType.PreferServer:
-                    return SyncActionType.CopyToServerByConflict;
-
-                case SyncConflictHandlingType.PreferLocal:
                     return SyncActionType.CopyToLocalByConflict;
 
-                case SyncConflictHandlingType.Igonre:
+                case SyncConflictHandlingType.PreferLocal:
+                    return SyncActionType.CopyToServerByConflict;
+
+                case SyncConflictHandlingType.Ignore:
                     return SyncActionType.Ignore;
             }
 

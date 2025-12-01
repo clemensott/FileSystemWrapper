@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.Configuration;
 using System.Threading.Tasks;
@@ -204,9 +205,25 @@ namespace FileSystemCommon
         {
             return size.ToString().PadLeft(15, '0');
         }
+        
+        public static Uri GetUri(string resource, IEnumerable<KeyValuePair<string, string>> values = null)
+        {
+            IEnumerable<string> queryPairs = values?.Select(p => string.Format("{0}={1}", p.Key, WebUtility.UrlEncode(p.Value)));
+            string query = string.Join("&", queryPairs ?? Enumerable.Empty<string>());
+            string url = string.Format("{0}?{1}", resource, query);
+
+            try
+            {
+                return new Uri(url, UriKind.Relative);
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         /// <summary>
-        /// Retruns partial data from front and end of file stream.
+        /// Returns partial data from front and end of file stream.
         /// </summary>
         /// <param name="stream">File stream</param>
         /// <param name="size">Amount of bytes to take from front and end of file. Max Value is file length. Returned byte is double this size.</param>

@@ -4,15 +4,15 @@ namespace FileSystemCommon.Models.FileSystem.Files.Many
 {
     public struct FileInfoManyItem
     {
-        public string FilePath { get; }
+        public string FilePath { get; set; }
 
-        public FileItemInfo? Info { get; }
+        public FileItemInfo? Info { get;  set;}
 
-        public HttpStatusCode StatusCode { get; }
+        public HttpStatusCode StatusCode { get;  set;}
 
-        public string ErrorMessage { get; }
+        public string ErrorMessage { get; set; }
 
-        public int? ErrorCode { get; }
+        public int? ErrorCode { get; set; }
 
         public FileInfoManyItem(string filePath, FileItemInfo? info, HttpStatusCode statusCode, string errorMessage, int? errorCode)
         {

@@ -59,7 +59,7 @@ namespace FileSystemUWP.Sync.Definitions
             {
                 [SyncConflictHandlingType.PreferServer] = "Prefer server",
                 [SyncConflictHandlingType.PreferLocal] = "Prefer local",
-                [SyncConflictHandlingType.Igonre] = "Igonre",
+                [SyncConflictHandlingType.Ignore] = "Ignore",
             };
         }
 

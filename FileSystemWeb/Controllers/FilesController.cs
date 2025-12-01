@@ -176,7 +176,7 @@ namespace FileSystemWeb.Controllers
 
                     FileInfo info = new FileInfo(file.PhysicalPath);
                     if (!info.Exists) throw new NotFoundException("File not found.", 9011);
-                    fileItemInfo= FileHelper.GetInfo(file, info);
+                    fileItemInfo = FileHelper.GetInfo(file, info);
                     statusCode = HttpStatusCode.OK;
                 }
                 catch (FileNotFoundException)

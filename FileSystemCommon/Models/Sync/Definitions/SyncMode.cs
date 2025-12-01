@@ -1,4 +1,4 @@
-﻿namespace FileSystemCommonUWP.Sync.Definitions
+﻿namespace FileSystemCommon.Models.Sync.Definitions
 {
     public enum SyncMode
     {
