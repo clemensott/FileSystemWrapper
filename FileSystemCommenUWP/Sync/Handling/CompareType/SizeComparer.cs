@@ -1,6 +1,6 @@
 ﻿using FileSystemCommon.Models.FileSystem.Files;
+using FileSystemCommon.Models.Sync.Definitions;
 using FileSystemCommonUWP.API;
-using FileSystemCommonUWP.Sync.Definitions;
 using System;
 using System.Threading.Tasks;
 using Windows.Storage;

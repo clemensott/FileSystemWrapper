@@ -1,5 +1,4 @@
-﻿using FileSystemCommonUWP.API;
-using FileSystemCommonUWP.Sync.Definitions;
+﻿using FileSystemCommon.Models.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling.CompareType;
 using System;
 using System.Threading.Tasks;

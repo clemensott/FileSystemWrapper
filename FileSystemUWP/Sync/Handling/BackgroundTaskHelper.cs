@@ -1,4 +1,5 @@
 ﻿using FileSystemCommon;
+using FileSystemCommon.Models.Sync.Definitions;
 using FileSystemCommonUWP;
 using FileSystemCommonUWP.API;
 using FileSystemCommonUWP.Database;

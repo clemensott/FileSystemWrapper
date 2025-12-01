@@ -3,6 +3,7 @@ using FileSystemCommon.Models.Configuration;
 using FileSystemCommon.Models.FileSystem;
 using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Folders;
+using FileSystemCommon.Models.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Definitions;
 using StdOttStandard.Linq;
 using StdOttUwp;

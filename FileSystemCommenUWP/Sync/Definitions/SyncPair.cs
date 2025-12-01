@@ -1,4 +1,5 @@
 ﻿using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.Sync.Definitions;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;

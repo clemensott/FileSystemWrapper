@@ -1,5 +1,5 @@
-﻿using FileSystemCommonUWP.Database;
-using FileSystemCommonUWP.Sync.Definitions;
+﻿using FileSystemCommon.Models.Sync.Definitions;
+using FileSystemCommonUWP.Database;
 using FileSystemCommonUWP.Sync.Handling;
 using StdOttStandard;
 using StdOttUwp;
