@@ -486,9 +486,9 @@ public class SyncPairHandler
             {
                 if (isTestRun || await api.DeleteFile(pair.ServerFullPath))
                 {
-                    Console.WriteLine($"Error deleting file from server: {pair.RelativePath}");
+                    Console.WriteLine($"Deleted file from server: {pair.RelativePath}");
                 }
-                else Console.WriteLine($"Deleted file from server: {pair.RelativePath}");
+                else Console.WriteLine($"Error deleting file from server: {pair.RelativePath}");
             }
             catch (Exception e)
             {
