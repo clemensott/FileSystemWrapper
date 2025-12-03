@@ -1,6 +1,8 @@
+using FileSystemCommon.Models.Sync.Handling;
+
 namespace FileSystemCLI.Models;
 
-public struct SyncPairStateFileModel
+public struct SyncPairStateFileModel: IBaseSyncPairStateFile
 {
     public string RelativePath { get; set; }
 
