@@ -61,6 +61,7 @@ public class ParsedArgs
         OptionParseResult result = options.Parse(args)!;
         OptionParsed parsed;
 
+        var v = (SyncMode)Enum.Parse(typeof(SyncMode), "LocalToServerCreateOnly");
         return new ParsedArgs()
         {
             IsTestRun = result.HasValidOptionParseds(isTestRunOption),
@@ -90,10 +91,10 @@ public class ParsedArgs
             Mode = result.TryGetFirstValidOptionParseds(modeOption, out parsed)
                 ? (SyncMode)Enum.Parse(typeof(SyncMode), parsed.Values[0])
                 : null,
-            CompareType = result.TryGetFirstValidOptionParseds(modeOption, out parsed)
+            CompareType = result.TryGetFirstValidOptionParseds(compareTypeOption, out parsed)
                 ? (SyncCompareType)Enum.Parse(typeof(SyncCompareType), parsed.Values[0])
                 : null,
-            ConflictHandling = result.TryGetFirstValidOptionParseds(modeOption, out parsed)
+            ConflictHandling = result.TryGetFirstValidOptionParseds(conflictHandlingOption, out parsed)
                 ? (SyncConflictHandlingType)Enum.Parse(typeof(SyncConflictHandlingType), parsed.Values[0])
                 : null,
             AllowList = result.TryGetFirstValidOptionParseds(allowListOption, out parsed)

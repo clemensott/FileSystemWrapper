@@ -22,6 +22,4 @@ public class SyncPairModel
     public string[]? DenyList { get; init; }
     
     public string? StateFilePath { get; init; }
-    
-    public ApiModel Api { get; init; }
 }
