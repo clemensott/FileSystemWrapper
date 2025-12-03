@@ -1,4 +1,4 @@
-﻿using FileSystemCommonUWP.Sync.Definitions;
+﻿using FileSystemCommon.Models.Sync.Definitions;
 using System.ComponentModel;
 
 namespace FileSystemCommonUWP.Sync.Handling

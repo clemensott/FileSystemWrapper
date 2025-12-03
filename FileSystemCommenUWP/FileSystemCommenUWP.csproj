@@ -143,10 +143,6 @@
     <Compile Include="Sync\Handling\CompareType\HashComparer.cs" />
     <Compile Include="Sync\Handling\CompareType\BaseSyncFileComparer.cs" />
     <Compile Include="Sync\Handling\CompareType\SizeComparer.cs" />
-    <Compile Include="Sync\Definitions\SyncActionType.cs" />
-    <Compile Include="Sync\Definitions\SyncCompareType.cs" />
-    <Compile Include="Sync\Definitions\SyncConflictHandlingType.cs" />
-    <Compile Include="Sync\Definitions\SyncMode.cs" />
     <Compile Include="Sync\Definitions\SyncPair.cs" />
     <Compile Include="Sync\Handling\FilePair.cs" />
     <Compile Include="Sync\Handling\SyncPairHandlerState.cs" />

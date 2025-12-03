@@ -4,15 +4,15 @@ namespace FileSystemCommon.Models.FileSystem.Files.Many
 {
     public struct FileHashManyItem
     {
-        public string FilePath { get; }
+        public string FilePath { get; set; }
 
-        public string Hash { get; }
+        public string Hash { get; set; }
         
-        public HttpStatusCode StatusCode{ get; }
+        public HttpStatusCode StatusCode{ get; set; }
         
-        public string ErrorMessage{ get; }
+        public string ErrorMessage{ get; set; }
         
-        public int? ErrorCode { get; }
+        public int? ErrorCode { get; set; }
 
         public FileHashManyItem(string filePath, string hash, HttpStatusCode statusCode, string errorMessage, int? errorCode)
         {

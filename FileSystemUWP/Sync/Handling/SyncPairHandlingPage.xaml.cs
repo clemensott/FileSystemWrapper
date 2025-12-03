@@ -1,5 +1,5 @@
-﻿using FileSystemCommonUWP.Database;
-using FileSystemCommonUWP.Sync.Definitions;
+﻿using FileSystemCommon.Models.Sync.Definitions;
+using FileSystemCommonUWP.Database;
 using FileSystemCommonUWP.Sync.Handling;
 using StdOttStandard;
 using StdOttUwp;
@@ -103,14 +103,14 @@ namespace FileSystemUWP.Sync.Handling
         {
             switch (value)
             {
-                case SyncConflictHandlingType.Igonre:
+                case SyncConflictHandlingType.Ignore:
                     return "Ignore";
 
                 case SyncConflictHandlingType.PreferServer:
-                    return "Prefere server";
+                    return "Prefer server";
 
                 case SyncConflictHandlingType.PreferLocal:
-                    return "Prefere local";
+                    return "Prefer local";
             }
 
             throw new ArgumentException("type not implemented", nameof(value));

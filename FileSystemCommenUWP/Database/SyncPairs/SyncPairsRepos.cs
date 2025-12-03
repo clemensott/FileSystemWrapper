@@ -1,4 +1,5 @@
 ﻿using FileSystemCommon.Models.FileSystem;
+using FileSystemCommon.Models.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling;
 using FileSystemCommonUWP.Sync.Handling.Progress;

@@ -1,6 +1,6 @@
 ﻿using FileSystemCommon;
+using FileSystemCommon.Models.Sync.Definitions;
 using FileSystemCommonUWP.API;
-using FileSystemCommonUWP.Sync.Definitions;
 using System;
 using System.IO;
 using System.Security.Cryptography;

@@ -2,9 +2,9 @@
 using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Files;
 using FileSystemCommon.Models.FileSystem.Folders;
+using FileSystemCommon.Models.Sync.Definitions;
 using FileSystemCommonUWP.API;
 using FileSystemCommonUWP.Database;
-using FileSystemCommonUWP.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Handling.CompareType;
 using FileSystemCommonUWP.Sync.Handling.Mode;
 using FileSystemCommonUWP.Sync.Handling.Progress;
