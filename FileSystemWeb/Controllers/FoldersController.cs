@@ -208,11 +208,16 @@ namespace FileSystemWeb.Controllers
             {
                 Changes = changes
                     .Take(pageSize)
-                    .Select(fc => new FolderChangeInfo()
+                    .Select(fc =>
                     {
-                        Path = fc.Path,
-                        ChangeType = fc.ChangeType,
-                        Timestamp = fc.Timestamp,
+                        string relativePath = Path.GetRelativePath(folder.PhysicalPath, fc.Path);
+                        return new FolderChangeInfo()
+                        {
+                            Path = ConfigHelper.Public.JoinPaths(folder.VirtualPath, relativePath),
+                            RelativePath = relativePath,
+                            ChangeType = fc.ChangeType,
+                            Timestamp = fc.Timestamp,
+                        };
                     })
                     .ToArray(),
                 Page = page,
@@ -245,11 +250,16 @@ namespace FileSystemWeb.Controllers
             {
                 Changes = changes
                     .Take(pageSize)
-                    .Select(fc => new FileChangeInfo()
+                    .Select(fc =>
                     {
-                        Path = fc.Path,
-                        ChangeType = fc.ChangeType,
-                        Timestamp = fc.Timestamp,
+                        string relativePath = Path.GetRelativePath(folder.PhysicalPath, fc.Path);
+                        return new FileChangeInfo()
+                        {
+                            Path = ConfigHelper.Public.JoinPaths(folder.VirtualPath, relativePath),
+                            RelativePath = relativePath,
+                            ChangeType = fc.ChangeType,
+                            Timestamp = fc.Timestamp,
+                        };
                     })
                     .ToArray(),
                 Page = page,

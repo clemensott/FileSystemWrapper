@@ -4,7 +4,8 @@ namespace FileSystemCommon.Models.FileSystem.Files.Change
     {
         Deleted,
         Written,
-        Moved,
-        Copied,
+        MovedFrom,
+        MovedTo,
+        CopiedTo,
     }
 }
