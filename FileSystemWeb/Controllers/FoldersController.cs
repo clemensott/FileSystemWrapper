@@ -194,6 +194,8 @@ namespace FileSystemWeb.Controllers
 
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
+            
+            if (!folder.Permission.Info) throw new ForbiddenException("No info permission", 7019);
 
             FolderChange[] changes = await dbContext.FolderChanges
                 .Where(fc => fc.Timestamp >= since && fc.Path.StartsWith(folder.PhysicalPath))
@@ -225,10 +227,12 @@ namespace FileSystemWeb.Controllers
             [FromQuery] int page = 0, [FromQuery] int pageSize = 1000)
         {
             string virtualPath = Utils.DecodePath(path);
-            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 7019);
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 7020);
 
             string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
+            
+            if (!folder.Permission.Info) throw new ForbiddenException("No info permission", 7021);
 
             FileChange[] changes = await dbContext.FileChanges
                 .Where(fc => fc.Timestamp >= since && fc.Path.StartsWith(folder.PhysicalPath))
