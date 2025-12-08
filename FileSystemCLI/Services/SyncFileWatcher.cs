@@ -107,21 +107,18 @@ public class SyncFileWatcher
                 (bool isEnd, string[]? files) = changedFiles.DequeueBatch();
                 if (isEnd) break;
 
-                // current batch includes all server changes
+                // Current batch includes all server changes
                 // and therefore the current lastServerChangeFetch can be saved in state
                 DateTime? serverChangeFetch = lastServerChangeFetch;
 
                 HashSet<string> set = new HashSet<string>(files);
-                Console.WriteLine($"Files changed: {string.Join(',', set)}");
 
                 // Wait for files to not be changed in last few seconds (syncDelay)
                 await Task.Delay(syncDelay);
                 string[] delayFiles = changedFiles.ToArray();
-                Console.WriteLine($"Delay files: {string.Join(',', delayFiles)}");
                 // Don't sync files that changed in last few seconds (syncDelay)
                 foreach (string delayFile in delayFiles) set.Remove(delayFile);
 
-                Console.WriteLine($"Syncing files: {string.Join(',', set)}");
                 if (set.Count > 0) await SyncFiles(set.ToArray(), serverChangeFetch);
             }
         });
