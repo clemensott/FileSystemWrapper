@@ -101,6 +101,8 @@ public class SyncPairHandler
     {
         Console.WriteLine("SyncPairHandler is running");
 
+        CurrentState.LastServerChangeSync = DateTime.Now;
+
         await QueryFoldersFiles();
         if (IsCancelled) return;
         await CompareSingleFiles();
@@ -116,6 +118,7 @@ public class SyncPairHandler
         await DeleteServerFiles();
         if (IsCancelled) return;
 
+        CurrentState.LastFullSync = DateTime.Now;
 
         Console.WriteLine("SyncPairHandler is finished");
         Console.WriteLine($"Total files: {totalFilesCount}");
