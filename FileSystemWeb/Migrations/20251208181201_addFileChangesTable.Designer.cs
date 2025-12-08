@@ -90,9 +90,9 @@ namespace FileSystemWeb.Migrations
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEO6HRyENXZR3h4mlSXEv1pGWNOQiF2+bK+bv2gpxVIcokSvZsZwMMz85lFqrq/Nmlw==",
+                            PasswordHash = "AQAAAAEAACcQAAAAENBKFrGvayF7a7Ow8I+ik06fhdpchFjO4rg6OQRrFEW4XNG5JFui5aVLsGH3/KDiAA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "459591ce-a10f-49f2-86ea-95ab90506fb7",
+                            SecurityStamp = "3a54f369-3a45-4ab8-8d22-885a8d8b60d7",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });

@@ -1,17 +1,18 @@
 using System;
 using FileSystemCommon.Models.FileSystem.Files.Change;
+using FileSystemCommon.Models.FileSystem.Folders;
 using Microsoft.EntityFrameworkCore;
 
 namespace FileSystemWeb.Models;
 
 [Index(nameof(Path))]
-public class FileChange
+public class FolderChange
 {
     public int Id { get; set; }
     
     public string Path { get; set; }
     
-    public FileChangeType ChangeType { get; set; }
+    public FolderChangeType ChangeType { get; set; }
     
     public DateTime Timestamp { get; set; }
 }
