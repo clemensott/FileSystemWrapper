@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FileSystemWeb.Models;
 
-[Index(nameof(Path))]
+[Index(nameof(Path), IsUnique = true)]
 public class FileChange
 {
     public int Id { get; set; }

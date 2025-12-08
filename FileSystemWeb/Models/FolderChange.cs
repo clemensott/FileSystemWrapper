@@ -1,11 +1,10 @@
 using System;
-using FileSystemCommon.Models.FileSystem.Files.Change;
 using FileSystemCommon.Models.FileSystem.Folders;
 using Microsoft.EntityFrameworkCore;
 
 namespace FileSystemWeb.Models;
 
-[Index(nameof(Path))]
+[Index(nameof(Path), IsUnique = true)]
 public class FolderChange
 {
     public int Id { get; set; }
