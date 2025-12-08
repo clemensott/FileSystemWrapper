@@ -1,7 +1,9 @@
 using System;
+using Microsoft.EntityFrameworkCore;
 
 namespace FileSystemWeb.Models;
 
+[Index(nameof(Path))]
 public class FileChange
 {
     public int Id { get; set; }

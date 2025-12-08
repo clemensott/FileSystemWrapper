@@ -3,14 +3,16 @@ using System;
 using FileSystemWeb.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FileSystemWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251208181201_addFileChangesTable")]
+    partial class addFileChangesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -88,9 +90,9 @@ namespace FileSystemWeb.Migrations
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAEAACcQAAAAENBKFrGvayF7a7Ow8I+ik06fhdpchFjO4rg6OQRrFEW4XNG5JFui5aVLsGH3/KDiAA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEO6HRyENXZR3h4mlSXEv1pGWNOQiF2+bK+bv2gpxVIcokSvZsZwMMz85lFqrq/Nmlw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "3a54f369-3a45-4ab8-8d22-885a8d8b60d7",
+                            SecurityStamp = "459591ce-a10f-49f2-86ea-95ab90506fb7",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
