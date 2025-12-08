@@ -19,4 +19,8 @@ public class SyncPairConfigModel
     public string[]? DenyList { get; init; }
     
     public string? StateFilePath { get; init; }
+    
+    public string? FullSyncInterval { get; init; }
+    
+    public string? ServerFetchChangesInterval { get; init; }
 }

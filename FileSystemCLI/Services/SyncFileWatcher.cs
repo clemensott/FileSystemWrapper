@@ -8,7 +8,6 @@ namespace FileSystemCLI.Services;
 
 public class SyncFileWatcher
 {
-    private readonly TimeSpan apiInterval = TimeSpan.FromSeconds(10);
     private readonly TimeSpan syncDelay = TimeSpan.FromSeconds(5);
 
     private readonly bool isTestRun;
@@ -48,7 +47,14 @@ public class SyncFileWatcher
 
     private void OnChanged(object sender, FileSystemEventArgs e)
     {
-        changedFiles.Enqueue(Path.GetRelativePath(localFolderPath, e.FullPath));
+        try
+        {
+            changedFiles.Enqueue(Path.GetRelativePath(localFolderPath, e.FullPath));
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine($"Error on file changed: {exc.Message}");
+        }
     }
 
     private async Task<SyncPairState> GetLastSyncPairState()
@@ -95,7 +101,7 @@ public class SyncFileWatcher
                         Console.WriteLine($"Error fetching server changes: {e.Message}");
                     }
 
-                    await Task.Delay(apiInterval);
+                    await Task.Delay(syncPair.ServerFetchChangesInterval);
                 }
             });
         }
@@ -112,6 +118,7 @@ public class SyncFileWatcher
                 DateTime? serverChangeFetch = lastServerChangeFetch;
 
                 HashSet<string> set = new HashSet<string>(files);
+                Console.WriteLine($"Changed {set.Count} files...");
 
                 // Wait for files to not be changed in last few seconds (syncDelay)
                 await Task.Delay(syncDelay);
@@ -141,7 +148,7 @@ public class SyncFileWatcher
         HashSet<string> relativeFilePathsSet = new HashSet<string>(filePairs.Select(f => f.RelativePath));
 
         IEnumerable<SyncPairStateFileModel> currentStateFiles = state
-            .Where(f => relativeFilePathsSet.Contains(f.RelativePath))
+            .Where(f => !relativeFilePathsSet.Contains(f.RelativePath))
             .Concat(handler.CurrentState);
 
         lastState = new SyncPairState(currentStateFiles)

@@ -9,6 +9,16 @@ namespace FileSystemCLI;
 
 sealed class Program
 {
+    private static TimeSpan ParseTimeSpan(string? raw, TimeSpan defaultValue)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return defaultValue;
+
+        TimeSpan value = TimeSpan.Parse(raw);
+        if (value <= TimeSpan.Zero) throw new Exception("Invalid TimeSpan specified (must be greater than zero)");
+
+        return value;
+    }
+
     private static SyncPairsModel? LoadSyncPairFromFile(string? filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath)) return null;
@@ -49,6 +59,8 @@ sealed class Program
                 AllowList = entry.AllowList,
                 DenyList = entry.DenyList,
                 StateFilePath = entry.StateFilePath,
+                FullSyncInterval = ParseTimeSpan(entry.FullSyncInterval, TimeSpan.FromDays(1)),
+                ServerFetchChangesInterval = ParseTimeSpan(entry.ServerFetchChangesInterval, TimeSpan.FromHours(1)),
             }).ToArray(),
             Api = config.Api ?? throw new Exception("No Api specified"),
         };
@@ -101,6 +113,8 @@ sealed class Program
                     DenyList = args.DenyList ??
                                pair?.DenyList,
                     StateFilePath = GetStateFilePath(mode, args.StateFilePath ?? pair?.StateFilePath),
+                    FullSyncInterval = pair?.FullSyncInterval ?? TimeSpan.FromDays(1),
+                    ServerFetchChangesInterval = pair?.ServerFetchChangesInterval ?? TimeSpan.FromHours(1),
                 };
             }).ToArray(),
         };
@@ -122,31 +136,23 @@ sealed class Program
             e.Cancel = true;
         };
 
-        if (initialSync)
+        foreach (SyncPairModel syncPair in syncPairs.Pairs)
         {
-            foreach (SyncPairModel syncPair in syncPairs.Pairs)
+            SyncPairState syncPairState = await SyncPairState.LoadSyncPairState(syncPair.StateFilePath);
+            if (initialSync || syncPairState.LastFullSync + syncPair.FullSyncInterval < DateTime.Now)
             {
-                SyncPairState lastSyncPairState = await SyncPairState.LoadSyncPairState(syncPair.StateFilePath);
-                initialHandler = new SyncPairHandler(isTestRun, syncPair, api, lastSyncPairState);
+                initialHandler = new SyncPairHandler(isTestRun, syncPair, api, syncPairState);
                 await initialHandler.Run();
 
                 if (initialHandler.IsCancelled) return;
 
-                if (!isTestRun) await initialHandler.CurrentState.WriteSyncPairState(syncPair.StateFilePath);
+                syncPairState = initialHandler.CurrentState;
+                if (!isTestRun) await syncPairState.WriteSyncPairState(syncPair.StateFilePath);
+            }
 
-                SyncFileWatcher watcher = new SyncFileWatcher(isTestRun, syncPair, api, initialHandler.CurrentState);
-                watchers.Add(watcher);
-                watcher.Start();
-            }
-        }
-        else
-        {
-            foreach (SyncPairModel syncPair in syncPairs.Pairs)
-            {
-                SyncFileWatcher watcher = new SyncFileWatcher(isTestRun, syncPair, api);
-                watchers.Add(watcher);
-                watcher.Start();
-            }
+            SyncFileWatcher watcher = new SyncFileWatcher(isTestRun, syncPair, api, syncPairState);
+            watchers.Add(watcher);
+            watcher.Start();
         }
 
         await Task.WhenAll(watchers.Select(w => w.AwaitSyncTask()));

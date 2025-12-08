@@ -22,4 +22,8 @@ public class SyncPairModel
     public string[]? DenyList { get; init; }
     
     public string? StateFilePath { get; init; }
+    
+    public TimeSpan FullSyncInterval { get; init; }
+    
+    public TimeSpan ServerFetchChangesInterval { get; init; }
 }
