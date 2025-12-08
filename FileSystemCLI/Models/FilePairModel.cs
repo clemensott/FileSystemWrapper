@@ -6,11 +6,11 @@ public class FilePairModel
 
     public string ServerFullPath { get; init; }
 
-    public bool ServerFileExists { get; init; }
+    public bool ServerFileExists { get; set; }
 
     public string LocalFilePath { get; init; }
 
-    public bool LocalFileExists { get; init; }
+    public bool LocalFileExists { get; set; }
 
     public object? ServerCompareValue { get; set; }
 
