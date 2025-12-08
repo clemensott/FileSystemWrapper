@@ -144,6 +144,14 @@ namespace FileSystemWeb.Controllers
             if (!folder.Permission.Write) throw new ForbiddenException("No write permission", 7014);
 
             DirectoryInfo info = Directory.CreateDirectory(folder.PhysicalPath);
+            await dbContext.FolderChanges.AddAsync(new FolderChange()
+            {
+                Path = folder.PhysicalPath,
+                ChangeType = FolderChangeType.Created,
+                Timestamp = DateTime.Now,
+            });
+            await dbContext.SaveChangesAsync();
+
             return FileHelper.GetInfo(folder, info);
         }
 
@@ -163,6 +171,13 @@ namespace FileSystemWeb.Controllers
             try
             {
                 await Task.Run(() => Directory.Delete(folder.PhysicalPath, recursive));
+                await dbContext.FolderChanges.AddAsync(new FolderChange()
+                {
+                    Path = folder.PhysicalPath,
+                    ChangeType = FolderChangeType.Deleted,
+                    Timestamp = DateTime.Now,
+                });
+                await dbContext.SaveChangesAsync();
             }
             catch (DirectoryNotFoundException)
             {

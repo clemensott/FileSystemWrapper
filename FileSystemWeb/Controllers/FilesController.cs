@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem.Files;
+using FileSystemCommon.Models.FileSystem.Files.Change;
 using FileSystemCommon.Models.FileSystem.Files.Many;
 using FileSystemWeb.Data;
 using FileSystemWeb.Helpers;
@@ -317,6 +318,14 @@ namespace FileSystemWeb.Controllers
                 await using Stream source = System.IO.File.OpenRead(srcFile.PhysicalPath);
                 await using Stream destination = System.IO.File.Create(destFile.PhysicalPath);
                 await source.CopyToAsync(destination);
+                
+                await dbContext.FileChanges.AddAsync(new FileChange()
+                {
+                    Path = destFile.PhysicalPath,
+                    ChangeType = FileChangeType.CopiedTo,
+                    Timestamp = DateTime.Now,
+                });
+                await dbContext.SaveChangesAsync();
             }
             catch (FileNotFoundException)
             {
@@ -345,6 +354,20 @@ namespace FileSystemWeb.Controllers
             try
             {
                 await Task.Run(() => System.IO.File.Move(srcFile.PhysicalPath, destFile.PhysicalPath));
+                
+                DateTime timestamp = DateTime.Now;
+                await dbContext.FileChanges.AddRangeAsync(new FileChange()
+                {
+                    Path = srcFile.PhysicalPath,
+                    ChangeType = FileChangeType.MovedFrom,
+                    Timestamp = timestamp,
+                }, new FileChange()
+                {
+                    Path = destFile.PhysicalPath,
+                    ChangeType = FileChangeType.MovedTo,
+                    Timestamp = timestamp,
+                });
+                await dbContext.SaveChangesAsync();
             }
             catch (FileNotFoundException)
             {
@@ -382,6 +405,14 @@ namespace FileSystemWeb.Controllers
                 {
                     System.IO.File.Move(tmpPath, physicalPath, true);
                 }
+                
+                await dbContext.FileChanges.AddAsync(new FileChange()
+                {
+                    Path = physicalPath,
+                    ChangeType = FileChangeType.Written,
+                    Timestamp = DateTime.Now,
+                });
+                await dbContext.SaveChangesAsync();
             }
             catch (Exception)
             {
@@ -412,6 +443,13 @@ namespace FileSystemWeb.Controllers
             try
             {
                 System.IO.File.Delete(file.PhysicalPath);
+                await dbContext.FileChanges.AddAsync(new FileChange()
+                {
+                    Path = file.PhysicalPath,
+                    ChangeType = FileChangeType.Deleted,
+                    Timestamp = DateTime.Now,
+                });
+                await dbContext.SaveChangesAsync();
             }
             catch (FileNotFoundException)
             {
