@@ -113,9 +113,15 @@ export default class API {
         });
     }
 
-    static deleteFolder(path) {
+    static deleteFolder(path, recursive) {
         return this.fetch('/folders', {
             path,
+            query: [
+                {
+                    key: 'recursive',
+                    value: recursive,
+                }
+            ],
             method: 'DELETE',
         });
     }
@@ -210,7 +216,7 @@ export default class API {
     }
 
     static deleteFileSystemItem(path, isFile) {
-        return isFile ? this.deleteFile(path) : this.deleteFolder(path);
+        return isFile ? this.deleteFile(path) : this.deleteFolder(path, true);
     }
 
     static getShareItems(isFile) {
