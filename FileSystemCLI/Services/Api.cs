@@ -23,7 +23,7 @@ public class Api : IDisposable
 
     public HttpClient Client { get; }
 
-    public Config Config { get; private set; }
+    public Config? Config { get; private set; }
 
     public Api(string baseUrl, string username, string password)
     {
@@ -31,10 +31,7 @@ public class Api : IDisposable
         Username = username;
         Password = password;
 
-        HttpClientHandler clientHandler = new HttpClientHandler();
-        clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
-
-        Client = new HttpClient(clientHandler)
+        Client = new HttpClient()
         {
             BaseAddress = new Uri(BaseUrl),
             DefaultRequestHeaders =

@@ -8,6 +8,29 @@ public static class ApiExtensions
     const long BIG_FILE_SIZE = 30 * 1024 * 1024; // 30 MB
     const long BIG_FILE_CHUNCK_SIZE = 5 * 1024 * 1024; // 5 MB
 
+    public static async Task Ensure(this Api api)
+    {
+        if (!await api.Ping())
+        {
+            Console.WriteLine($"Could not reach server: {api.BaseUrl}");
+            return;
+        }
+
+        if (!await api.IsAuthorized() && !await api.Login())
+        {
+            Console.WriteLine($"Could not login at server: {api.BaseUrl}");
+            return;
+        }
+
+        if (!await api.IsAuthorized())
+        {
+            Console.WriteLine($"Could authenticate at server: {api.BaseUrl}");
+            return;
+        }
+
+        if (api.Config == null) await api.LoadConfig();
+    }
+
     public static async Task UploadFile(this Api api, string serverFilePath, string localFilePath)
     {
         FileInfo fileInfo = new FileInfo(localFilePath);

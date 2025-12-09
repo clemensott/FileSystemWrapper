@@ -3,7 +3,6 @@ using FileSystemCLI.Models;
 using FileSystemCLI.ProgramArguments;
 using FileSystemCLI.Services;
 using FileSystemCommon.Models.Sync.Definitions;
-using StdOttStandard.Linq;
 
 namespace FileSystemCLI;
 
@@ -141,13 +140,21 @@ sealed class Program
             SyncPairState syncPairState = await SyncPairState.LoadSyncPairState(syncPair.StateFilePath);
             if (initialSync || syncPairState.LastFullSync + syncPair.FullSyncInterval < DateTime.Now)
             {
-                initialHandler = new SyncPairHandler(isTestRun, syncPair, api, syncPairState);
-                await initialHandler.Run();
+                try
+                {
+                    await api.Ensure();
+                    initialHandler = new SyncPairHandler(isTestRun, syncPair, api, syncPairState);
+                    await initialHandler.Run();
 
-                if (initialHandler.IsCancelled) return;
+                    if (initialHandler.IsCancelled) return;
 
-                syncPairState = initialHandler.CurrentState;
-                if (!isTestRun) await syncPairState.WriteSyncPairState(syncPair.StateFilePath);
+                    syncPairState = initialHandler.CurrentState;
+                    if (!isTestRun) await syncPairState.WriteSyncPairState(syncPair.StateFilePath);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Error on initial sync before watch: {e.Message}");
+                }
             }
 
             SyncFileWatcher watcher = new SyncFileWatcher(isTestRun, syncPair, api, syncPairState);
@@ -160,6 +167,8 @@ sealed class Program
 
     private static async Task DoSingleCompleteSyncs(bool isTestRun, SyncPairsModel syncPairs, Api api)
     {
+        await api.Ensure();
+
         SyncPairHandler? handler = null;
         Console.CancelKeyPress += (_, e) =>
         {
@@ -192,25 +201,6 @@ sealed class Program
         SyncPairsModel syncPairs = GetSyncPair(parsedArgs);
 
         using Api api = new(syncPairs.Api.BaseUrl, syncPairs.Api.Username, syncPairs.Api.Password);
-        if (!await api.Ping())
-        {
-            Console.WriteLine($"Could not reach server: {api.BaseUrl}");
-            return;
-        }
-
-        if (!await api.Login())
-        {
-            Console.WriteLine($"Could not login at server: {api.BaseUrl}");
-            return;
-        }
-
-        if (!await api.IsAuthorized())
-        {
-            Console.WriteLine($"Could authenticate at server: {api.BaseUrl}");
-            return;
-        }
-
-        await api.LoadConfig();
 
         if (parsedArgs.Watch) await DoWatchSyncs(parsedArgs.IsTestRun, parsedArgs.InitialSync, syncPairs, api);
         else await DoSingleCompleteSyncs(parsedArgs.IsTestRun, syncPairs, api);

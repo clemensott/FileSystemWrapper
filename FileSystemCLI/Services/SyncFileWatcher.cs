@@ -16,6 +16,8 @@ public class SyncFileWatcher
     private readonly Api api;
     private readonly FileSystemWatcher fileSystemWatcher;
     private readonly LockQueue<string> changedFiles = new LockQueue<string>();
+    private readonly HashSet<string> backlog = new HashSet<string>();
+    private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
     private bool isEnabled;
     private Task? syncTask, watchServerTask;
@@ -30,7 +32,7 @@ public class SyncFileWatcher
         this.lastState = lastState;
 
         localFolderPath = Path.GetFullPath(syncPair.LocalFolderPath);
-        serverFolderPath = api.Config.JoinPaths(syncPair.ServerFolderPath);
+        serverFolderPath = syncPair.ServerFolderPath;
 
         fileSystemWatcher = new FileSystemWatcher(localFolderPath);
         fileSystemWatcher.NotifyFilter = NotifyFilters.DirectoryName
@@ -42,18 +44,35 @@ public class SyncFileWatcher
         fileSystemWatcher.Changed += OnChanged;
         fileSystemWatcher.Created += OnChanged;
         fileSystemWatcher.Deleted += OnChanged;
-        fileSystemWatcher.Renamed += OnChanged;
+        fileSystemWatcher.Renamed += OnRenamed;
     }
 
     private void OnChanged(object sender, FileSystemEventArgs e)
     {
         try
         {
+            Console.WriteLine($"OnChanged: {e.ChangeType} => {e.FullPath}");
             changedFiles.Enqueue(Path.GetRelativePath(localFolderPath, e.FullPath));
         }
         catch (Exception exc)
         {
             Console.WriteLine($"Error on file changed: {exc.Message}");
+        }
+    }
+
+    private void OnRenamed(object sender, RenamedEventArgs e)
+    {
+        try
+        {
+            changedFiles.Enqueue(new string[]
+            {
+                Path.GetRelativePath(localFolderPath, e.OldFullPath),
+                Path.GetRelativePath(localFolderPath, e.FullPath),
+            });
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine($"Error on file renamed: {exc.Message}");
         }
     }
 
@@ -86,6 +105,7 @@ public class SyncFileWatcher
                         SyncPairState state = await GetLastSyncPairState();
                         DateTime since = lastServerChangeFetch ?? state.LastServerChangeSync;
 
+                        await api.Ensure();
                         List<FileChangeInfo> fileChanges =
                             await api.GetAllFileChanges(serverFolderPath, since);
 
@@ -101,7 +121,14 @@ public class SyncFileWatcher
                         Console.WriteLine($"Error fetching server changes: {e.Message}");
                     }
 
-                    await Task.Delay(syncPair.ServerFetchChangesInterval);
+                    try
+                    {
+                        await Task.Delay(syncPair.ServerFetchChangesInterval, cancellationTokenSource.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return;
+                    }
                 }
             });
         }
@@ -110,29 +137,52 @@ public class SyncFileWatcher
         {
             while (isEnabled)
             {
-                (bool isEnd, string[]? files) = changedFiles.DequeueBatch();
-                if (isEnd) break;
+                if (backlog.Count == 0 || changedFiles.Count > 0)
+                {
+                    (_, string[]? files) = changedFiles.DequeueBatch();
+                    if (!isEnabled) break;
 
-                // Current batch includes all server changes
-                // and therefore the current lastServerChangeFetch can be saved in state
-                DateTime? serverChangeFetch = lastServerChangeFetch;
+                    foreach (string file in files) backlog.Add(file);
+                }
 
-                HashSet<string> set = new HashSet<string>(files);
-                Console.WriteLine($"Changed {set.Count} files...");
+                try
+                {
+                    // Current batch includes all server changes
+                    // and therefore the current lastServerChangeFetch can be saved in state
+                    DateTime? serverChangeFetch = lastServerChangeFetch;
 
-                // Wait for files to not be changed in last few seconds (syncDelay)
-                await Task.Delay(syncDelay);
-                string[] delayFiles = changedFiles.ToArray();
-                // Don't sync files that changed in last few seconds (syncDelay)
-                foreach (string delayFile in delayFiles) set.Remove(delayFile);
+                    HashSet<string> set = new HashSet<string>(backlog);
+                    Console.WriteLine($"Changed {set.Count} files...");
 
-                if (set.Count > 0) await SyncFiles(set.ToArray(), serverChangeFetch);
+                    try
+                    {
+                        // Wait for files to not be changed in last few seconds (syncDelay)
+                        await Task.Delay(syncDelay, cancellationTokenSource.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return;
+                    }
+
+                    string[] delayFiles = changedFiles.ToArray();
+                    // Don't sync files that changed in last few seconds (syncDelay)
+                    foreach (string delayFile in delayFiles) set.Remove(delayFile);
+
+                    if (set.Count > 0) await SyncFiles(set.ToArray(), serverChangeFetch);
+                    backlog.Clear();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Error syncing files: {e.Message}");
+                }
             }
         });
     }
 
     private async Task SyncFiles(string[] relativeFilePaths, DateTime? serverChangeFetch)
     {
+        await api.Ensure();
+
         Console.WriteLine($"Syncing {relativeFilePaths.Length} files...");
         IEnumerable<FilePairModel> filePairs = relativeFilePaths.Select(relativeFilePath => new FilePairModel()
         {
@@ -171,6 +221,7 @@ public class SyncFileWatcher
         fileSystemWatcher.EnableRaisingEvents = false;
 
         changedFiles.End();
+        cancellationTokenSource.Cancel();
     }
 
     public async Task AwaitSyncTask()
