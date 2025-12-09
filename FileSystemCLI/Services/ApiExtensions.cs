@@ -1,3 +1,6 @@
+using FileSystemCommon.Models.FileSystem.Files.Change;
+using FileSystemCommon.Models.FileSystem.Folders.Change;
+
 namespace FileSystemCLI.Services;
 
 public static class ApiExtensions
@@ -49,5 +52,43 @@ public static class ApiExtensions
         {
             if (uploadUuid != null) api.CancelBigFileUpload(uploadUuid);
         }
+    }
+
+    public static async Task<List<FileChangeInfo>> GetAllFileChanges(this Api api, string serverFolderPath,
+        DateTime since)
+    {
+        int page = 0;
+        int pageSize = 1;
+        List<FileChangeInfo> changes = new List<FileChangeInfo>();
+
+        while (true)
+        {
+            FileChangeResult result = await api.GetFileChanges(serverFolderPath, since, page, pageSize);
+            changes.AddRange(result.Changes);
+
+            if (!result.HasMore) break;
+            page++;
+        }
+
+        return changes;
+    }
+
+    public static async Task<List<FolderChangeInfo>> GetAllFolderChanges(this Api api, string serverFolderPath,
+        DateTime since)
+    {
+        int page = 0;
+        int pageSize = 1000;
+        List<FolderChangeInfo> changes = new List<FolderChangeInfo>();
+
+        while (true)
+        {
+            FolderChangeResult result = await api.GetFolderChanges(serverFolderPath, since, page, pageSize);
+            changes.AddRange(result.Changes);
+
+            if (!result.HasMore) break;
+            page++;
+        }
+
+        return changes;
     }
 }

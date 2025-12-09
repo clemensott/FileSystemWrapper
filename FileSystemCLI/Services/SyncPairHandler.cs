@@ -1,3 +1,4 @@
+using System.Net;
 using FileSystemCLI.Models;
 using FileSystemCLI.Services.CompareType;
 using FileSystemCLI.Services.Mode;
@@ -24,7 +25,7 @@ public class SyncPairHandler
         deleteLocalFiles = new(),
         deleteServerFiles = new();
 
-    private int totalFilesCount, equalFilesCount, ignoreFilesCount;
+    private int totalFilesCount, equalFilesCount, ignoreFilesCount, errorFilesCount;
 
     private readonly HashSet<string> serverFolderExistsCache = new();
 
@@ -100,7 +101,45 @@ public class SyncPairHandler
     {
         Console.WriteLine("SyncPairHandler is running");
 
-        await QueryFiles();
+        CurrentState.LastServerChangeSync = DateTime.Now;
+
+        await QueryFoldersFiles();
+        if (IsCancelled) return;
+        await CompareSingleFiles();
+        if (IsCancelled) return;
+        await CompareBothFiles();
+        if (IsCancelled) return;
+        await CopyFilesToLocal();
+        if (IsCancelled) return;
+        await CopyFilesToServer();
+        if (IsCancelled) return;
+        DeleteLocalFiles();
+        if (IsCancelled) return;
+        await DeleteServerFiles();
+        if (IsCancelled) return;
+
+        CurrentState.LastFullSync = DateTime.Now;
+
+        Console.WriteLine("SyncPairHandler is finished");
+        Console.WriteLine($"Total files: {totalFilesCount}");
+        Console.WriteLine($"Equal files: {equalFilesCount}");
+        Console.WriteLine($"Ignore files: {ignoreFilesCount}");
+        Console.WriteLine($"Ignore files: {errorFilesCount}");
+        Console.WriteLine($"Both files: {bothFiles.Count}");
+        Console.WriteLine($"Single files: {singleFiles.Count}");
+        Console.WriteLine($"Copy to local files: {copyToLocalFiles.Count}");
+        Console.WriteLine($"Copy to server files: {copyToServerFiles.Count}");
+        Console.WriteLine($"Delete local files: {deleteLocalFiles.Count}");
+        Console.WriteLine($"Delete server files: {deleteServerFiles.Count}");
+
+        if (isTestRun) Console.WriteLine("THIS WAS A TEST RUN!!");
+    }
+
+    public async Task Run(IEnumerable<FilePairModel> filePairs)
+    {
+        Console.WriteLine("SyncPairHandler is running specific files");
+
+        await QuerySpecificFiles(filePairs);
         if (IsCancelled) return;
         await CompareSingleFiles();
         if (IsCancelled) return;
@@ -116,10 +155,11 @@ public class SyncPairHandler
         if (IsCancelled) return;
 
 
-        Console.WriteLine("SyncPairHandler is finished");
+        Console.WriteLine("SyncPairHandler is finished specific files");
         Console.WriteLine($"Total files: {totalFilesCount}");
         Console.WriteLine($"Equal files: {equalFilesCount}");
         Console.WriteLine($"Ignore files: {ignoreFilesCount}");
+        Console.WriteLine($"Ignore files: {errorFilesCount}");
         Console.WriteLine($"Both files: {bothFiles.Count}");
         Console.WriteLine($"Single files: {singleFiles.Count}");
         Console.WriteLine($"Copy to local files: {copyToLocalFiles.Count}");
@@ -157,7 +197,7 @@ public class SyncPairHandler
         };
     }
 
-    private async Task QueryFiles()
+    private async Task QueryFoldersFiles()
     {
         bool localRootFolderExists = Directory.Exists(syncPair.LocalFolderPath);
         bool serverRootFolderExists = await api.FolderExists(syncPair.ServerFolderPath);
@@ -244,6 +284,57 @@ public class SyncPairHandler
         }
     }
 
+    private async Task QuerySpecificFiles(IEnumerable<FilePairModel> filePairs)
+    {
+        Dictionary<string, FilePairModel> dict = filePairs.ToDictionary(p => p.ServerFullPath);
+
+        await api.GetFilesExits(dict.Keys.ToArray(), item =>
+        {
+            if (IsCancelled || !dict.TryGetValue(item.FilePath, out FilePairModel? pair)) return Task.CompletedTask;
+
+            try
+            {
+                if (item.StatusCode is HttpStatusCode.OK or HttpStatusCode.NotFound)
+                {
+                    pair.ServerFileExists = item.Exists ?? false;
+                }
+                else
+                {
+                    Console.WriteLine(
+                        $"Error file exists {pair.RelativePath}: HTTP {item.StatusCode} {item.ErrorMessage} ({item.ErrorCode})");
+                    return Task.CompletedTask;
+                }
+
+                pair.LocalFileExists = File.Exists(pair.LocalFilePath);
+
+                if (!pair.LocalFileExists && !pair.ServerFileExists)
+                {
+                    Console.WriteLine($"File doesn't exists: {pair.RelativePath}");
+                }
+                else if (!pair.LocalFileExists || !pair.ServerFileExists) singleFiles.Enqueue(pair);
+                else bothFiles.Enqueue(pair);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Compare unknown files error {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
+            }
+            finally
+            {
+                dict.Remove(item.FilePath);
+            }
+
+            return Task.CompletedTask;
+        });
+
+        if (IsCancelled) return;
+
+        foreach (FilePairModel pair in dict.Values)
+        {
+            Console.WriteLine($"Compare unknown files no response: {pair.RelativePath}");
+        }
+    }
+
     private async Task CompareSingleFiles()
     {
         IEnumerable<FilePairModel> singleComparePairs;
@@ -269,6 +360,7 @@ public class SyncPairHandler
             catch (Exception e)
             {
                 Console.WriteLine($"Compare single file error {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
             }
         }
     }
@@ -303,7 +395,8 @@ public class SyncPairHandler
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Compare files batch error: {pair.RelativePath}");
+                Console.WriteLine($"Compare files batch error {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
             }
             finally
             {
@@ -406,6 +499,7 @@ public class SyncPairHandler
             catch (Exception e)
             {
                 Console.WriteLine($"Error copying file to local {pair.RelativePath}: ({errorMessage}) {e.Message}");
+                errorFilesCount++;
             }
 
             try
@@ -439,6 +533,7 @@ public class SyncPairHandler
                     if (!await TryCreateServerFolder(pair.ServerFullPath))
                     {
                         Console.WriteLine($"Create server folder, to copy file to, failed: {pair.RelativePath}");
+                        errorFilesCount++;
                         continue;
                     }
 
@@ -459,6 +554,7 @@ public class SyncPairHandler
             catch (Exception e)
             {
                 Console.WriteLine($"Error copying file to server {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
             }
         }
     }
@@ -513,6 +609,7 @@ public class SyncPairHandler
             catch (Exception e)
             {
                 Console.WriteLine($"Error deleting file from local {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
             }
         }
     }
@@ -529,11 +626,16 @@ public class SyncPairHandler
                 {
                     Console.WriteLine($"Deleted file from server: {pair.RelativePath}");
                 }
-                else Console.WriteLine($"Error deleting file from server: {pair.RelativePath}");
+                else
+                {
+                    Console.WriteLine($"Error deleting file from server: {pair.RelativePath}");
+                    errorFilesCount++;
+                }
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Error deleting file from server {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
             }
         }
     }

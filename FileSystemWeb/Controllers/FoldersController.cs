@@ -1,14 +1,20 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using FileSystemCommon;
 using FileSystemCommon.Models.FileSystem.Content;
+using FileSystemCommon.Models.FileSystem.Files.Change;
 using FileSystemCommon.Models.FileSystem.Folders;
+using FileSystemCommon.Models.FileSystem.Folders.Change;
 using FileSystemWeb.Data;
 using FileSystemWeb.Helpers;
+using FileSystemWeb.Models;
 using FileSystemWeb.Models.Exceptions;
 using FileSystemWeb.Models.Internal;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FileSystemWeb.Controllers
 {
@@ -96,7 +102,8 @@ namespace FileSystemWeb.Controllers
 
         [HttpGet("infoWithSize")]
         [HttpGet("{encodedVirtualPath}/infoWithSize")]
-        public async Task<ActionResult<FolderItemInfoWithSize>> GetInfoWithSize(string encodedVirtualPath, [FromQuery] string path)
+        public async Task<ActionResult<FolderItemInfoWithSize>> GetInfoWithSize(string encodedVirtualPath,
+            [FromQuery] string path)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) throw new BadRequestException("Path encoding error.", 7009);
@@ -137,12 +144,20 @@ namespace FileSystemWeb.Controllers
             if (!folder.Permission.Write) throw new ForbiddenException("No write permission", 7014);
 
             DirectoryInfo info = Directory.CreateDirectory(folder.PhysicalPath);
+            await dbContext.UpsertFolderChanges(new FolderChange()
+            {
+                Path = folder.PhysicalPath,
+                ChangeType = FolderChangeType.Created,
+                Timestamp = DateTime.Now,
+            });
+
             return FileHelper.GetInfo(folder, info);
         }
 
         [HttpDelete("")]
         [HttpDelete("{encodedVirtualPath}")]
-        public async Task<ActionResult> Delete(string encodedVirtualPath, [FromQuery] string path, [FromQuery] bool recursive)
+        public async Task<ActionResult> Delete(string encodedVirtualPath, [FromQuery] string path,
+            [FromQuery] bool recursive)
         {
             string virtualPath = Utils.DecodePath(encodedVirtualPath ?? path);
             if (virtualPath == null) throw new BadRequestException("Path encoding error.", 7015);
@@ -155,6 +170,12 @@ namespace FileSystemWeb.Controllers
             try
             {
                 await Task.Run(() => Directory.Delete(folder.PhysicalPath, recursive));
+                await dbContext.UpsertFolderChanges(new FolderChange()
+                {
+                    Path = folder.PhysicalPath,
+                    ChangeType = FolderChangeType.Deleted,
+                    Timestamp = DateTime.Now,
+                });
             }
             catch (DirectoryNotFoundException)
             {
@@ -162,6 +183,90 @@ namespace FileSystemWeb.Controllers
             }
 
             return Ok();
+        }
+
+        [HttpGet("folderChanges")]
+        public async Task<ActionResult<FolderChangeResult>> FolderChanges([FromQuery] string path, [FromQuery] DateTime since,
+            [FromQuery] int page = 0, [FromQuery] int pageSize = 1000)
+        {
+            string virtualPath = Utils.DecodePath(path);
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 7018);
+
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
+            
+            if (!folder.Permission.Info) throw new ForbiddenException("No info permission", 7019);
+
+            FolderChange[] changes = await dbContext.FolderChanges
+                .Where(fc => fc.Timestamp >= since && fc.Path.StartsWith(folder.PhysicalPath))
+                .OrderBy(fc => fc.Timestamp)
+                .Skip(page * pageSize)
+                .Take(pageSize + 1)
+                .ToArrayAsync();
+
+            return new FolderChangeResult()
+            {
+                Changes = changes
+                    .Take(pageSize)
+                    .Select(fc =>
+                    {
+                        string relativePath = Path.GetRelativePath(folder.PhysicalPath, fc.Path);
+                        return new FolderChangeInfo()
+                        {
+                            Path = ConfigHelper.Public.JoinPaths(folder.VirtualPath, relativePath),
+                            RelativePath = relativePath,
+                            ChangeType = fc.ChangeType,
+                            Timestamp = fc.Timestamp,
+                        };
+                    })
+                    .ToArray(),
+                Page = page,
+                PageSize = pageSize,
+                HasMore = changes.Length > pageSize,
+                NextTimestamp = changes.LastOrDefault()?.Timestamp,
+            };
+        }
+
+        [HttpGet("fileChanges")]
+        public async Task<ActionResult<FileChangeResult>> FileChanges([FromQuery] string path, [FromQuery] DateTime since,
+            [FromQuery] int page = 0, [FromQuery] int pageSize = 1000)
+        {
+            string virtualPath = Utils.DecodePath(path);
+            if (virtualPath == null) throw new BadRequestException("Path encoding error.", 7020);
+
+            string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            InternalFolder folder = await ShareFolderHelper.GetFolderItem(virtualPath, dbContext, userId);
+            
+            if (!folder.Permission.Info) throw new ForbiddenException("No info permission", 7021);
+
+            FileChange[] changes = await dbContext.FileChanges
+                .Where(fc => fc.Timestamp >= since && fc.Path.StartsWith(folder.PhysicalPath))
+                .OrderBy(fc => fc.Timestamp)
+                .Skip(page * pageSize)
+                .Take(pageSize + 1)
+                .ToArrayAsync();
+
+            return new FileChangeResult()
+            {
+                Changes = changes
+                    .Take(pageSize)
+                    .Select(fc =>
+                    {
+                        string relativePath = Path.GetRelativePath(folder.PhysicalPath, fc.Path);
+                        return new FileChangeInfo()
+                        {
+                            Path = ConfigHelper.Public.JoinPaths(folder.VirtualPath, relativePath),
+                            RelativePath = relativePath,
+                            ChangeType = fc.ChangeType,
+                            Timestamp = fc.Timestamp,
+                        };
+                    })
+                    .ToArray(),
+                Page = page,
+                PageSize = pageSize,
+                HasMore = changes.Length > pageSize,
+                NextTimestamp = changes.LastOrDefault()?.Timestamp,
+            };
         }
     }
 }

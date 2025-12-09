@@ -16,6 +16,10 @@ namespace FileSystemWeb.Data
         public DbSet<FileItemPermission> FileItemPermissions { get; set; }
 
         public DbSet<BigFileUpload> BigFileUploads { get; set; }
+        
+        public DbSet<FileChange> FileChanges { get; set; }
+        
+        public DbSet<FolderChange> FolderChanges { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

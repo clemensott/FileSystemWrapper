@@ -9,6 +9,16 @@ namespace FileSystemCLI;
 
 sealed class Program
 {
+    private static TimeSpan ParseTimeSpan(string? raw, TimeSpan defaultValue)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return defaultValue;
+
+        TimeSpan value = TimeSpan.Parse(raw);
+        if (value <= TimeSpan.Zero) throw new Exception("Invalid TimeSpan specified (must be greater than zero)");
+
+        return value;
+    }
+
     private static SyncPairsModel? LoadSyncPairFromFile(string? filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath)) return null;
@@ -49,6 +59,8 @@ sealed class Program
                 AllowList = entry.AllowList,
                 DenyList = entry.DenyList,
                 StateFilePath = entry.StateFilePath,
+                FullSyncInterval = ParseTimeSpan(entry.FullSyncInterval, TimeSpan.FromDays(1)),
+                ServerFetchChangesInterval = ParseTimeSpan(entry.ServerFetchChangesInterval, TimeSpan.FromHours(1)),
             }).ToArray(),
             Api = config.Api ?? throw new Exception("No Api specified"),
         };
@@ -68,7 +80,7 @@ sealed class Program
     {
         SyncPairsModel? fileSyncPairs = LoadSyncPairFromFile(args.ConfigFilePath);
 
-        SyncPairModel?[] pairs = fileSyncPairs?.Pairs ?? new SyncPairModel?[] { null }; 
+        SyncPairModel?[] pairs = fileSyncPairs?.Pairs ?? new SyncPairModel?[] { null };
         return new SyncPairsModel()
         {
             Api = new ApiModel()
@@ -101,31 +113,76 @@ sealed class Program
                     DenyList = args.DenyList ??
                                pair?.DenyList,
                     StateFilePath = GetStateFilePath(mode, args.StateFilePath ?? pair?.StateFilePath),
+                    FullSyncInterval = pair?.FullSyncInterval ?? TimeSpan.FromDays(1),
+                    ServerFetchChangesInterval = pair?.ServerFetchChangesInterval ?? TimeSpan.FromHours(1),
                 };
             }).ToArray(),
         };
     }
 
-    private static SyncPairState LoadSyncPairState(string? stateFilePath)
+    private static async Task DoWatchSyncs(bool isTestRun, bool initialSync, SyncPairsModel syncPairs, Api api)
     {
-        SyncPairState state = new SyncPairState();
-        if (string.IsNullOrWhiteSpace(stateFilePath) || !File.Exists(stateFilePath)) return state;
+        SyncPairHandler? initialHandler = null;
+        List<SyncFileWatcher> watchers = new List<SyncFileWatcher>();
 
-        string json = File.ReadAllText(stateFilePath);
-        SyncPairStateFileModel[]? files = JsonSerializer.Deserialize<SyncPairStateFileModel[]>(json);
-        if (files is null) throw new Exception("State files are missing");
+        bool isCanceled = false;
+        Console.CancelKeyPress += (_, e) =>
+        {
+            if (isCanceled) return;
 
-        foreach (SyncPairStateFileModel file in files.ToNotNull()) state.AddFile(file);
+            Console.WriteLine("Cancel sync!");
+            initialHandler?.Cancel();
+            foreach (SyncFileWatcher watcher in watchers) watcher.Stop();
+            e.Cancel = true;
+        };
 
-        return state;
+        foreach (SyncPairModel syncPair in syncPairs.Pairs)
+        {
+            SyncPairState syncPairState = await SyncPairState.LoadSyncPairState(syncPair.StateFilePath);
+            if (initialSync || syncPairState.LastFullSync + syncPair.FullSyncInterval < DateTime.Now)
+            {
+                initialHandler = new SyncPairHandler(isTestRun, syncPair, api, syncPairState);
+                await initialHandler.Run();
+
+                if (initialHandler.IsCancelled) return;
+
+                syncPairState = initialHandler.CurrentState;
+                if (!isTestRun) await syncPairState.WriteSyncPairState(syncPair.StateFilePath);
+            }
+
+            SyncFileWatcher watcher = new SyncFileWatcher(isTestRun, syncPair, api, syncPairState);
+            watchers.Add(watcher);
+            watcher.Start();
+        }
+
+        await Task.WhenAll(watchers.Select(w => w.AwaitSyncTask()));
     }
 
-    private static void WriteSyncPairState(string? stateFilePath, SyncPairState state)
+    private static async Task DoSingleCompleteSyncs(bool isTestRun, SyncPairsModel syncPairs, Api api)
     {
-        if (string.IsNullOrWhiteSpace(stateFilePath)) return;
+        SyncPairHandler? handler = null;
+        Console.CancelKeyPress += (_, e) =>
+        {
+            SyncPairHandler? currentHandler = handler;
+            if (currentHandler is null || currentHandler.IsCancelled) return;
 
-        string json = JsonSerializer.Serialize(state.ToArray());
-        File.WriteAllText(stateFilePath, json);
+            Console.WriteLine("Cancel sync!");
+            currentHandler.Cancel();
+            e.Cancel = true;
+        };
+
+        foreach (SyncPairModel syncPair in syncPairs.Pairs)
+        {
+            SyncPairState lastSyncPairState = await SyncPairState.LoadSyncPairState(syncPair.StateFilePath);
+            handler = new SyncPairHandler(isTestRun, syncPair, api, lastSyncPairState);
+            await handler.Run();
+
+            if (handler.IsCancelled) return;
+
+            if (!isTestRun) await handler.CurrentState.WriteSyncPairState(syncPair.StateFilePath);
+        }
+
+        Console.WriteLine("Sync finished successfully!!");
     }
 
     public static async Task Main(string[] args)
@@ -155,29 +212,7 @@ sealed class Program
 
         await api.LoadConfig();
 
-        SyncPairHandler? handler = null;
-        Console.CancelKeyPress += (_, e) =>
-        {
-            SyncPairHandler? currentHandler = handler;
-            if (currentHandler is null || currentHandler.IsCancelled) return;
-
-            Console.WriteLine("Cancel sync!");
-            currentHandler.Cancel();
-            e.Cancel = true;
-        };
-
-        foreach (SyncPairModel syncPair in syncPairs.Pairs)
-        {
-            SyncPairState lastSyncPairState = LoadSyncPairState(syncPair.StateFilePath);
-
-            handler = new SyncPairHandler(parsedArgs.IsTestRun, syncPair, api, lastSyncPairState);
-            await handler.Run();
-
-            if (handler.IsCancelled) return;
-
-            if (!parsedArgs.IsTestRun) WriteSyncPairState(syncPair.StateFilePath, handler.CurrentState);
-        }
-
-        Console.WriteLine("Sync finished successfully!!");
+        if (parsedArgs.Watch) await DoWatchSyncs(parsedArgs.IsTestRun, parsedArgs.InitialSync, syncPairs, api);
+        else await DoSingleCompleteSyncs(parsedArgs.IsTestRun, syncPairs, api);
     }
 }
