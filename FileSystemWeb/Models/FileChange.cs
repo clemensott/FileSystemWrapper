@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FileSystemWeb.Models;
 
 [Index(nameof(Path), IsUnique = true)]
+[Index(nameof(Timestamp))]
 public class FileChange
 {
     public int Id { get; set; }
