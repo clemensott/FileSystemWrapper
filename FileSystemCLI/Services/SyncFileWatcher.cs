@@ -51,7 +51,6 @@ public class SyncFileWatcher
     {
         try
         {
-            Console.WriteLine($"OnChanged: {e.ChangeType} => {e.FullPath}");
             changedFiles.Enqueue(Path.GetRelativePath(localFolderPath, e.FullPath));
         }
         catch (Exception exc)
