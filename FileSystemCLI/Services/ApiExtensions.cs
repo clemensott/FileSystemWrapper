@@ -8,27 +8,36 @@ public static class ApiExtensions
     const long BIG_FILE_SIZE = 30 * 1024 * 1024; // 30 MB
     const long BIG_FILE_CHUNCK_SIZE = 5 * 1024 * 1024; // 5 MB
 
+    private static readonly SemaphoreSlim ensureSem = new SemaphoreSlim(1,1);
     public static async Task Ensure(this Api api)
     {
-        if (!await api.Ping())
+        try
         {
-            Console.WriteLine($"Could not reach server: {api.BaseUrl}");
-            return;
-        }
+            await ensureSem.WaitAsync();
+            if (!await api.Ping())
+            {
+                Console.WriteLine($"Could not reach server: {api.BaseUrl}");
+                return;
+            }
 
-        if (!await api.IsAuthorized() && !await api.Login())
+            if (!await api.IsAuthorized() && !await api.Login())
+            {
+                Console.WriteLine($"Could not login at server: {api.BaseUrl}");
+                return;
+            }
+
+            if (!await api.IsAuthorized())
+            {
+                Console.WriteLine($"Could authenticate at server: {api.BaseUrl}");
+                return;
+            }
+
+            if (api.Config == null) await api.LoadConfig();
+        }
+        finally
         {
-            Console.WriteLine($"Could not login at server: {api.BaseUrl}");
-            return;
+            ensureSem.Release();
         }
-
-        if (!await api.IsAuthorized())
-        {
-            Console.WriteLine($"Could authenticate at server: {api.BaseUrl}");
-            return;
-        }
-
-        if (api.Config == null) await api.LoadConfig();
     }
 
     public static async Task UploadFile(this Api api, string serverFilePath, string localFilePath)
@@ -81,7 +90,7 @@ public static class ApiExtensions
         DateTime since)
     {
         int page = 0;
-        int pageSize = 1;
+        int pageSize = 1000;
         List<FileChangeInfo> changes = new List<FileChangeInfo>();
 
         while (true)

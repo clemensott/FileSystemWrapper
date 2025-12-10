@@ -266,7 +266,7 @@ public class Api : IDisposable
                 "page", page.ToString(),
                 "pageSize", pageSize.ToString()
             ));
-        
+
         return Request<FileChangeResult>(uri, HttpMethod.Get);
     }
 
@@ -279,7 +279,7 @@ public class Api : IDisposable
                 "page", page.ToString(),
                 "pageSize", pageSize.ToString()
             ));
-        
+
         return Request<FolderChangeResult>(uri, HttpMethod.Get);
     }
 

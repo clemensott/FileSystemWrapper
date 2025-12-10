@@ -109,7 +109,7 @@ public class SyncFileWatcher
                         List<FileChangeInfo> fileChanges =
                             await api.GetAllFileChanges(serverFolderPath, since);
 
-                        lastServerChangeFetch = DateTime.Now;
+                        lastServerChangeFetch = DateTime.UtcNow;
 
                         if (fileChanges.Count > 0)
                         {

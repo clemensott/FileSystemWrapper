@@ -138,7 +138,7 @@ sealed class Program
         foreach (SyncPairModel syncPair in syncPairs.Pairs)
         {
             SyncPairState syncPairState = await SyncPairState.LoadSyncPairState(syncPair.StateFilePath);
-            if (initialSync || syncPairState.LastFullSync + syncPair.FullSyncInterval < DateTime.Now)
+            if (initialSync || syncPairState.LastFullSync + syncPair.FullSyncInterval < DateTime.UtcNow)
             {
                 try
                 {
