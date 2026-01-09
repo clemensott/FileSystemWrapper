@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -66,7 +67,25 @@ namespace FileSystemWeb
                 config.Cookie.HttpOnly = true;
             });
 
-            services.AddControllersWithViews();
+            services.AddAntiforgery(options =>
+            {
+                // Set Cookie properties using CookieBuilder properties†.
+                options.Cookie.Name = "fs_csrf";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.IsEssential = true;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.Expiration = null;
+                options.Cookie.MaxAge = null;
+                options.FormFieldName = "AntiforgeryFieldname";
+                options.HeaderName = "X-CSRF-TOKEN-HEADERNAME";
+                options.SuppressXFrameOptionsHeader = false;
+            });
+
+            services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+            });
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
@@ -94,17 +113,11 @@ namespace FileSystemWeb
             app.UseAuthentication();
             app.UseAuthorization();
 
-            if (!env.IsDevelopment())
-            {
-                string sslCertificateDirPath = Path.Combine(Directory.GetCurrentDirectory(), @".well-known");
-                if (!Directory.Exists(sslCertificateDirPath)) Directory.CreateDirectory(sslCertificateDirPath);
-                app.UseStaticFiles(new StaticFileOptions
-                {
-                    FileProvider = new PhysicalFileProvider(sslCertificateDirPath),
-                    RequestPath = new PathString("/.well-known"),
-                    ServeUnknownFileTypes = true // serve extensionless files
-                });
-            }
+            //app.Use((context, next) =>
+            //{
+            //    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self' 'unsafe-inline';");
+            //    return next();
+            //});
 
             app.UseEndpoints(endpoints =>
             {
