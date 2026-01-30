@@ -65,7 +65,6 @@ public class ParsedArgs
         OptionParseResult result = options.Parse(args)!;
         OptionParsed parsed;
 
-        var v = (SyncMode)Enum.Parse(typeof(SyncMode), "LocalToServerCreateOnly");
         return new ParsedArgs()
         {
             IsTestRun = result.HasValidOptionParseds(isTestRunOption),
