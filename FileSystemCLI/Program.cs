@@ -119,9 +119,9 @@ sealed class Program
         };
     }
 
-    private static async Task DoWatchSyncs(bool isTestRun, bool initialSync, SyncPairsModel syncPairs, Api api)
+    private static async Task DoWatchSyncs(bool isTestRun, SyncPairsModel syncPairs, Api api)
     {
-        SyncPairHandler? initialHandler = null;
+        SemaphoreSlim syncSem = new SemaphoreSlim(1, 1);
         List<SyncFileWatcher> watchers = new List<SyncFileWatcher>();
 
         bool isCanceled = false;
@@ -130,34 +130,13 @@ sealed class Program
             if (isCanceled) return;
 
             Console.WriteLine("Cancel sync!");
-            initialHandler?.Cancel();
             foreach (SyncFileWatcher watcher in watchers) watcher.Stop();
             e.Cancel = true;
         };
 
         foreach (SyncPairModel syncPair in syncPairs.Pairs)
         {
-            SyncPairState syncPairState = await SyncPairState.LoadSyncPairState(syncPair.StateFilePath);
-            if (initialSync || syncPairState.LastFullSync + syncPair.FullSyncInterval < DateTime.UtcNow)
-            {
-                try
-                {
-                    await api.Ensure();
-                    initialHandler = new SyncPairHandler(isTestRun, syncPair, api, syncPairState);
-                    await initialHandler.Run();
-
-                    if (initialHandler.IsCancelled) return;
-
-                    syncPairState = initialHandler.CurrentState;
-                    if (!isTestRun) await syncPairState.WriteSyncPairState(syncPair.StateFilePath);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error on initial sync before watch: {e.Message}");
-                }
-            }
-
-            SyncFileWatcher watcher = new SyncFileWatcher(isTestRun, syncPair, api, syncPairState);
+            SyncFileWatcher watcher = new SyncFileWatcher(isTestRun, syncPair, api, syncSem);
             watchers.Add(watcher);
             watcher.Start();
         }
@@ -202,7 +181,7 @@ sealed class Program
 
         using Api api = new(syncPairs.Api.BaseUrl, syncPairs.Api.Username, syncPairs.Api.Password);
 
-        if (parsedArgs.Watch) await DoWatchSyncs(parsedArgs.IsTestRun, parsedArgs.InitialSync, syncPairs, api);
+        if (parsedArgs.Watch) await DoWatchSyncs(parsedArgs.IsTestRun, syncPairs, api);
         else await DoSingleCompleteSyncs(parsedArgs.IsTestRun, syncPairs, api);
     }
 }
