@@ -243,14 +243,15 @@ public class SyncFileWatcher
         {
             SyncPairState state = await GetLastSyncPairState();
 
-            if (DateTime.UtcNow < state.LastFullSync + syncPair.FullSyncInterval)
+            TimeSpan timeUntilNextFullSync = (state.LastFullSync + syncPair.FullSyncInterval) - DateTime.UtcNow;
+            if (timeUntilNextFullSync < TimeSpan.Zero)
             {
                 await FullSync(state);
+                continue;
             }
 
             try
             {
-                TimeSpan timeUntilNextFullSync = DateTime.UtcNow - state.LastFullSync + syncPair.FullSyncInterval;
                 await Task.Delay(timeUntilNextFullSync, cancellationTokenSource.Token);
             }
             catch (OperationCanceledException)

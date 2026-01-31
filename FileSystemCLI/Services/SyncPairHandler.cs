@@ -608,7 +608,7 @@ public class SyncPairHandler
     {
         while (!IsCancelled && deleteLocalFiles.Count > 0)
         {
-            FilePairModel pair = copyToServerFiles.Dequeue();
+            FilePairModel pair = deleteLocalFiles.Dequeue();
 
             try
             {
