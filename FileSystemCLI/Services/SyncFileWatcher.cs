@@ -252,6 +252,7 @@ public class SyncFileWatcher
 
             try
             {
+                Console.WriteLine($"Next full sync of {syncPair.LocalFolderPath} in {timeUntilNextFullSync}");
                 await Task.Delay(timeUntilNextFullSync, cancellationTokenSource.Token);
             }
             catch (OperationCanceledException)

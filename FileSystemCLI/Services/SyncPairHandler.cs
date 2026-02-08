@@ -106,7 +106,7 @@ public class SyncPairHandler
 
     public async Task Run()
     {
-        Console.WriteLine("SyncPairHandler is running");
+        Console.WriteLine($"SyncPairHandler is running: {syncPair.LocalFolderPath}");
 
         CurrentState.LastServerChangeSync = DateTime.UtcNow;
 
@@ -123,7 +123,7 @@ public class SyncPairHandler
 
         CurrentState.LastFullSync = DateTime.UtcNow;
 
-        Console.WriteLine("SyncPairHandler is finished");
+        Console.WriteLine($"SyncPairHandler is finished: {syncPair.LocalFolderPath}");
         Console.WriteLine($"Total files: {totalFilesCount}");
         Console.WriteLine($"Equal files: {equalFilesCount}");
         Console.WriteLine($"Ignore files: {ignoreFilesCount}");
@@ -140,7 +140,7 @@ public class SyncPairHandler
 
     public async Task Run(IEnumerable<FilePairModel> filePairs)
     {
-        Console.WriteLine("SyncPairHandler is running specific files");
+        Console.WriteLine($"SyncPairHandler is running specific files: {syncPair.LocalFolderPath}");
 
         await QuerySpecificFiles(filePairs);
         if (IsCancelled) return;
@@ -154,7 +154,7 @@ public class SyncPairHandler
         if (IsCancelled) return;
 
 
-        Console.WriteLine("SyncPairHandler is finished specific files");
+        Console.WriteLine($"SyncPairHandler is finished specific files: {syncPair.LocalFolderPath}");
         Console.WriteLine($"Total files: {totalFilesCount}");
         Console.WriteLine($"Equal files: {equalFilesCount}");
         Console.WriteLine($"Ignore files: {ignoreFilesCount}");
