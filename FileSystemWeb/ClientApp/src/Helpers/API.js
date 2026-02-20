@@ -41,17 +41,24 @@ export default class API {
 
     static async loadConfig() {
         const response = await this.fetch('/config');
-        console.log('loadConfig2')
         if (response.ok) {
-            console.log('loadConfig3')
             API.config = await response.json();
-            console.log('loadConfig4')
         }
-        console.log('loadConfig5')
+    }
+    
+    static getMe() {
+        return this.fetch('/users/me');
     }
 
     static getAllUsers() {
         return this.fetch('/users/all');
+    }
+    
+    static changePassword(data) {
+        return this.fetch('/users/changePassword', {
+            method: 'PUT',
+            body: data,
+        });
     }
 
     static getFile(path) {

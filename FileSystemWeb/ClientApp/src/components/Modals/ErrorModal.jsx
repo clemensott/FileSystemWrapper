@@ -3,7 +3,7 @@ import {Button, Modal, ModalHeader, ModalFooter, ModalBody} from 'reactstrap';
 
 const modal = forwardRef((props, ref) => {
     const [promise, setPromise] = useState(null);
-    const closeDeleteModal = () => {
+    const closeErrorModal = () => {
         promise.resolve();
         setPromise(null);
     };
@@ -16,17 +16,17 @@ const modal = forwardRef((props, ref) => {
                 error
             }));
         },
-        close: closeDeleteModal,
+        close: closeErrorModal,
     }));
 
     return (
-        <Modal isOpen={!!promise} toggle={closeDeleteModal}>
-            <ModalHeader toggle={closeDeleteModal}>An error occoured</ModalHeader>
+        <Modal isOpen={!!promise} toggle={closeErrorModal}>
+            <ModalHeader toggle={closeErrorModal}>An error occurred</ModalHeader>
             <ModalBody>
                 {promise ? promise.error : null}
             </ModalBody>
             <ModalFooter>
-                <Button color="primary" onClick={closeDeleteModal}>Cancel</Button>
+                <Button color="primary" onClick={closeErrorModal}>Cancel</Button>
             </ModalFooter>
         </Modal>
     );

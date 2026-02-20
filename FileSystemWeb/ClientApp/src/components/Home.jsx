@@ -4,8 +4,9 @@ import FolderViewer from './FolderViewer/FolderViewer';
 import FileViewerOverlay from './FileViewerOverlay';
 import { generateQueryUrl } from '../Helpers/generateNavigationUrl';
 import { useLocation } from 'react-router-dom';
+import {setDocumentTitle} from "../Helpers/setDocumentTitle";
 
-function setDocumentTitle(folderContent, fileInfo) {
+function setHomeDocumentTitle(folderContent, fileInfo) {
     let name = null;
     if (fileInfo && fileInfo.name) {
         name = fileInfo.name;
@@ -13,7 +14,7 @@ function setDocumentTitle(folderContent, fileInfo) {
         name = folderContent.path.length ? folderContent.path[folderContent.path.length - 1].name : 'Root';
     }
 
-    document.title = name ? `${name} - File System` : 'File System';
+    setDocumentTitle(name);
 }
 
 export default function () {
@@ -46,7 +47,7 @@ export default function () {
             normalizeFolder(folderContent.path[folderContent.path.length - 1].path) || null;
         const expectedFilePath = fileNorm || null;
         const actualFilePath = fileInfo && fileInfo.path || null;
-        setDocumentTitle(
+        setHomeDocumentTitle(
             expectedFolderPath === actualFolderPath ? folderContent : null,
             expectedFilePath === actualFilePath ? fileInfo : null);
     }, [folderNorm, fileNorm, folderContent, fileInfo])

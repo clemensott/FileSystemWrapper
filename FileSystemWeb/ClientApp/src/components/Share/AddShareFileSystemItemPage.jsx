@@ -2,15 +2,7 @@
 import { useLocation } from 'react-router-dom';
 import {normalizeFile, normalizeFolder} from '../../Helpers/Path';
 import ShareFileSystemItemControl from "./ShareFileSystemItemControl";
-
-function setDocumentTitle(item) {
-    let name = null;
-    if (item && item.name) {
-        name = item.name;
-    }
-
-    document.title = name ? `${name} - Add Share - File System` : 'Add Share - File System';
-}
+import {setDocumentTitle} from "../../Helpers/setDocumentTitle";
 
 export default function () {
     const location = useLocation();
@@ -24,6 +16,6 @@ export default function () {
 
     return (
         <ShareFileSystemItemControl path={path} isFile={isFile}
-                                    onItemInfoLoaded={setDocumentTitle}/>
+                                    onItemInfoLoaded={item => setDocumentTitle(item && item.name)}/>
     );
 }

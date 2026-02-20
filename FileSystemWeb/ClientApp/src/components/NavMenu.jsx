@@ -32,6 +32,11 @@ export default function () {
                     <ul className="navbar-nav flex-grow">
                         {isLoggedIn ? (
                             <NavItem>
+                                <NavLink tag={RRNavLink} className="text-dark" to="/user">User</NavLink>
+                            </NavItem>
+                        ) : null}
+                        {isLoggedIn ? (
+                            <NavItem>
                                 <NavLink tag={RRNavLink} className="text-dark" to="/share">Shares</NavLink>
                             </NavItem>
                         ) : null}

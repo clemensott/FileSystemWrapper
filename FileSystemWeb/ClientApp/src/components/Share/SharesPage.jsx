@@ -71,7 +71,6 @@ export default function () {
         const itemLink = item.isFile ?
             `/file/view?path=${encodeURIComponent(item.id)}` :
             `/?folder=${encodeURIComponent(item.id)}`;
-        const exists = item.exists;
         const editLink = item.isFile ? `/share/file/edit/${item.id}` : `/share/folder/edit/${item.id}`
 
         return (

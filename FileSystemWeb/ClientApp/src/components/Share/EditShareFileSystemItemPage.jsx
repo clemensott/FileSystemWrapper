@@ -6,15 +6,7 @@ import Loading from '../Loading/Loading';
 import deleteShareItem from '../../Helpers/deleteShareItem'
 import { closeLoadingModal, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
 import API from '../../Helpers/API';
-
-function setDocumentTitle(shareItem) {
-    let name = null;
-    if (shareItem && shareItem.name) {
-        name = shareItem.name;
-    }
-
-    document.title = name ? `${name} - Edit Share - File System` : 'Edit Share - File System';
-}
+import {setDocumentTitle} from "../../Helpers/setDocumentTitle";
 
 async function loadShareItem(id, isFile) {
     let item = null;
@@ -73,7 +65,7 @@ export default function () {
         loadShareItem(decodedId, isFile).then(item => {
             if (item) {
                 setShareItem(item);
-                setDocumentTitle(item)
+                setDocumentTitle(item && item.name)
             } else navigate('/');
         });
     }, [decodedId]);

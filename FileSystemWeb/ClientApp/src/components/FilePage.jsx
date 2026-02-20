@@ -2,16 +2,8 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { normalizeFile } from '../Helpers/Path';
 import FileViewer from './FileViewer/FileViewer';
+import { setDocumentTitle } from '../Helpers/setDocumentTitle';
 import './FilePage.css'
-
-function setDocumentTitle(file) {
-    let name = null;
-    if (file && file.name) {
-        name = file.name;
-    }
-
-    document.title = name ? `${name} - File System` : 'File System';
-}
 
 export default function () {
     const location = useLocation();
@@ -22,7 +14,7 @@ export default function () {
     return (
         <div className="file-page-container">
             <FileViewer theme="light" path={path} hideOpenFileLinkAction={true}
-                onFileInfoLoaded={setDocumentTitle}
+                onFileInfoLoaded={file => setDocumentTitle(file && file.name)}
                 onClose={() => navigate('/')} />
         </div>
     );
