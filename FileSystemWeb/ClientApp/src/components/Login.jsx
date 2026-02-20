@@ -1,28 +1,26 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import API from '../Helpers/API';
 import store from '../Helpers/store';
-import { closeLoadingModal, showErrorModal, showLoadingModal } from '../Helpers/storeExtensions';
+import {closeLoadingModal, showErrorModal, showLoadingModal} from '../Helpers/storeExtensions';
+import {Alert, Button, Form, FormGroup, Input, Label} from 'reactstrap';
+import {setDocumentTitle} from '../Helpers/setDocumentTitle';
 
 export default function () {
     const navigate = useNavigate();
 
+    const [username, setUsername] = useState('');
     const [isUsernameInvalid, setIsUsernameInvalid] = useState(false);
+    const [password, setPassword] = useState('');
     const [isPasswordInvalid, setIsPasswordInvalid] = useState(false);
     const [error, setError] = useState(null);
 
-    const usernameInputRef = useRef();
-    const passwordInputRef = useRef();
-
     useEffect(() => {
-        document.title = 'Login - File System';
-        usernameInputRef.current.focus();
+        setDocumentTitle('Login');
     }, []);
 
     async function submit() {
-        const username = usernameInputRef.current.value;
-        const password = passwordInputRef.current.value;
-
+        setError(null);
         if (!username) setIsUsernameInvalid(true);
         if (!password) setIsPasswordInvalid(true);
         if (!username || !password) {
@@ -45,7 +43,7 @@ export default function () {
                 await showErrorModal(
                     <div>
                         Status: {response.status}
-                        <br />
+                        <br/>
                         {text}
                     </div>
                 );
@@ -58,34 +56,35 @@ export default function () {
 
     return (
         <div>
-            <form onSubmit={e => {
+            <Form onSubmit={e => {
                 e.preventDefault();
                 return submit();
             }}>
-                <div className="form-group">
-                    <label>Username</label>
-                    <input ref={usernameInputRef} type="text"
-                        className={`form-control ${isUsernameInvalid ? 'is-invalid' : ''}`}
-                        onChange={e => setIsUsernameInvalid(!e.target.value)} />
-                </div>
-                <div className="form-group">
-                    <label>Password</label>
-                    <input ref={passwordInputRef} type="password"
-                        className={`form-control ${isPasswordInvalid ? 'is-invalid' : ''}`}
-                        onChange={e => setIsPasswordInvalid(!e.target.value)} />
-                </div>
+                <FormGroup>
+                    <Label>Username</Label>
+                    <Input
+                        type="text"
+                        invalid={isUsernameInvalid}
+                        value={username}
+                        onChange={e => setUsername(e.target.value)}
+                    />
+                </FormGroup>
+                <FormGroup>
+                    <Label>Username</Label>
+                    <Input
+                        type="password"
+                        invalid={isPasswordInvalid}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                    />
+                </FormGroup>
 
-                <div className={`form-group form-check  ${error ? '' : 'd-none'}`}>
-                    <label className="form-check-label">
-                        <input className="is-invalid d-none" />
-                        <div className="invalid-feedback">{error}</div>
-                    </label>
-                </div>
+                <Alert color="danger" isOpen={!!error} toggle={() => setError(null)}>{error}</Alert>
 
                 <div>
-                    <button className="btn btn-primary" type="submit">Login</button>
+                    <Button color="primary" type="submit">Login</Button>
                 </div>
-            </form>
+            </Form>
         </div>
     );
 }

@@ -1,6 +1,6 @@
 ﻿import React, {forwardRef, useImperativeHandle, useState} from 'react'
 import {Button, Modal, ModalHeader, ModalFooter, ModalBody, Form, Label, Input, FormGroup, Alert} from 'reactstrap';
-import API from "../../Helpers/API";
+import API from '../../Helpers/API';
 
 const modal = forwardRef((props, ref) => {
     const [promise, setPromise] = useState(null);
