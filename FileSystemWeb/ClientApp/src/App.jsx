@@ -29,6 +29,7 @@ export default function () {
 
             try {
                 const { ok, redirected } = await API.isAuthorized();
+                console.log('isAuthorized', {ok, redirected});
                 isLoggedIn = ok && !redirected;
             } catch (err) {
                 console.error('isAuthorized Error:', err);
@@ -37,6 +38,7 @@ export default function () {
             store.set('isLoggedIn', isLoggedIn);
 
             await API.loadConfig();
+            console.log(isLoggedIn)
             setLoaded(true);
         })();
     }, []);

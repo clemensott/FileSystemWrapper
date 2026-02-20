@@ -41,9 +41,13 @@ export default class API {
 
     static async loadConfig() {
         const response = await this.fetch('/config');
+        console.log('loadConfig2')
         if (response.ok) {
+            console.log('loadConfig3')
             API.config = await response.json();
+            console.log('loadConfig4')
         }
+        console.log('loadConfig5')
     }
 
     static getAllUsers() {
