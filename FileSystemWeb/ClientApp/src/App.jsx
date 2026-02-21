@@ -18,12 +18,12 @@ import store from './Helpers/store'
 import { getAllRefs } from './Helpers/storeExtensions';
 import API from './Helpers/API';
 import Loading from './components/Loading/Loading';
+import UserPage from './components/User/UserPage';
+import UsersPage from './components/Users/UsersPage';
 import './App.css';
-import User from "./components/User";
-import ChangePasswordModal from "./components/Modals/ChangePasswordModal";
 
 export default function () {
-    const [isLoaded, setLoaded] = useState();
+    const [isLoaded, setLoaded] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -37,6 +37,18 @@ export default function () {
             }
 
             store.set('isLoggedIn', isLoggedIn);
+            
+            let me = null;
+            try {
+                const res = await API.getMe();
+                if (res.ok) {
+                    me = await res.json();
+                }
+            } catch (err) {
+                console.error('getMe Error:', err);
+            }
+            
+            store.set('me', me);
 
             await API.loadConfig();
             setLoaded(true);
@@ -49,7 +61,6 @@ export default function () {
     allRefs.overrideFileModal = useRef();
     allRefs.loadingModal = useRef();
     allRefs.errorModal = useRef();
-    allRefs.changePasswordModal = useRef();
 
     return isLoaded ? (
         <div>
@@ -64,7 +75,8 @@ export default function () {
                     <Route path='/share/folder/add' element={<AddShareFileSystemItemPage />} />
                     <Route path='/share/file/edit/:id' element={<EditShareFileSystemItemPage />} />
                     <Route path='/share/folder/edit/:id' element={<EditShareFileSystemItemPage />} />
-                    <Route path='/user' element={<User />} />
+                    <Route path='/user' element={<UserPage />} />
+                    <Route path='/users' element={<UsersPage />} />
                     <Route path='/' element={<Home />} />
                     <Route path='/api/*' element={
                         <h3>Please reload page without cache (Ctrl + F5)</h3>
@@ -76,7 +88,6 @@ export default function () {
             <OverrideFileModal ref={allRefs.overrideFileModal} />
             <LoadingModal ref={allRefs.loadingModal} />
             <ErrorModal ref={allRefs.errorModal} />
-            <ChangePasswordModal ref={allRefs.changePasswordModal} />
         </div>
     ) : (
             <div className="center-root">

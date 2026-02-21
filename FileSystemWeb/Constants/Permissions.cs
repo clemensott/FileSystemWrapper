@@ -18,6 +18,8 @@
 
         public class Users
         {
+            public const string GetAllOverviewUsers = "permissions.users.get_all_overview_users";
+            public const string GetAllRoles = "permissions.users.get_all_overview_users";
             public const string GetAllUsers = "permissions.users.get_all_users";
             public const string PostUser = "permissions.users.post_user";
             public const string DeleteUser = "permissions.users.post_user";

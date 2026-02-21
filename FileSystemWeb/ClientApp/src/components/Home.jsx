@@ -4,7 +4,7 @@ import FolderViewer from './FolderViewer/FolderViewer';
 import FileViewerOverlay from './FileViewerOverlay';
 import { generateQueryUrl } from '../Helpers/generateNavigationUrl';
 import { useLocation } from 'react-router-dom';
-import {setDocumentTitle} from "../Helpers/setDocumentTitle";
+import {setDocumentTitle} from '../Helpers/setDocumentTitle';
 
 function setHomeDocumentTitle(folderContent, fileInfo) {
     let name = null;

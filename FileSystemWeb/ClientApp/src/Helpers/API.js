@@ -49,6 +49,27 @@ export default class API {
     static getMe() {
         return this.fetch('/users/me');
     }
+    
+    static getAllOverviewUsers() {
+        return this.fetch('/users/overview');
+    }
+    
+    static createUser(data) {
+        return this.fetch('/users/add',{
+            method: 'POST',
+            body: data,
+        });
+    }
+    
+    static deleteUser(id) {
+        return this.fetch(`/users/${id}`,{
+            method: 'DELETE',
+        });
+    }
+    
+    static getAllRoles() {
+        return this.fetch('/users/roles');
+    }
 
     static getAllUsers() {
         return this.fetch('/users/all');

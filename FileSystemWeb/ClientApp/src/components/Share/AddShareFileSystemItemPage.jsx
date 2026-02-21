@@ -1,8 +1,8 @@
 ﻿import React, {useEffect} from 'react';
 import { useLocation } from 'react-router-dom';
 import {normalizeFile, normalizeFolder} from '../../Helpers/Path';
-import ShareFileSystemItemControl from "./ShareFileSystemItemControl";
-import {setDocumentTitle} from "../../Helpers/setDocumentTitle";
+import ShareFileSystemItemControl from './ShareFileSystemItemControl';
+import {setDocumentTitle} from '../../Helpers/setDocumentTitle';
 
 export default function () {
     const location = useLocation();

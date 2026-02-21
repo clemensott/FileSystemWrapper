@@ -6,7 +6,7 @@ import Loading from '../Loading/Loading';
 import deleteShareItem from '../../Helpers/deleteShareItem'
 import { closeLoadingModal, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
 import API from '../../Helpers/API';
-import {setDocumentTitle} from "../../Helpers/setDocumentTitle";
+import {setDocumentTitle} from '../../Helpers/setDocumentTitle';
 
 async function loadShareItem(id, isFile) {
     let item = null;

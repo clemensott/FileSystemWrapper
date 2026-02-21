@@ -1,9 +1,10 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Button, FormGroup, Input, Label, Table } from 'reactstrap';
-import './SharesPage.css'
-import deleteShareItem from "../../Helpers/deleteShareItem";
-import { Link } from "react-router-dom";
+import deleteShareItem from '../../Helpers/deleteShareItem';
+import { Link } from 'react-router-dom';
 import API from '../../Helpers/API';
+import {setDocumentTitle} from '../../Helpers/setDocumentTitle';
+import './SharesPage.css'
 
 async function load(promise) {
     try {
@@ -42,7 +43,7 @@ export default function () {
     state.updateItems = updateItems;
 
     useEffect(() => {
-        document.title = 'Shares - File System';
+        setDocumentTitle('Shares');
         return () => {
             state.isUnmounted = true;
         };

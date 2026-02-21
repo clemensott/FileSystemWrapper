@@ -26,7 +26,7 @@ const modal = forwardRef((props, ref) => {
                 {promise ? promise.error : null}
             </ModalBody>
             <ModalFooter>
-                <Button color="primary" onClick={closeErrorModal}>Cancel</Button>
+                <Button color="primary" onClick={closeErrorModal}>Close</Button>
             </ModalFooter>
         </Modal>
     );

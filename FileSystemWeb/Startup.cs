@@ -49,6 +49,8 @@ namespace FileSystemWeb
                     Share.GetShareFolder,
                     Share.PutShareFolder,
                     Share.DeleteShareFolder,
+                    Users.GetAllOverviewUsers,
+                    Users.GetAllRoles,
                     Users.GetAllUsers,
                     Users.PostUser,
                     Users.DeleteUser,

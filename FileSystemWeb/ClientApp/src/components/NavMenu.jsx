@@ -1,41 +1,48 @@
-import React, { useEffect, useState } from 'react';
-import { Collapse, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink } from 'reactstrap';
-import { NavLink as RRNavLink } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {Collapse, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink} from 'reactstrap';
+import {NavLink as RRNavLink} from 'react-router-dom';
 import store from '../Helpers/store'
 import './NavMenu.css';
+import {roles} from "../constants";
 
 export default function () {
     const [collapsed, setCollapsed] = useState(true);
     const toggleCollapsed = () => setCollapsed(!collapsed);
 
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [isLoggedInCallbackId, setIsLoggedInCallbackId] = useState(null);
+    const [me, setMe] = useState(null);
+    const [meCallbackId, setMeCallbackId] = useState(null);
 
     useEffect(() => {
-        setIsLoggedInCallbackId(store.addCallback('isLoggedIn', value => setIsLoggedIn(value)));
-        setIsLoggedIn(store.get('isLoggedIn'));
+        setMeCallbackId(store.addCallback('me', value => setMe(value)));
+        setMe(store.get('me'));
     }, []);
     useEffect(() => {
-        return () => isLoggedInCallbackId && store.removeCallback('isLoggedIn', isLoggedInCallbackId)
-    }, [isLoggedInCallbackId]);
+        return () => meCallbackId && store.removeCallback('me', meCallbackId)
+    }, [meCallbackId]);
 
-    const authUrl = isLoggedIn ? '/logout' : '/login';
-    const authTitle = isLoggedIn ? 'Logout' : 'Login';
+    const authUrl = me ? '/logout' : '/login';
+    const authTitle = me ? 'Logout' : 'Login';
 
     return (
         <header>
-            <Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3" container="sm" light>
+            <Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3"
+                    container="sm" light>
                 <NavbarBrand tag={RRNavLink} to="/">Home</NavbarBrand>
-                <NavbarToggler onClick={toggleCollapsed} className="me-2" />
+                <NavbarToggler onClick={toggleCollapsed} className="me-2"/>
                 <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!collapsed}
-                    navbar>
+                          navbar>
                     <ul className="navbar-nav flex-grow">
-                        {isLoggedIn ? (
+                        {me && me.roles.includes(roles.USER_MANAGER) ? (
                             <NavItem>
                                 <NavLink tag={RRNavLink} className="text-dark" to="/user">User</NavLink>
                             </NavItem>
                         ) : null}
-                        {isLoggedIn ? (
+                        {me ? (
+                            <NavItem>
+                                <NavLink tag={RRNavLink} className="text-dark" to="/users">Users</NavLink>
+                            </NavItem>
+                        ) : null}
+                        {me && me.roles.includes(roles.SHARE_MANAGER) ? (
                             <NavItem>
                                 <NavLink tag={RRNavLink} className="text-dark" to="/share">Shares</NavLink>
                             </NavItem>
