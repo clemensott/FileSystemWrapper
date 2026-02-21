@@ -88,8 +88,10 @@ const modal = forwardRef((props, ref) => {
                         <Input
                             type="select"
                             multiple
-                            value={password}
-                            onChange={e => console.log(e.target)}
+                            value={roleIds}
+                            onChange={e => {
+                                setRoleIds([...e.target.options].filter(option => option.selected).map(option => option.value));
+                            }}
                         >
                             {roles.map((role) => (<option key={role.id} value={role.id}>{role.name}</option>))}
                         </Input>
