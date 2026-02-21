@@ -1,13 +1,15 @@
 ﻿import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import API from '../Helpers/API';
-import store from '../Helpers/store';
-import {closeLoadingModal, showErrorModal, showLoadingModal} from '../Helpers/storeExtensions';
 import {Alert, Button, Form, FormGroup, Input, Label} from 'reactstrap';
 import {setDocumentTitle} from '../Helpers/setDocumentTitle';
+import {useAuth} from '../contexts/AuthContext';
+import {useGlobalRefs} from '../contexts/GlobalRefsContext';
 
 export default function () {
     const navigate = useNavigate();
+    const {reloadUser} = useAuth();
+    const {showLoadingModal, closeLoadingModal, showErrorModal} = useGlobalRefs();
 
     const [username, setUsername] = useState('');
     const [isUsernameInvalid, setIsUsernameInvalid] = useState(false);
@@ -34,8 +36,8 @@ export default function () {
 
             closeLoadingModal();
             if (response.ok) {
+                await reloadUser();
                 navigate('/');
-                store.set('isLoggedIn', true);
             } else if (response.status === 400) {
                 setError('Please enter a correct Username and password');
             } else {

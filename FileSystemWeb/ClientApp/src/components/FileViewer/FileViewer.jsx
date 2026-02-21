@@ -1,16 +1,17 @@
 ﻿import React, {useEffect, useState} from 'react';
-import {getFileType, encodeBase64UnicodeCustom} from '../../Helpers/Path';
+import {getFileType} from '../../Helpers/Path';
 import ImageViewer from './ImageViewer';
 import TextViewer from './TextViewer';
 import MediaViewer from './MediaViewer';
 import PdfViewer from './PdfViewer';
 import Loading from '../Loading/Loading';
 import FileActionsDropdown from '../FSItem/FileActionsDropdown';
-import deleteFileSystemItem from '../../Helpers/deleteFileSystemItem';
+import useDeleteFileSystemItem from '../../Helpers/useDeleteFileSystemItem';
 import API from '../../Helpers/API';
 import './FileViewer.css';
 
 export default function ({path, theme, onFileInfoLoaded, hideOpenFileLinkAction, onClose}) {
+    const deleteFileSystemItem = useDeleteFileSystemItem();
     const [state] = useState({isUnmounted: false, loadIndex: 0});
     const [error, setError] = useState(null);
     const [contentError, setContentError] = useState(null);

@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Button, FormGroup, Input, Label, Table } from 'reactstrap';
-import deleteShareItem from '../../Helpers/deleteShareItem';
+import useDeleteShareItem from '../../Helpers/useDeleteShareItem';
 import { Link } from 'react-router-dom';
 import API from '../../Helpers/API';
 import {setDocumentTitle} from '../../Helpers/setDocumentTitle';
@@ -34,6 +34,7 @@ async function loadShareItems(isFile) {
 }
 
 export default function () {
+    const deleteShareItem = useDeleteShareItem();
     const [state] = useState([{ isUnmounted: false }]);
     const [updateItems, setUpdateItems] = useState(0);
     const [shareFiles, setShareFiles] = useState(null);

@@ -1,14 +1,14 @@
-﻿import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from 'reactstrap';
+﻿import React, {useState, useEffect} from 'react';
+import {useParams, useNavigate} from 'react-router-dom';
+import {Button} from 'reactstrap';
 import ShareFileSystemItemForm from './ShareFileSystemItemForm';
 import Loading from '../Loading/Loading';
-import deleteShareItem from '../../Helpers/deleteShareItem'
-import { closeLoadingModal, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
+import useDeleteShareItem from '../../Helpers/useDeleteShareItem';
 import API from '../../Helpers/API';
 import {setDocumentTitle} from '../../Helpers/setDocumentTitle';
+import {useGlobalRefs} from '../../contexts/GlobalRefsContext';
 
-async function loadShareItem(id, isFile) {
+async function loadShareItem(id, isFile, showErrorModal) {
     let item = null;
     let infoError = null;
     if (id) {
@@ -52,17 +52,19 @@ async function loadUsers() {
 }
 
 export default function () {
-    const { id } = useParams();
+    const {id} = useParams();
     const decodedId = decodeURIComponent(id);
     const isFile = window.location.pathname.startsWith('/share/file/edit/');
 
     const navigate = useNavigate();
+    const {showLoadingModal, closeLoadingModal, showErrorModal} = useGlobalRefs();
+    const deleteShareItem = useDeleteShareItem();
     const [shareItem, setShareItem] = useState(null);
     const [users, setUsers] = useState(null);
 
     useEffect(() => {
         setDocumentTitle(null);
-        loadShareItem(decodedId, isFile).then(item => {
+        loadShareItem(decodedId, isFile, showErrorModal).then(item => {
             if (item) {
                 setShareItem(item);
                 setDocumentTitle(item && item.name)
@@ -75,16 +77,12 @@ export default function () {
     }, []);
 
     const submit = async body => {
-        let redirect = null;
         let submitError = null;
         try {
             showLoadingModal();
             const response = await API.putShareItem(id, body, isFile);
             if (response.ok) {
                 const shareItem = await response.json();
-                redirect = isFile ?
-                    `/file/view?path=${encodeURIComponent(shareItem.path)}` :
-                    `/?folder=${encodeURIComponent(shareItem.path)}`;
             } else if (response.status === 400) {
                 submitError = (await response.text()) || 'An error occured';
             } else if (response.status === 404) {
@@ -104,22 +102,22 @@ export default function () {
         }
 
         if (submitError) await showErrorModal(submitError);
-        if (redirect) navigate(redirect);
+        navigate(-1);
     };
 
     return shareItem ? (
         <div>
             <ShareFileSystemItemForm item={shareItem} isFile={shareItem.isFile} users={users}
-                isEdit={true} defaultValues={shareItem} onSubmit={submit} />
+                                     isEdit={true} defaultValues={shareItem} onSubmit={submit}/>
 
             <Button color="danger" className="float-end"
-                onClick={() => deleteShareItem(shareItem, () => navigate('/'))}>
+                    onClick={() => deleteShareItem(shareItem, () => navigate('/'))}>
                 Delete
             </Button>
         </div>
     ) : (
         <div className="center">
-            <Loading />
+            <Loading/>
         </div>
     );
 }

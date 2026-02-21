@@ -2,10 +2,10 @@
 import { useNavigate } from 'react-router-dom';
 import ShareFileSystemItemForm from './ShareFileSystemItemForm';
 import Loading from '../Loading/Loading';
-import { closeLoadingModal, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
 import API from '../../Helpers/API';
+import {useGlobalRefs} from '../../contexts/GlobalRefsContext';
 
-async function updateItem(path, isFile) {
+async function updateItem(path, isFile, showErrorModal) {
     let item = null;
     let infoError = null;
     if (path) {
@@ -53,9 +53,10 @@ export default function ({ path, isFile, defaultValues, onItemInfoLoaded }) {
     const [item, setItem] = useState(null);
     const [users, setUsers] = useState(null);
     const navigate = useNavigate();
+    const {showLoadingModal, closeLoadingModal, showErrorModal} = useGlobalRefs();
 
     useEffect(() => {
-        updateItem(path, isFile).then(i => {
+        updateItem(path, isFile, showErrorModal).then(i => {
             setItem(i);
             onItemInfoLoaded && onItemInfoLoaded(i);
         });
@@ -66,16 +67,11 @@ export default function ({ path, isFile, defaultValues, onItemInfoLoaded }) {
     }, []);
 
     const submit = async body => {
-        let redirect = null;
         let submitError = null;
         try {
             showLoadingModal();
             const response = await API.createShareItem(body, isFile);
             if (response.ok) {
-                const shareItem = await response.json();
-                redirect = isFile ?
-                    `/file/view?path=${encodeURIComponent(shareItem.path)}` :
-                    `/?folder=${encodeURIComponent(shareItem.path)}`;
             } else if (response.status === 400) {
                 submitError = (await response.text()) || 'An error occured';
             } else if (response.status === 404) {
@@ -95,7 +91,7 @@ export default function ({ path, isFile, defaultValues, onItemInfoLoaded }) {
         }
 
         if (submitError) await showErrorModal(submitError);
-        if (redirect) navigate(redirect);
+        navigate(-1);
     };
 
     return item ? (

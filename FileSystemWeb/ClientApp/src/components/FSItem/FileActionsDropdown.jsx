@@ -2,11 +2,13 @@
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, } from 'reactstrap';
 import DropdownLinkItem from './DropdownLinkItem';
 import { getFileType } from '../../Helpers/Path';
-import store from '../../Helpers/store';
 import formatFileSize from '../../Helpers/formatFileSize';
 import formatUrl from '../../Helpers/formatUrl';
+import {useAuth} from '../../contexts/AuthContext';
 
 export default function ({ file, title, hideOpenFileLink, onDelete }) {
+    const {user} = useAuth();
+
     const fileOpenFileLink = `/file/view?path=${encodeURIComponent(file.path)}`;
     const fileOpenContentLink = formatUrl({ resource: '/api/files', path: file.path });
     const fileDownloadLink = formatUrl({ resource: '/api/files/download', path: file.path });
@@ -14,19 +16,6 @@ export default function ({ file, title, hideOpenFileLink, onDelete }) {
         `/share/file/edit/${encodeURIComponent(file.path)}` :
         `/share/file/add?path=${encodeURIComponent(file.path)}`;
     const isSupportedFile = ['image', 'audio', 'video', 'text', 'pdf'].includes(getFileType(file.extension));
-
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [isLoggedInCallbackId, setIsLoggedInCallbackId] = useState(null);
-
-    useEffect(() => {
-        setIsLoggedInCallbackId(store.addCallback('isLoggedIn', value => setIsLoggedIn(value)));
-        setIsLoggedIn(store.get('isLoggedIn'));
-    }, []);
-    useEffect(() => {
-        return () => {
-            isLoggedInCallbackId && store.removeCallback('isLoggedIn', isLoggedInCallbackId);
-        }
-    }, [isLoggedInCallbackId]);
 
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const toggleDropdown = () => setDropdownOpen(prevState => !prevState);
@@ -55,7 +44,7 @@ export default function ({ file, title, hideOpenFileLink, onDelete }) {
                     Download {file.size ? `(${formatFileSize(file.size)})` : ''}
                 </DropdownLinkItem>
                 <DropdownItem divider />
-                {isLoggedIn ? (
+                {user ? (
                     <DropdownLinkItem disabled={!file.permission.info} to={fileShareFileLink}>
                         <i className="me-2 fas fa-share" />
                         Share

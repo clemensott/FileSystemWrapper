@@ -1,12 +1,13 @@
 import React, {useEffect, useRef} from 'react';
 import {Button, Table} from 'reactstrap';
 import API from '../../Helpers/API';
-import {showErrorModal} from '../../Helpers/storeExtensions';
 import DeleteUserModal from './DeleteUserModal';
 import CreateUserModal from './CreateUserModal';
+import {useGlobalRefs} from '../../contexts/GlobalRefsContext';
 import './UsersPage.css'
 
 export default function () {
+    const {showErrorModal} = useGlobalRefs();
     const [users, setUsers] = React.useState(null);
     const createUserModal = useRef();
     const deleteUserModal = useRef();

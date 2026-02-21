@@ -1,9 +1,10 @@
 import React, {forwardRef, useImperativeHandle, useState} from 'react'
 import {Button, Modal, ModalHeader, ModalFooter, ModalBody, Form, FormGroup, Label, Input} from 'reactstrap';
-import {showErrorModal} from "../../Helpers/storeExtensions";
-import API from "../../Helpers/API";
+import API from '../../Helpers/API';
+import {useGlobalRefs} from '../../contexts/GlobalRefsContext';
 
 const modal = forwardRef((props, ref) => {
+    const {showErrorModal} = useGlobalRefs();
     const [promise, setPromise] = useState(null);
     const [roles, setRoles] = useState([]);
     const [username, setUsername] = useState('');

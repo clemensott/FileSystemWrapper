@@ -1,17 +1,17 @@
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
-import { Button, Modal, ModalHeader, ModalFooter, ModalBody, Form, FormGroup, Label, Input } from 'reactstrap';
-import { closeLoadingModal, getAllRefs, showErrorModal, showLoadingModal } from '../../Helpers/storeExtensions';
+import React, {forwardRef, useImperativeHandle, useRef, useState} from 'react'
+import {Button, Modal, ModalHeader, ModalFooter, ModalBody, Form, FormGroup, Label, Input} from 'reactstrap';
 import formatFileSize from '../../Helpers/formatFileSize';
 import API from '../../Helpers/API';
 import uploadFile from '../../Helpers/uploadFile';
 import sleep from '../../Helpers/sleep'
+import {useGlobalRefs} from '../../contexts/GlobalRefsContext';
 
 function formatFile(file) {
     return `${file.name} (${formatFileSize(file.size)})`
 }
 
 const modal = forwardRef((props, ref) => {
-    const allRefs = getAllRefs();
+    const {overrideFileModal, showLoadingModal, closeLoadingModal, showErrorModal} = useGlobalRefs();
     const [promise, setPromise] = useState(null);
     const [suggestedName, setSuggestedName] = useState('');
     const [formattedFileName, setFormattedFileName] = useState(null);
@@ -42,7 +42,7 @@ const modal = forwardRef((props, ref) => {
             const filePath = promise.folderPath + name;
             const fileExistsResponse = await API.getFileExists(filePath);
             const fileExists = fileExistsResponse.ok && await fileExistsResponse.json();
-            if (fileExists && !await allRefs.overrideFileModal.current.show({ name })) {
+            if (fileExists && !await overrideFileModal.current.show({name})) {
                 return;
             }
 
@@ -58,7 +58,7 @@ const modal = forwardRef((props, ref) => {
                 await showErrorModal(
                     <div>
                         Status: {response.status}
-                        <br />
+                        <br/>
                         {text}
                     </div>
                 );
@@ -102,13 +102,13 @@ const modal = forwardRef((props, ref) => {
                     <FormGroup>
                         <Label>File</Label>
                         <Input innerRef={fileInputRef} type="file"
-                            className={isFileInvalid ? 'is-invalid' : ''} onChange={onFileChange} />
+                               className={isFileInvalid ? 'is-invalid' : ''} onChange={onFileChange}/>
                     </FormGroup>
                     <FormGroup>
                         <Label>Name</Label>
                         <Input innerRef={nameInputRef} type="text" defaultValue={suggestedName}
-                            className={`form-control ${isNameInvalid ? 'is-invalid' : ''}`}
-                            onChange={e => setIsNameInvalid(!e.target.value)} />
+                               className={`form-control ${isNameInvalid ? 'is-invalid' : ''}`}
+                               onChange={e => setIsNameInvalid(!e.target.value)}/>
                     </FormGroup>
                 </Form>
             </ModalBody>

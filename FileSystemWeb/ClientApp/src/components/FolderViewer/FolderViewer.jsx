@@ -5,7 +5,7 @@ import Loading from '../Loading/Loading';
 import FolderSortButton from './FolderSortButton';
 import UploadFileButton from './UploadFileButton';
 import FolderViewerContent from './FolderViewerContent';
-import deleteFileSystemItem from '../../Helpers/deleteFileSystemItem';
+import useDeleteFileSystemItem from '../../Helpers/useDeleteFileSystemItem';
 import API from '../../Helpers/API';
 import useSortByState from '../../Helpers/useSortByState';
 import sleep from '../../Helpers/sleep';
@@ -16,6 +16,7 @@ const maxItemStepSize = 150;
 const bottomAppendDistance = 1000;
 
 const FolderViewer = ({ path, onFolderLoaded }) => {
+    const deleteFileSystemItem = useDeleteFileSystemItem();
     const [state] = useState({ isUnmounted: false, loadIndex: 0 });
     const [sortBy, setSortBy] = useSortByState('home-page');
     const [content, setContent] = useState(null);
