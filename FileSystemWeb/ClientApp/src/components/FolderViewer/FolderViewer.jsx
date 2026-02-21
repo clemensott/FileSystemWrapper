@@ -18,7 +18,7 @@ const bottomAppendDistance = 1000;
 const FolderViewer = ({ path, onFolderLoaded }) => {
     const deleteFileSystemItem = useDeleteFileSystemItem();
     const [state] = useState({ isUnmounted: false, loadIndex: 0 });
-    const [sortBy, setSortBy] = useSortByState('home-page');
+    const [sortBy, setSortBy] = useSortByState(`home-page-${path}`);
     const [content, setContent] = useState(null);
     const [update, setUpdate] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
