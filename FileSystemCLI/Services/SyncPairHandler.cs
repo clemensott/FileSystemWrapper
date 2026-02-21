@@ -177,9 +177,9 @@ public class SyncPairHandler
     /// <returns>Returns true if file has to be synced</returns>
     private bool CheckAllowAndDenyList(string path)
     {
-        if (syncPair.DenyList is not null && syncPair.DenyList.Any(e => path.EndsWith(e))) return false;
+        if (syncPair.DenyList is not null && syncPair.DenyList.Any(e => path.Contains(e))) return false;
 
-        return syncPair.AllowList is null || syncPair.AllowList.Any(e => path.EndsWith(e));
+        return syncPair.AllowList is null || syncPair.AllowList.Any(e => path.Contains(e));
     }
 
     private FilePairModel CreateFilePair(string relPath, string localFilePath, bool localFileExits,
@@ -286,7 +286,10 @@ public class SyncPairHandler
 
     private async Task QuerySpecificFiles(IEnumerable<FilePairModel> filePairs)
     {
-        Dictionary<string, FilePairModel> dict = filePairs.ToDictionary(p => p.ServerFullPath);
+        Dictionary<string, FilePairModel> dict = filePairs.Where(p => CheckAllowAndDenyList(p.ServerFullPath))
+            .ToDictionary(p => p.ServerFullPath);
+
+        if (dict.Count == 0) return;
 
         await api.GetFilesExits(dict.Keys.ToArray(), item =>
         {
