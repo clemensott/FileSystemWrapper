@@ -8,8 +8,6 @@ public class ParsedArgs
     public bool IsTestRun { get; init; }
     
     public bool Watch  { get; init; }
-    
-    public bool InitialSync { get; init; }
 
     public string? ConfigFilePath { get; init; }
 
@@ -41,8 +39,6 @@ public class ParsedArgs
     {
         Option isTestRunOption = new Option("t", "test-run", "Do a test run that doesn't change anything", false, 0, 0);
         Option watchOption = new Option("w", "watch", "Watch for changes in file system", false, 0, 0);
-        Option initialSyncOption = Option.GetLongOnly("inital-sync",
-            "Does complete sync before starting file system water (only works with --watch)", false, 0, 0);
         Option configFilePathOption =
             new Option("c", "config-file", "Uses the config from file at given path", false, 1, 1);
 
@@ -61,7 +57,7 @@ public class ParsedArgs
         Option stateFilePathOption = new Option("state", "state-file",
             "File to save synced state in and only needed for two way mode", false, 1, 1);
 
-        Options options = new Options(isTestRunOption, watchOption, initialSyncOption, configFilePathOption,
+        Options options = new Options(isTestRunOption, watchOption, configFilePathOption,
             serverUrlOption, serverUsernameOption, serverPasswordOption, withSubfoldersOption, localFolderPathOption,
             serverFolderPathOption, modeOption, compareTypeOption, conflictHandlingOption, allowListOption,
             denyListsOption, stateFilePathOption);
@@ -69,12 +65,10 @@ public class ParsedArgs
         OptionParseResult result = options.Parse(args)!;
         OptionParsed parsed;
 
-        var v = (SyncMode)Enum.Parse(typeof(SyncMode), "LocalToServerCreateOnly");
         return new ParsedArgs()
         {
             IsTestRun = result.HasValidOptionParseds(isTestRunOption),
             Watch = result.HasValidOptionParseds(watchOption),
-            InitialSync = result.HasValidOptionParseds(initialSyncOption),
             ConfigFilePath = result.TryGetFirstValidOptionParseds(configFilePathOption, out parsed)
                 ? parsed.Values[0]
                 : null,
