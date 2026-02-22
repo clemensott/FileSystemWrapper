@@ -32,5 +32,5 @@ export default function () {
             closeLoadingModal();
             await showErrorModal(e.message);
         }
-    }
+    };
 }

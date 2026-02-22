@@ -14,7 +14,7 @@ export default function () {
             const response = await API.deleteShareItem(item.id, item.isFile);
             closeLoadingModal();
 
-            if (response.ok) await callback && callback();
+            if (response.ok) callback && await callback();
             else {
                 const text = await response.text();
                 await showErrorModal(
@@ -29,6 +29,5 @@ export default function () {
             closeLoadingModal();
             await showErrorModal(e.message);
         }
-
     };
 }

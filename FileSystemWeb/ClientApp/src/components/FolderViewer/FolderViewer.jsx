@@ -70,7 +70,7 @@ const FolderViewer = ({ path, onFolderLoaded }) => {
         };
     }, []);
 
-    const updateContent = async () => {
+    const updateContent = useCallback(async () => {
         const currentIndex = ++state.loadIndex;
         let content = null;
         try {
@@ -90,13 +90,13 @@ const FolderViewer = ({ path, onFolderLoaded }) => {
             onFolderLoaded && onFolderLoaded(content);
             setIsLoading(false);
         }
-    }
+    },[path, sortBy]);
 
     useEffect(() => {
         updateContent();
     }, [path, sortBy, update]);
 
-    const onDeleteItem = useCallback(item => deleteFileSystemItem(item, () => updateContent(true)), []);
+    const onDeleteItem = useCallback(item => deleteFileSystemItem(item, () => updateContent()), [updateContent]);
 
     const onBackToTop = async () => {
         document.body.scrollTop = 0; // For Safari
