@@ -82,7 +82,6 @@ export default function () {
             showLoadingModal();
             const response = await API.putShareItem(id, body, isFile);
             if (response.ok) {
-                const shareItem = await response.json();
             } else if (response.status === 400) {
                 submitError = (await response.text()) || 'An error occured';
             } else if (response.status === 404) {

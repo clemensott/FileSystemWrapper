@@ -73,7 +73,8 @@ export default function () {
         const itemLink = item.isFile ?
             `/file/view?path=${encodeURIComponent(item.id)}` :
             `/?folder=${encodeURIComponent(item.id)}`;
-        const editLink = item.isFile ? `/share/file/edit/${item.id}` : `/share/folder/edit/${item.id}`
+        const editLink = item.isFile ? `/share/file/edit/${item.id}` : `/share/folder/edit/${item.id}`;
+        const expiresAt = item.expiresAt && new Date(`${item.expiresAt}Z`);
 
         return (
             <tr key={item.id}>
@@ -89,6 +90,25 @@ export default function () {
                 <td>{item.userId ? user && user.name : (
                     <i>PUBLIC</i>
                 )}</td>
+                <td>{expiresAt ? (
+                    <div>
+                        {expiresAt.toLocaleString('de-DE', {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                        })}
+                        {expiresAt < new Date() ? (
+                            <>
+                                <br/>
+                                <i>Expired</i> 
+                            </>
+                        ): null}
+                    </div>
+                ) : null}</td>
                 <td className="shares-page-removable-column">
                     <FormGroup check inline className="share-page-permission-item">
                         <Input type="checkbox" checked={item.permission.info} readOnly />
@@ -133,6 +153,7 @@ export default function () {
                         <th className="shares-page-header-exists">Exists</th>
                         <th className="shares-page-header-is-listed">Is listed</th>
                         <th className="shares-page-header-user">User</th>
+                        <th className="shares-page-header-expires">Expires</th>
                         <th className="shares-page-header-permissions shares-page-removable-column">
                             Permissions
                         </th>

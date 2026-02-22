@@ -20,6 +20,8 @@ namespace FileSystemWeb.Models
         public int PermissionId { get; set; }
 
         public string? UserId { get; set; }
+        
+        public DateTime? ExpiresAt { get; set; }
 #nullable disable
 
         public FolderItemPermission Permission { get; set; }
@@ -49,6 +51,7 @@ namespace FileSystemWeb.Models
                 UserId = UserId,
                 IsFile = false,
                 Permission = Permission.ToFolderItemPermission(),
+                ExpiresAt = ExpiresAt,
             };
         }
     }

@@ -23,12 +23,12 @@ export default function () {
                 <Collapse className="d-sm-inline-flex flex-sm-row-reverse" isOpen={!collapsed}
                           navbar>
                     <ul className="navbar-nav flex-grow">
-                        {user && user.roles.includes(roles.USER_MANAGER) ? (
+                        {user ? (
                             <NavItem>
                                 <NavLink tag={RRNavLink} className="text-dark" to="/user">User</NavLink>
                             </NavItem>
                         ) : null}
-                        {user ? (
+                        {user && user.roles.includes(roles.USER_MANAGER) ? (
                             <NavItem>
                                 <NavLink tag={RRNavLink} className="text-dark" to="/users">Users</NavLink>
                             </NavItem>

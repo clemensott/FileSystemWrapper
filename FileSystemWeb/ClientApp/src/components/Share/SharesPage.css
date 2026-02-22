@@ -7,7 +7,11 @@
 }
 
 .shares-page-header-user {
-    width: 200px;
+    width: 150px;
+}
+
+.shares-page-header-expires {
+    width: 220px;
 }
 
 .shares-page-header-permissions {

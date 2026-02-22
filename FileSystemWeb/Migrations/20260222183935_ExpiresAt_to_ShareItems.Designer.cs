@@ -3,6 +3,7 @@ using System;
 using FileSystemWeb.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FileSystemWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260222183935_ExpiresAt_to_ShareItems")]
+    partial class ExpiresAt_to_ShareItems
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.22");
@@ -89,9 +92,9 @@ namespace FileSystemWeb.Migrations
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAEAACcQAAAAENBKFrGvayF7a7Ow8I+ik06fhdpchFjO4rg6OQRrFEW4XNG5JFui5aVLsGH3/KDiAA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFtDny3jU4cXmyyF0zYR2JVwJPBd6M05Ba5rKH0bWcDF62PSWtTNbmKu+JTGbb9DCQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "3a54f369-3a45-4ab8-8d22-885a8d8b60d7",
+                            SecurityStamp = "6e130710-ee8b-4aea-a453-cd1231c7b7b6",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
