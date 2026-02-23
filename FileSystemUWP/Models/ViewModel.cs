@@ -46,6 +46,7 @@ namespace FileSystemUWP.Models
 
         public void InjectData(IEnumerable<Server> servers, int? currentServerId)
         {
+            Servers.Clear();
             foreach (Server server in servers)
             {
                 server.BackgroundOperations = BackgroundOperations;

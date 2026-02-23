@@ -42,23 +42,20 @@ namespace FileSystemUWP
             database = ((App)Application.Current).Database;
         }
 
-        protected async override void OnNavigatedTo(NavigationEventArgs e)
+        protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             DataContext = viewModel = (Server)e.Parameter;
 
             base.OnNavigatedTo(e);
-
-            if (await CheckServerConnection() && !isAway)
-            {
-                Application.Current.EnteredBackground += Application_EnteredBackground;
-                Application.Current.LeavingBackground += Application_LeavingBackground;
-            }
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
-            viewModel.RestoreFileSystemItem = pcView.GetCenteredFileSystemSortItem();
+            if (pcView.CurrentFolder.HasValue)
+            {
+                viewModel.CurrentFolderPath = pcView.CurrentFolder?.FullPath;
+                viewModel.RestoreFileSystemItem = pcView.GetCenteredFileSystemSortItem();
+            }
 
             Application.Current.EnteredBackground -= Application_EnteredBackground;
             Application.Current.LeavingBackground -= Application_LeavingBackground;
@@ -140,10 +137,16 @@ namespace FileSystemUWP
         {
             pcView.Type = FileSystemItemViewType.Files | FileSystemItemViewType.Folders;
 
-            await pcView.SetCurrentFolder(viewModel.CurrentFolderPath);
-            if (viewModel.RestoreFileSystemItem.HasValue)
+            if (await CheckServerConnection() && !isAway)
             {
-                pcView.ScrollToFileItemName(viewModel.RestoreFileSystemItem.Value);
+                Application.Current.EnteredBackground += Application_EnteredBackground;
+                Application.Current.LeavingBackground += Application_LeavingBackground;
+
+                await pcView.SetCurrentFolder(viewModel.CurrentFolderPath);
+                if (viewModel.RestoreFileSystemItem.HasValue)
+                {
+                    pcView.ScrollToFileItemName(viewModel.RestoreFileSystemItem.Value);
+                }
             }
         }
 

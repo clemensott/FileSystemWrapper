@@ -223,9 +223,10 @@ namespace FileSystemUWP.Picker
         private Task UpdateCurrentFolderItems(bool clearItems)
         {
             FileSystemItem? currentFolder = CurrentFolder;
-            if (!currentFolder.HasValue) return Task.CompletedTask;
+            if (currentFolder.HasValue) return SetCurrentFolder(currentFolder.Value, clearItems);
+            else if (!string.IsNullOrWhiteSpace(currentUpdatePath)) return SetCurrentFolder(currentUpdatePath, null, clearItems);
 
-            return SetCurrentFolder(currentFolder.Value, clearItems);
+            return Task.CompletedTask;
         }
 
         public Task SetCurrentFolder(FileSystemItem folder)
