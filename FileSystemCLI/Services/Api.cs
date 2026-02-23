@@ -6,7 +6,9 @@ using FileSystemCommon.Models.Auth;
 using FileSystemCommon.Models.Configuration;
 using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Files;
+using FileSystemCommon.Models.FileSystem.Files.Change;
 using FileSystemCommon.Models.FileSystem.Files.Many;
+using FileSystemCommon.Models.FileSystem.Folders.Change;
 using StdOttStandard.Linq;
 
 namespace FileSystemCLI.Services;
@@ -21,7 +23,7 @@ public class Api : IDisposable
 
     public HttpClient Client { get; }
 
-    public Config Config { get; private set; }
+    public Config? Config { get; private set; }
 
     public Api(string baseUrl, string username, string password)
     {
@@ -253,6 +255,32 @@ public class Api : IDisposable
         Uri? uri = Utils.GetUri("/api/folders",
             KeyValuePairsUtils.CreatePairs("path", Utils.EncodePath(serverFolderPath)));
         return Request(uri, HttpMethod.Post);
+    }
+
+    public Task<FileChangeResult> GetFileChanges(string serverFolderPath, DateTime since, int page, int pageSize)
+    {
+        Uri? uri = Utils.GetUri("/api/folders/fileChanges",
+            KeyValuePairsUtils.CreatePairs(
+                "path", Utils.EncodePath(serverFolderPath),
+                "since", since.ToString("yyyy-MM-dd HH:mm:ss"),
+                "page", page.ToString(),
+                "pageSize", pageSize.ToString()
+            ));
+
+        return Request<FileChangeResult>(uri, HttpMethod.Get);
+    }
+
+    public Task<FolderChangeResult> GetFolderChanges(string serverFolderPath, DateTime since, int page, int pageSize)
+    {
+        Uri? uri = Utils.GetUri("/api/folders/folderChanges",
+            KeyValuePairsUtils.CreatePairs(
+                "path", Utils.EncodePath(serverFolderPath),
+                "since", since.ToString("yyyy-MM-dd HH:mm:ss"),
+                "page", page.ToString(),
+                "pageSize", pageSize.ToString()
+            ));
+
+        return Request<FolderChangeResult>(uri, HttpMethod.Get);
     }
 
     private async Task<bool> Request(Uri? uri, HttpMethod method, HttpContent? content = null)

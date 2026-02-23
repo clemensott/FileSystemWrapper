@@ -47,6 +47,7 @@ namespace FileSystemWeb.Controllers
                 IsListed = body.IsListed,
                 UserId = string.IsNullOrWhiteSpace(body.UserId) ? null : body.UserId,
                 Permission = Models.FileItemPermission.New(body.Permission),
+                ExpiresAt = body.ExpiresAt,
             };
 
             await dbContext.ShareFiles.AddAsync(shareFile);
@@ -98,6 +99,7 @@ namespace FileSystemWeb.Controllers
             shareFile.Name = body.Name;
             shareFile.IsListed = body.IsListed;
             shareFile.UserId = string.IsNullOrWhiteSpace(body.UserId) ? null : body.UserId;
+            shareFile.ExpiresAt = body.ExpiresAt;
 
             await dbContext.SaveChangesAsync();
 
@@ -181,6 +183,7 @@ namespace FileSystemWeb.Controllers
                 IsListed = body.IsListed,
                 UserId = body.UserId,
                 Permission = Models.FolderItemPermission.New(body.Permission),
+                ExpiresAt = body.ExpiresAt,
             };
 
             await dbContext.ShareFolders.AddAsync(shareFolder);
@@ -233,6 +236,7 @@ namespace FileSystemWeb.Controllers
             shareFolder.Name = body.Name;
             shareFolder.IsListed = body.IsListed;
             shareFolder.UserId = body.UserId;
+            shareFolder.ExpiresAt = body.ExpiresAt;
 
             await dbContext.SaveChangesAsync();
 

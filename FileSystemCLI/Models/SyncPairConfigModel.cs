@@ -20,5 +20,7 @@ public class SyncPairConfigModel
     
     public string? StateFilePath { get; init; }
     
-    public ApiModel Api { get; init; }
+    public string? FullSyncInterval { get; init; }
+    
+    public string? ServerFetchChangesInterval { get; init; }
 }

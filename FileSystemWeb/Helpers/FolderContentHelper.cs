@@ -22,13 +22,13 @@ namespace FileSystemWeb.Helpers
             FileSystemItemSortType sortType, FileSystemItemSortDirection sortDirection)
         {
             ShareFolder[] shareFolders = await dbContext.ShareFolders
-                .Where(f => f.IsListed && (f.UserId == null || f.UserId == userId))
+                .Where(f => f.IsListed && (f.UserId == null || f.UserId == userId) && (f.ExpiresAt  == null || f.ExpiresAt > DateTime.UtcNow))
                 .Include(f => f.Permission)
                 .ToArrayAsync();
             IEnumerable<FolderSortItem> folders = GetFolderItems(shareFolders, sortType);
 
             ShareFile[] shareFiles = await dbContext.ShareFiles
-                .Where(f => f.IsListed && (f.UserId == null || f.UserId == userId))
+                .Where(f => f.IsListed && (f.UserId == null || f.UserId == userId) && (f.ExpiresAt  == null || f.ExpiresAt > DateTime.UtcNow))
                 .Include(f => f.Permission)
                 .ToArrayAsync();
             IEnumerable<FileSortItem> files = GetFileItems(shareFiles, sortType);

@@ -3,13 +3,22 @@ using FileSystemCLI.Models;
 using FileSystemCLI.ProgramArguments;
 using FileSystemCLI.Services;
 using FileSystemCommon.Models.Sync.Definitions;
-using StdOttStandard.Linq;
 
 namespace FileSystemCLI;
 
 sealed class Program
 {
-    private static SyncPairModel? LoadSyncPairFromFile(string? filePath)
+    private static TimeSpan ParseTimeSpan(string? raw, TimeSpan defaultValue)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return defaultValue;
+
+        TimeSpan value = TimeSpan.Parse(raw);
+        if (value <= TimeSpan.Zero) throw new Exception("Invalid TimeSpan specified (must be greater than zero)");
+
+        return value;
+    }
+
+    private static SyncPairsModel? LoadSyncPairFromFile(string? filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath)) return null;
 
@@ -23,31 +32,36 @@ sealed class Program
             throw new Exception($"File for sync config {filePath} not found");
         }
 
-        SyncPairConfigModel? pair;
+        SyncPairConfigsModel? config;
         try
         {
-            pair = JsonSerializer.Deserialize<SyncPairConfigModel>(json);
-            if (pair is null) throw new Exception("Invalid sync pair config file");
+            config = JsonSerializer.Deserialize<SyncPairConfigsModel>(json);
+            if (config is null) throw new Exception("Invalid sync pair config file");
         }
         catch (Exception e)
         {
             throw new Exception("Parsing sync config file failed", e);
         }
 
-        return new SyncPairModel()
+        return new SyncPairsModel()
         {
-            WithSubfolders = pair.WithSubfolders,
-            LocalFolderPath = pair.LocalFolderPath ?? throw new Exception("No LocalFolderPath specified"),
-            ServerFolderPath = pair.ServerFolderPath ?? throw new Exception("No ServerFolderPath specified"),
-            Mode = (SyncMode)Enum.Parse(typeof(SyncMode), pair.Mode ?? throw new Exception("No Mode specified")),
-            CompareType = (SyncCompareType)Enum.Parse(typeof(SyncCompareType),
-                pair.CompareType ?? throw new Exception("No CompareType specified")),
-            ConflictHandling = (SyncConflictHandlingType)Enum.Parse(typeof(SyncConflictHandlingType),
-                pair.ConflictHandling ?? throw new Exception("No ConflictHandling specified")),
-            AllowList = pair.AllowList,
-            DenyList = pair.DenyList,
-            StateFilePath = pair.StateFilePath,
-            Api = pair.Api ?? throw new Exception("No Api specified"),
+            Pairs = config.Configs.Select(entry => new SyncPairModel()
+            {
+                WithSubfolders = entry.WithSubfolders,
+                LocalFolderPath = entry.LocalFolderPath ?? throw new Exception("No LocalFolderPath specified"),
+                ServerFolderPath = entry.ServerFolderPath ?? throw new Exception("No ServerFolderPath specified"),
+                Mode = (SyncMode)Enum.Parse(typeof(SyncMode), entry.Mode ?? throw new Exception("No Mode specified")),
+                CompareType = (SyncCompareType)Enum.Parse(typeof(SyncCompareType),
+                    entry.CompareType ?? throw new Exception("No CompareType specified")),
+                ConflictHandling = (SyncConflictHandlingType)Enum.Parse(typeof(SyncConflictHandlingType),
+                    entry.ConflictHandling ?? throw new Exception("No ConflictHandling specified")),
+                AllowList = entry.AllowList,
+                DenyList = entry.DenyList,
+                StateFilePath = entry.StateFilePath,
+                FullSyncInterval = ParseTimeSpan(entry.FullSyncInterval, TimeSpan.FromDays(1)),
+                ServerFetchChangesInterval = ParseTimeSpan(entry.ServerFetchChangesInterval, TimeSpan.FromHours(1)),
+            }).ToArray(),
+            Api = config.Api ?? throw new Exception("No Api specified"),
         };
     }
 
@@ -61,109 +75,113 @@ sealed class Program
         return stateFilePath;
     }
 
-    private static SyncPairModel GetSyncPair(ParsedArgs args)
+    private static SyncPairsModel GetSyncPair(ParsedArgs args)
     {
-        SyncPairModel? fileSyncPair = LoadSyncPairFromFile(args.ConfigFilePath);
+        SyncPairsModel? fileSyncPairs = LoadSyncPairFromFile(args.ConfigFilePath);
 
-        SyncMode? mode = args.Mode ?? fileSyncPair?.Mode;
-        return new SyncPairModel()
+        SyncPairModel?[] pairs = fileSyncPairs?.Pairs ?? new SyncPairModel?[] { null };
+        return new SyncPairsModel()
         {
             Api = new ApiModel()
             {
                 BaseUrl = args.ServerBaseUrl ??
-                          fileSyncPair?.Api.BaseUrl ?? throw new Exception("No BaseUrl specified"),
+                          fileSyncPairs?.Api.BaseUrl ?? throw new Exception("No BaseUrl specified"),
                 Username = args.ServerUsername ??
-                           fileSyncPair?.Api.Username ?? throw new Exception("No Username specified"),
+                           fileSyncPairs?.Api.Username ?? throw new Exception("No Username specified"),
                 Password = args.ServerPassword ??
-                           fileSyncPair?.Api.Password ?? throw new Exception("No Username specified"),
+                           fileSyncPairs?.Api.Password ?? throw new Exception("No Username specified"),
             },
-            WithSubfolders = args.WithSubfolders ??
-                             fileSyncPair?.WithSubfolders ?? throw new Exception("No WithSubfolders specified"),
-            LocalFolderPath = args.LocalFolderPath ??
-                              fileSyncPair?.LocalFolderPath ?? throw new Exception("No LocalFolderPath specified"),
-            ServerFolderPath = args.ServerFolderPath ??
-                               fileSyncPair?.ServerFolderPath ?? throw new Exception("No ServerFolderPath specified"),
-            Mode = mode ?? throw new Exception("No Mode specified"),
-            CompareType = args.CompareType ??
-                          fileSyncPair?.CompareType ?? throw new Exception("No CompareType specified"),
-            ConflictHandling = args.ConflictHandling ??
-                               fileSyncPair?.ConflictHandling ?? throw new Exception("No ConflictHandling specified"),
-            AllowList = args.AllowList ??
-                        fileSyncPair?.AllowList,
-            DenyList = args.DenyList ??
-                       fileSyncPair?.DenyList,
-            StateFilePath = GetStateFilePath(mode, args.StateFilePath ?? fileSyncPair?.StateFilePath),
+            Pairs = pairs.Select(pair =>
+            {
+                SyncMode? mode = args.Mode ?? pair?.Mode;
+                return new SyncPairModel()
+                {
+                    WithSubfolders = args.WithSubfolders ??
+                                     pair?.WithSubfolders ?? throw new Exception("No WithSubfolders specified"),
+                    LocalFolderPath = args.LocalFolderPath ??
+                                      pair?.LocalFolderPath ?? throw new Exception("No LocalFolderPath specified"),
+                    ServerFolderPath = args.ServerFolderPath ??
+                                       pair?.ServerFolderPath ?? throw new Exception("No ServerFolderPath specified"),
+                    Mode = mode ?? throw new Exception("No Mode specified"),
+                    CompareType = args.CompareType ??
+                                  pair?.CompareType ?? throw new Exception("No CompareType specified"),
+                    ConflictHandling = args.ConflictHandling ??
+                                       pair?.ConflictHandling ?? throw new Exception("No ConflictHandling specified"),
+                    AllowList = args.AllowList ??
+                                pair?.AllowList,
+                    DenyList = args.DenyList ??
+                               pair?.DenyList,
+                    StateFilePath = GetStateFilePath(mode, args.StateFilePath ?? pair?.StateFilePath),
+                    FullSyncInterval = pair?.FullSyncInterval ?? TimeSpan.FromDays(1),
+                    ServerFetchChangesInterval = pair?.ServerFetchChangesInterval ?? TimeSpan.FromHours(1),
+                };
+            }).ToArray(),
         };
     }
 
-    private static SyncPairState LoadSyncPairState(string? stateFilePath)
+    private static async Task DoWatchSyncs(bool isTestRun, SyncPairsModel syncPairs, Api api)
     {
-        SyncPairState state = new SyncPairState();
-        if (string.IsNullOrWhiteSpace(stateFilePath) || !File.Exists(stateFilePath)) return state;
+        SemaphoreSlim syncSem = new SemaphoreSlim(1, 1);
+        List<SyncFileWatcher> watchers = new List<SyncFileWatcher>();
 
-        string json = File.ReadAllText(stateFilePath);
-        SyncPairStateFileModel[]? files = JsonSerializer.Deserialize<SyncPairStateFileModel[]>(json);
-        if (files is null) throw new Exception("State files are missing");
+        bool isCanceled = false;
+        Console.CancelKeyPress += (_, e) =>
+        {
+            if (isCanceled) return;
 
-        foreach (SyncPairStateFileModel file in files.ToNotNull()) state.AddFile(file);
+            Console.WriteLine("Cancel sync!");
+            foreach (SyncFileWatcher watcher in watchers) watcher.Stop();
+            e.Cancel = true;
+        };
 
-        return state;
+        foreach (SyncPairModel syncPair in syncPairs.Pairs)
+        {
+            SyncFileWatcher watcher = new SyncFileWatcher(isTestRun, syncPair, api, syncSem);
+            watchers.Add(watcher);
+            watcher.Start();
+        }
+
+        await Task.WhenAll(watchers.Select(w => w.AwaitSyncTask()));
     }
 
-    private static void WriteSyncPairState(string? stateFilePath, SyncPairState state)
+    private static async Task DoSingleCompleteSyncs(bool isTestRun, SyncPairsModel syncPairs, Api api)
     {
-        if (string.IsNullOrWhiteSpace(stateFilePath)) return;
+        await api.Ensure();
 
-        string json = JsonSerializer.Serialize(state.ToArray());
-        File.WriteAllText(stateFilePath, json);
+        SyncPairHandler? handler = null;
+        Console.CancelKeyPress += (_, e) =>
+        {
+            SyncPairHandler? currentHandler = handler;
+            if (currentHandler is null || currentHandler.IsCancelled) return;
+
+            Console.WriteLine("Cancel sync!");
+            currentHandler.Cancel();
+            e.Cancel = true;
+        };
+
+        foreach (SyncPairModel syncPair in syncPairs.Pairs)
+        {
+            SyncPairState lastSyncPairState = await SyncPairState.LoadSyncPairState(syncPair.StateFilePath);
+            handler = new SyncPairHandler(isTestRun, syncPair, api, lastSyncPairState);
+            await handler.Run();
+
+            if (handler.IsCancelled) return;
+
+            if (!isTestRun) await handler.CurrentState.WriteSyncPairState(syncPair.StateFilePath);
+        }
+
+        Console.WriteLine("Sync finished successfully!!");
     }
 
     public static async Task Main(string[] args)
     {
         ParsedArgs parsedArgs = ParsedArgs.Parse(args);
 
-        SyncPairModel syncPair = GetSyncPair(parsedArgs);
+        SyncPairsModel syncPairs = GetSyncPair(parsedArgs);
 
-        SyncPairState lastSyncPairState = LoadSyncPairState(syncPair.StateFilePath);
+        using Api api = new(syncPairs.Api.BaseUrl, syncPairs.Api.Username, syncPairs.Api.Password);
 
-        using Api api = new(syncPair.Api.BaseUrl, syncPair.Api.Username, syncPair.Api.Password);
-        if (!await api.Ping())
-        {
-            Console.WriteLine($"Could not reach server: {api.BaseUrl}");
-            return;
-        }
-
-        if (!await api.Login())
-        {
-            Console.WriteLine($"Could not login at server: {api.BaseUrl}");
-            return;
-        }
-
-        if (!await api.IsAuthorized())
-        {
-            Console.WriteLine($"Could authenticate at server: {api.BaseUrl}");
-            return;
-        }
-
-        await api.LoadConfig();
-
-        SyncPairHandler handler = new SyncPairHandler(parsedArgs.IsTestRun, syncPair, api, lastSyncPairState);
-
-        Console.CancelKeyPress += (_, e) =>
-        {
-            if (handler.IsCancelled) return;
-
-            Console.WriteLine("Cancel sync!");
-            handler.Cancel();
-            e.Cancel = true;
-        };
-
-        await handler.Run();
-
-        if (handler.IsCancelled) return;
-
-        if (!parsedArgs.IsTestRun) WriteSyncPairState(syncPair.StateFilePath, handler.CurrentState);
-
-        Console.WriteLine("Sync finished successfully!!");
+        if (parsedArgs.Watch) await DoWatchSyncs(parsedArgs.IsTestRun, syncPairs, api);
+        else await DoSingleCompleteSyncs(parsedArgs.IsTestRun, syncPairs, api);
     }
 }

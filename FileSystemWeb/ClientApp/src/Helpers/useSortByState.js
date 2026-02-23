@@ -1,5 +1,12 @@
-﻿import { useState } from 'react';
-import { fileSystemItemSortDirection, fileSystemItemSortType } from '../constants';
+﻿import {useEffect, useState} from 'react';
+import {fileSystemItemSortDirection, fileSystemItemSortType} from '../constants';
+
+function getDefaultSortBy() {
+    return {
+        type: fileSystemItemSortType.NAME,
+        direction: fileSystemItemSortDirection.ASC,
+    };
+}
 
 function isValidSortBy(sortBy) {
     return sortBy &&
@@ -9,13 +16,12 @@ function isValidSortBy(sortBy) {
 
 export default function useSortByState(id) {
     const storageKey = `sort-by-state-${id}`;
-    const [sortBy, setSortBy] = useState(() => {
+    const [sortBy, setSortBy] = useState(getDefaultSortBy());
+
+    useEffect(() => {
         const initValue = JSON.parse(localStorage.getItem(storageKey));
-        return isValidSortBy(initValue) ? initValue : ({
-            type: fileSystemItemSortType.NAME,
-            direction: fileSystemItemSortDirection.ASC,
-        });
-    });
+        setSortBy(isValidSortBy(initValue) ? initValue : getDefaultSortBy());
+    }, [storageKey]);
 
     return [
         sortBy,

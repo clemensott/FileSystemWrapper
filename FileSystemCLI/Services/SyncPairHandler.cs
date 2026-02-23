@@ -1,3 +1,4 @@
+using System.Net;
 using FileSystemCLI.Models;
 using FileSystemCLI.Services.CompareType;
 using FileSystemCLI.Services.Mode;
@@ -24,7 +25,14 @@ public class SyncPairHandler
         deleteLocalFiles = new(),
         deleteServerFiles = new();
 
-    private int totalFilesCount, equalFilesCount, ignoreFilesCount;
+    private int totalFilesCount,
+        equalFilesCount,
+        ignoreFilesCount,
+        errorFilesCount,
+        copyToLocalFilesCount,
+        copyToServerFilesCount,
+        deleteLocalFilesCount,
+        deleteServerFilesCount;
 
     private readonly HashSet<string> serverFolderExistsCache = new();
 
@@ -98,34 +106,65 @@ public class SyncPairHandler
 
     public async Task Run()
     {
-        Console.WriteLine("SyncPairHandler is running");
+        Console.WriteLine($"SyncPairHandler is running: {syncPair.LocalFolderPath}");
 
-        await QueryFiles();
+        CurrentState.LastServerChangeSync = DateTime.UtcNow;
+
+        await QueryFoldersFiles();
         if (IsCancelled) return;
         await CompareSingleFiles();
         if (IsCancelled) return;
+        await HandleCopyAndDeleteQueues();
+        if (IsCancelled) return;
         await CompareBothFiles();
         if (IsCancelled) return;
-        await CopyFilesToLocal();
-        if (IsCancelled) return;
-        await CopyFilesToServer();
-        if (IsCancelled) return;
-        DeleteLocalFiles();
-        if (IsCancelled) return;
-        await DeleteServerFiles();
+        await HandleCopyAndDeleteQueues();
         if (IsCancelled) return;
 
+        CurrentState.LastFullSync = DateTime.UtcNow;
 
-        Console.WriteLine("SyncPairHandler is finished");
+        Console.WriteLine($"SyncPairHandler is finished: {syncPair.LocalFolderPath}");
         Console.WriteLine($"Total files: {totalFilesCount}");
         Console.WriteLine($"Equal files: {equalFilesCount}");
         Console.WriteLine($"Ignore files: {ignoreFilesCount}");
+        Console.WriteLine($"Ignore files: {errorFilesCount}");
         Console.WriteLine($"Both files: {bothFiles.Count}");
         Console.WriteLine($"Single files: {singleFiles.Count}");
-        Console.WriteLine($"Copy to local files: {copyToLocalFiles.Count}");
-        Console.WriteLine($"Copy to server files: {copyToServerFiles.Count}");
-        Console.WriteLine($"Delete local files: {deleteLocalFiles.Count}");
-        Console.WriteLine($"Delete server files: {deleteServerFiles.Count}");
+        Console.WriteLine($"Copy to local files: {copyToLocalFilesCount}");
+        Console.WriteLine($"Copy to server files: {copyToServerFilesCount}");
+        Console.WriteLine($"Delete local files: {deleteLocalFilesCount}");
+        Console.WriteLine($"Delete server files: {deleteServerFilesCount}");
+
+        if (isTestRun) Console.WriteLine("THIS WAS A TEST RUN!!");
+    }
+
+    public async Task Run(IEnumerable<FilePairModel> filePairs)
+    {
+        Console.WriteLine($"SyncPairHandler is running specific files: {syncPair.LocalFolderPath}");
+
+        await QuerySpecificFiles(filePairs);
+        if (IsCancelled) return;
+        await CompareSingleFiles();
+        if (IsCancelled) return;
+        await HandleCopyAndDeleteQueues();
+        if (IsCancelled) return;
+        await CompareBothFiles();
+        if (IsCancelled) return;
+        await HandleCopyAndDeleteQueues();
+        if (IsCancelled) return;
+
+
+        Console.WriteLine($"SyncPairHandler is finished specific files: {syncPair.LocalFolderPath}");
+        Console.WriteLine($"Total files: {totalFilesCount}");
+        Console.WriteLine($"Equal files: {equalFilesCount}");
+        Console.WriteLine($"Ignore files: {ignoreFilesCount}");
+        Console.WriteLine($"Ignore files: {errorFilesCount}");
+        Console.WriteLine($"Both files: {bothFiles.Count}");
+        Console.WriteLine($"Single files: {singleFiles.Count}");
+        Console.WriteLine($"Copy to local files: {copyToLocalFilesCount}");
+        Console.WriteLine($"Copy to server files: {copyToServerFilesCount}");
+        Console.WriteLine($"Delete local files: {deleteLocalFilesCount}");
+        Console.WriteLine($"Delete server files: {deleteServerFilesCount}");
 
         if (isTestRun) Console.WriteLine("THIS WAS A TEST RUN!!");
     }
@@ -137,9 +176,9 @@ public class SyncPairHandler
     /// <returns>Returns true if file has to be synced</returns>
     private bool CheckAllowAndDenyList(string path)
     {
-        if (syncPair.DenyList is not null && syncPair.DenyList.Any(e => path.EndsWith(e))) return false;
+        if (syncPair.DenyList is not null && syncPair.DenyList.Any(e => path.Contains(e))) return false;
 
-        return syncPair.AllowList is null || syncPair.AllowList.Any(e => path.EndsWith(e));
+        return syncPair.AllowList is null || syncPair.AllowList.Any(e => path.Contains(e));
     }
 
     private FilePairModel CreateFilePair(string relPath, string localFilePath, bool localFileExits,
@@ -157,7 +196,7 @@ public class SyncPairHandler
         };
     }
 
-    private async Task QueryFiles()
+    private async Task QueryFoldersFiles()
     {
         bool localRootFolderExists = Directory.Exists(syncPair.LocalFolderPath);
         bool serverRootFolderExists = await api.FolderExists(syncPair.ServerFolderPath);
@@ -244,6 +283,60 @@ public class SyncPairHandler
         }
     }
 
+    private async Task QuerySpecificFiles(IEnumerable<FilePairModel> filePairs)
+    {
+        Dictionary<string, FilePairModel> dict = filePairs.Where(p => CheckAllowAndDenyList(p.ServerFullPath))
+            .ToDictionary(p => p.ServerFullPath);
+
+        if (dict.Count == 0) return;
+
+        await api.GetFilesExits(dict.Keys.ToArray(), item =>
+        {
+            if (IsCancelled || !dict.TryGetValue(item.FilePath, out FilePairModel? pair)) return Task.CompletedTask;
+
+            try
+            {
+                if (item.StatusCode is HttpStatusCode.OK or HttpStatusCode.NotFound)
+                {
+                    pair.ServerFileExists = item.Exists ?? false;
+                }
+                else
+                {
+                    Console.WriteLine(
+                        $"Error file exists {pair.RelativePath}: HTTP {item.StatusCode} {item.ErrorMessage} ({item.ErrorCode})");
+                    return Task.CompletedTask;
+                }
+
+                pair.LocalFileExists = File.Exists(pair.LocalFilePath);
+
+                if (!pair.LocalFileExists && !pair.ServerFileExists)
+                {
+                    Console.WriteLine($"File doesn't exists: {pair.RelativePath}");
+                }
+                else if (!pair.LocalFileExists || !pair.ServerFileExists) singleFiles.Enqueue(pair);
+                else bothFiles.Enqueue(pair);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Compare unknown files error {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
+            }
+            finally
+            {
+                dict.Remove(item.FilePath);
+            }
+
+            return Task.CompletedTask;
+        });
+
+        if (IsCancelled) return;
+
+        foreach (FilePairModel pair in dict.Values)
+        {
+            Console.WriteLine($"Compare unknown files no response: {pair.RelativePath}");
+        }
+    }
+
     private async Task CompareSingleFiles()
     {
         IEnumerable<FilePairModel> singleComparePairs;
@@ -269,6 +362,7 @@ public class SyncPairHandler
             catch (Exception e)
             {
                 Console.WriteLine($"Compare single file error {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
             }
         }
     }
@@ -303,7 +397,8 @@ public class SyncPairHandler
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Compare files batch error: {pair.RelativePath}");
+                Console.WriteLine($"Compare files batch error {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
             }
             finally
             {
@@ -360,11 +455,19 @@ public class SyncPairHandler
         }
     }
 
+    private async Task HandleCopyAndDeleteQueues()
+    {
+        await CopyFilesToLocal();
+        await CopyFilesToServer();
+        DeleteLocalFiles();
+        await DeleteServerFiles();
+    }
+
     private async Task CopyFilesToLocal()
     {
-        foreach (FilePairModel pair in copyToLocalFiles)
+        while (!IsCancelled && copyToLocalFiles.Count > 0)
         {
-            if (IsCancelled) return;
+            FilePairModel pair = copyToLocalFiles.Dequeue();
 
             string errorMessage = "Unkown";
             string? downloadFilePath = null;
@@ -400,12 +503,14 @@ public class SyncPairHandler
                     CurrentState.AddFile(pair.ToState());
                 }
 
+                copyToLocalFilesCount++;
                 Console.WriteLine($"Copied file to local: {pair.RelativePath}");
                 continue;
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Error copying file to local {pair.RelativePath}: ({errorMessage}) {e.Message}");
+                errorFilesCount++;
             }
 
             try
@@ -428,9 +533,9 @@ public class SyncPairHandler
 
     private async Task CopyFilesToServer()
     {
-        foreach (FilePairModel pair in copyToServerFiles)
+        while (!IsCancelled && copyToServerFiles.Count > 0)
         {
-            if (IsCancelled) return;
+            FilePairModel pair = copyToServerFiles.Dequeue();
 
             try
             {
@@ -439,6 +544,7 @@ public class SyncPairHandler
                     if (!await TryCreateServerFolder(pair.ServerFullPath))
                     {
                         Console.WriteLine($"Create server folder, to copy file to, failed: {pair.RelativePath}");
+                        errorFilesCount++;
                         continue;
                     }
 
@@ -454,11 +560,13 @@ public class SyncPairHandler
                     CurrentState.AddFile(pair.ToState());
                 }
 
+                copyToServerFilesCount++;
                 Console.WriteLine($"Copied file to server: {pair.RelativePath}");
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Error copying file to server {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
             }
         }
     }
@@ -501,39 +609,47 @@ public class SyncPairHandler
 
     private void DeleteLocalFiles()
     {
-        foreach (FilePairModel pair in deleteLocalFiles)
+        while (!IsCancelled && deleteLocalFiles.Count > 0)
         {
-            if (IsCancelled) return;
+            FilePairModel pair = deleteLocalFiles.Dequeue();
 
             try
             {
                 if (!isTestRun) File.Delete(pair.LocalFilePath);
+                deleteLocalFilesCount++;
                 Console.WriteLine($"Deleted file from local: {pair.RelativePath}");
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Error deleting file from local {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
             }
         }
     }
 
     private async Task DeleteServerFiles()
     {
-        foreach (FilePairModel pair in deleteServerFiles)
+        while (!IsCancelled && deleteServerFiles.Count > 0)
         {
-            if (IsCancelled) return;
+            FilePairModel pair = deleteServerFiles.Dequeue();
 
             try
             {
                 if (isTestRun || await api.DeleteFile(pair.ServerFullPath))
                 {
+                    deleteServerFilesCount++;
                     Console.WriteLine($"Deleted file from server: {pair.RelativePath}");
                 }
-                else Console.WriteLine($"Error deleting file from server: {pair.RelativePath}");
+                else
+                {
+                    Console.WriteLine($"Error deleting file from server: {pair.RelativePath}");
+                    errorFilesCount++;
+                }
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Error deleting file from server {pair.RelativePath}: {e.Message}");
+                errorFilesCount++;
             }
         }
     }

@@ -18,5 +18,7 @@ namespace FileSystemCommon.Models.Share
         public bool IsFile { get; set; }
 
         public FolderItemPermission Permission { get; set; }
+        
+        public DateTime? ExpiresAt { get; set; }
     }
 }

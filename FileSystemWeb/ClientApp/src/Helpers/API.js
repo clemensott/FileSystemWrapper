@@ -45,9 +45,41 @@ export default class API {
             API.config = await response.json();
         }
     }
+    
+    static getMe() {
+        return this.fetch('/users/me');
+    }
+    
+    static getAllOverviewUsers() {
+        return this.fetch('/users/overview');
+    }
+    
+    static createUser(data) {
+        return this.fetch('/users/add',{
+            method: 'POST',
+            body: data,
+        });
+    }
+    
+    static deleteUser(id) {
+        return this.fetch(`/users/${id}`,{
+            method: 'DELETE',
+        });
+    }
+    
+    static getAllRoles() {
+        return this.fetch('/users/roles');
+    }
 
     static getAllUsers() {
         return this.fetch('/users/all');
+    }
+    
+    static changePassword(data) {
+        return this.fetch('/users/changePassword', {
+            method: 'PUT',
+            body: data,
+        });
     }
 
     static getFile(path) {
@@ -113,9 +145,15 @@ export default class API {
         });
     }
 
-    static deleteFolder(path) {
+    static deleteFolder(path, recursive) {
         return this.fetch('/folders', {
             path,
+            query: [
+                {
+                    key: 'recursive',
+                    value: recursive,
+                }
+            ],
             method: 'DELETE',
         });
     }
@@ -210,7 +248,7 @@ export default class API {
     }
 
     static deleteFileSystemItem(path, isFile) {
-        return isFile ? this.deleteFile(path) : this.deleteFolder(path);
+        return isFile ? this.deleteFile(path) : this.deleteFolder(path, true);
     }
 
     static getShareItems(isFile) {

@@ -25,7 +25,9 @@ namespace FileSystemWeb.Helpers
             ShareFolder folder = await dbContext.ShareFolders
                 .Include(f => f.Permission)
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
-            if (folder == null || (folder.UserId != null && folder.UserId != userId))
+            if (folder == null 
+                || (folder.UserId != null && folder.UserId != userId)
+                || (folder.ExpiresAt  != null && folder.ExpiresAt <= DateTime.UtcNow))
             {
                 throw new NotFoundException("Share folder not found.", 6002);
             }

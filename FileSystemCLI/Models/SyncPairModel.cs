@@ -23,5 +23,7 @@ public class SyncPairModel
     
     public string? StateFilePath { get; init; }
     
-    public ApiModel Api { get; init; }
+    public TimeSpan FullSyncInterval { get; init; }
+    
+    public TimeSpan ServerFetchChangesInterval { get; init; }
 }

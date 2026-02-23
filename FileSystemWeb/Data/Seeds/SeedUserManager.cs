@@ -47,7 +47,14 @@ namespace FileSystemWeb.Data.Seeds
                     Id = 13,
                     RoleId = RoleId,
                     ClaimType = CustomClaimTypes.Permission,
-                    ClaimValue = Permissions.Users.GetAllUsers,
+                    ClaimValue = Permissions.Users.GetAllOverviewUsers,
+                },
+                new IdentityRoleClaim<string>()
+                {
+                    Id = 14,
+                    RoleId = RoleId,
+                    ClaimType = CustomClaimTypes.Permission,
+                    ClaimValue = Permissions.Users.GetAllRoles,
                 }
             );
         }

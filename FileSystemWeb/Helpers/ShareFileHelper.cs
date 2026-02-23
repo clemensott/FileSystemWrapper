@@ -27,7 +27,9 @@ namespace FileSystemWeb.Helpers
                     .Include(f => f.Permission)
                     .FirstOrDefaultAsync(f => f.Uuid == uuid);
 
-                if (shareFile == null || (shareFile.UserId != null && shareFile.UserId != userId))
+                if (shareFile == null
+                    || (shareFile.UserId != null && shareFile.UserId != userId)
+                    || (shareFile.ExpiresAt  != null && shareFile.ExpiresAt <= DateTime.UtcNow))
                 {
                     throw new NotFoundException("Share file not found.", 4002);
                 }
@@ -46,7 +48,9 @@ namespace FileSystemWeb.Helpers
                 .Include(f => f.Permission)
                 .FirstOrDefaultAsync(f => f.Uuid == uuid);
 
-            if (folder == null || (folder.UserId != null && folder.UserId != userId))
+            if (folder == null 
+                || (folder.UserId != null && folder.UserId != userId)
+                || (folder.ExpiresAt  != null && folder.ExpiresAt <= DateTime.UtcNow))
             {
                 throw new NotFoundException("Share folder not found.", 4003);
             }

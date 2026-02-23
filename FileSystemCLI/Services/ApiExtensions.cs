@@ -1,9 +1,44 @@
+using FileSystemCommon.Models.FileSystem.Files.Change;
+using FileSystemCommon.Models.FileSystem.Folders.Change;
+
 namespace FileSystemCLI.Services;
 
 public static class ApiExtensions
 {
     const long BIG_FILE_SIZE = 30 * 1024 * 1024; // 30 MB
     const long BIG_FILE_CHUNCK_SIZE = 5 * 1024 * 1024; // 5 MB
+
+    private static readonly SemaphoreSlim ensureSem = new SemaphoreSlim(1,1);
+    public static async Task Ensure(this Api api)
+    {
+        try
+        {
+            await ensureSem.WaitAsync();
+            if (!await api.Ping())
+            {
+                Console.WriteLine($"Could not reach server: {api.BaseUrl}");
+                return;
+            }
+
+            if (!await api.IsAuthorized() && !await api.Login())
+            {
+                Console.WriteLine($"Could not login at server: {api.BaseUrl}");
+                return;
+            }
+
+            if (!await api.IsAuthorized())
+            {
+                Console.WriteLine($"Could authenticate at server: {api.BaseUrl}");
+                return;
+            }
+
+            if (api.Config == null) await api.LoadConfig();
+        }
+        finally
+        {
+            ensureSem.Release();
+        }
+    }
 
     public static async Task UploadFile(this Api api, string serverFilePath, string localFilePath)
     {
@@ -49,5 +84,43 @@ public static class ApiExtensions
         {
             if (uploadUuid != null) api.CancelBigFileUpload(uploadUuid);
         }
+    }
+
+    public static async Task<List<FileChangeInfo>> GetAllFileChanges(this Api api, string serverFolderPath,
+        DateTime since)
+    {
+        int page = 0;
+        int pageSize = 1000;
+        List<FileChangeInfo> changes = new List<FileChangeInfo>();
+
+        while (true)
+        {
+            FileChangeResult result = await api.GetFileChanges(serverFolderPath, since, page, pageSize);
+            changes.AddRange(result.Changes);
+
+            if (!result.HasMore) break;
+            page++;
+        }
+
+        return changes;
+    }
+
+    public static async Task<List<FolderChangeInfo>> GetAllFolderChanges(this Api api, string serverFolderPath,
+        DateTime since)
+    {
+        int page = 0;
+        int pageSize = 1000;
+        List<FolderChangeInfo> changes = new List<FolderChangeInfo>();
+
+        while (true)
+        {
+            FolderChangeResult result = await api.GetFolderChanges(serverFolderPath, since, page, pageSize);
+            changes.AddRange(result.Changes);
+
+            if (!result.HasMore) break;
+            page++;
+        }
+
+        return changes;
     }
 }

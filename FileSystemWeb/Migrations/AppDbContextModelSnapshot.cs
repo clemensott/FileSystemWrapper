@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
+#nullable disable
+
 namespace FileSystemWeb.Migrations
 {
     [DbContext(typeof(AppDbContext))]
@@ -13,8 +15,7 @@ namespace FileSystemWeb.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.17");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.22");
 
             modelBuilder.Entity("FileSystemWeb.Models.AppUser", b =>
                 {
@@ -77,7 +78,7 @@ namespace FileSystemWeb.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers");
+                    b.ToTable("AspNetUsers", (string)null);
 
                     b.HasData(
                         new
@@ -124,6 +125,31 @@ namespace FileSystemWeb.Migrations
                     b.ToTable("BigFileUploads");
                 });
 
+            modelBuilder.Entity("FileSystemWeb.Models.FileChange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChangeType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Path")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Path")
+                        .IsUnique();
+
+                    b.HasIndex("Timestamp");
+
+                    b.ToTable("FileChanges");
+                });
+
             modelBuilder.Entity("FileSystemWeb.Models.FileItemPermission", b =>
                 {
                     b.Property<int>("Id")
@@ -132,6 +158,7 @@ namespace FileSystemWeb.Migrations
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
+                        .HasMaxLength(21)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Hash")
@@ -150,7 +177,34 @@ namespace FileSystemWeb.Migrations
 
                     b.ToTable("FileItemPermissions");
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("FileItemPermission");
+                    b.HasDiscriminator().HasValue("FileItemPermission");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("FileSystemWeb.Models.FolderChange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChangeType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Path")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Path")
+                        .IsUnique();
+
+                    b.HasIndex("Timestamp");
+
+                    b.ToTable("FolderChanges");
                 });
 
             modelBuilder.Entity("FileSystemWeb.Models.ShareFile", b =>
@@ -158,6 +212,9 @@ namespace FileSystemWeb.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsListed")
                         .HasColumnType("INTEGER");
@@ -193,6 +250,9 @@ namespace FileSystemWeb.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsListed")
                         .HasColumnType("INTEGER");
@@ -246,7 +306,7 @@ namespace FileSystemWeb.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("AspNetRoles");
+                    b.ToTable("AspNetRoles", (string)null);
 
                     b.HasData(
                         new
@@ -285,7 +345,7 @@ namespace FileSystemWeb.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims");
+                    b.ToTable("AspNetRoleClaims", (string)null);
 
                     b.HasData(
                         new
@@ -376,7 +436,14 @@ namespace FileSystemWeb.Migrations
                         {
                             Id = 13,
                             ClaimType = "claims/permission",
-                            ClaimValue = "permissions.users.get_all_users",
+                            ClaimValue = "permissions.users.get_all_overview_users",
+                            RoleId = "BE51B666-B8B0-437D-B51E-27D23D5114AB"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            ClaimType = "claims/permission",
+                            ClaimValue = "permissions.users.get_all_overview_users",
                             RoleId = "BE51B666-B8B0-437D-B51E-27D23D5114AB"
                         });
                 });
@@ -401,7 +468,7 @@ namespace FileSystemWeb.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims");
+                    b.ToTable("AspNetUserClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -423,7 +490,7 @@ namespace FileSystemWeb.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins");
+                    b.ToTable("AspNetUserLogins", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -438,7 +505,7 @@ namespace FileSystemWeb.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles");
+                    b.ToTable("AspNetUserRoles", (string)null);
 
                     b.HasData(
                         new
@@ -464,7 +531,7 @@ namespace FileSystemWeb.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens");
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("FileSystemWeb.Models.FolderItemPermission", b =>

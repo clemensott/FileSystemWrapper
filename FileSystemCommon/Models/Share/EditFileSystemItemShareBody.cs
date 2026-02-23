@@ -1,4 +1,6 @@
-﻿namespace FileSystemCommon.Models.Share
+﻿using System;
+
+namespace FileSystemCommon.Models.Share
 {
     public class EditFileSystemItemShareBody
     {
@@ -7,5 +9,7 @@
         public string Name { get; set; }
 
         public bool IsListed { get; set; }
+        
+        public DateTime? ExpiresAt { get; set; }
     }
 }
