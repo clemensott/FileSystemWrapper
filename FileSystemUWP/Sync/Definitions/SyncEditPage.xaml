@@ -11,6 +11,7 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
+        <con:ValueConverter x:Key="serverPathConverter" ConvertEvent="ServerPathConverter_ConvertEvent" />
         <con:ValueConverter x:Key="linesConverter" ConvertEvent="LinesConverter_ConvertEvent"
                             ConvertBackEvent="LinesConverter_ConvertBackEvent"/>
     </Page.Resources>
@@ -38,15 +39,9 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <AutoSuggestBox x:Name="asbServerPath" TextChanged="AsbServerPath_TextChanged"
-                                    QuerySubmitted="AsbServerPath_QuerySubmitted">
-                        <AutoSuggestBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name}"/>
-                            </DataTemplate>
-                        </AutoSuggestBox.ItemTemplate>
-                    </AutoSuggestBox>
-                    <SymbolIcon Name="sinServerPathValid" Grid.Column="1" Symbol="Help" Margin="8,0"/>
+                    <TextBlock VerticalAlignment="Center" Margin="5,0,0,0"
+                               Text="{Binding ServerPath,Converter={StaticResource serverPathConverter}}"/>
+                    <ctl:IconButton Grid.Column="1" Symbol="Folder" Margin="8,0" Click="IbnSelectServerFolder_Click"/>
                 </Grid>
 
                 <TextBlock Text="Local path: *" Margin="5,10,5,5" FontWeight="Bold"/>

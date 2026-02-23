@@ -5,6 +5,7 @@ using FileSystemCommon.Models.FileSystem.Content;
 using FileSystemCommon.Models.FileSystem.Folders;
 using FileSystemCommon.Models.Sync.Definitions;
 using FileSystemCommonUWP.Sync.Definitions;
+using FileSystemUWP.Picker;
 using StdOttStandard.Linq;
 using StdOttUwp;
 using System;
@@ -28,16 +29,10 @@ namespace FileSystemUWP.Sync.Definitions
     public sealed partial class SyncEditPage : Page
     {
         private SyncPairEdit edit;
-        private readonly IDictionary<string, string> folderPaths;
 
         public SyncEditPage()
         {
             this.InitializeComponent();
-
-            folderPaths = new Dictionary<string, string>()
-            {
-                { "", "" },
-            };
 
             ecbMode.Names = new Dictionary<object, string>()
             {
@@ -67,23 +62,9 @@ namespace FileSystemUWP.Sync.Definitions
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             edit = (SyncPairEdit)e.Parameter;
-            char directorySeparatorChar = edit.Api.Config.DirectorySeparatorChar;
-
-            PathPart[] serverPath = edit.Sync.ServerPath;
-            if (serverPath != null)
-            {
-                for (int i = 0; i < serverPath.Length; i++)
-                {
-                    string path = serverPath
-                        .Take(i + 1)
-                        .GetNamePath(directorySeparatorChar);
-                    folderPaths[path] = serverPath[i].Path;
-                }
-            }
 
             tblTitlePrefix.Text = edit.IsAdd ? "Add" : "Edit";
             DataContext = edit.Sync;
-            asbServerPath.Text = edit.Sync.ServerPath.GetNamePath(directorySeparatorChar);
 
             base.OnNavigatedTo(e);
         }
@@ -93,6 +74,12 @@ namespace FileSystemUWP.Sync.Definitions
             if (e.NavigationMode == NavigationMode.Back && !edit.Task.IsCompleted) edit.SetResult(false);
 
             base.OnNavigatedFrom(e);
+        }
+
+        private object ServerPathConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
+        {
+            PathPart[] serverPath = (PathPart[])value;
+            return serverPath.GetNamePath(edit.Api.Config.DirectorySeparatorChar);
         }
 
         private object LinesConverter_ConvertEvent(object value, Type targetType, object parameter, string language)
@@ -109,66 +96,12 @@ namespace FileSystemUWP.Sync.Definitions
             return new ObservableCollection<string>(lines ?? new string[0]);
         }
 
-        private async void AsbServerPath_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        private async void IbnSelectServerFolder_Click(object sender, RoutedEventArgs e)
         {
-            Config config = edit.Api.Config;
-            sinServerPathValid.Symbol = Symbol.Help;
-
-            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput ||
-                args.Reason == AutoSuggestionBoxTextChangeReason.ProgrammaticChange)
-            {
-                string actualParentPath;
-                string folderName = string.IsNullOrWhiteSpace(sender.Text) ?
-                    string.Empty : sender.Text.Split(config.DirectorySeparatorChar, config.AltDirectorySeparatorChar).Last();
-                string searchKey = folderName.ToLower();
-                string parentPath = string.IsNullOrWhiteSpace(sender.Text) ?
-                    string.Empty : config.GetParentPath(sender.Text).TrimEnd(config.DirectorySeparatorChar, config.AltDirectorySeparatorChar);
-                FolderContent content = folderPaths.TryGetValue(parentPath, out actualParentPath) ?
-                    await edit.Api.FolderContent(actualParentPath) : null;
-
-                if (content?.Folders != null)
-                {
-                    foreach (FolderSortItem folder in content.Folders)
-                    {
-                        string path = content.Path
-                            .GetChildPathParts(folder)
-                            .GetNamePath(config.DirectorySeparatorChar)
-                            .TrimEnd(config.DirectorySeparatorChar, config.AltDirectorySeparatorChar);
-                        folderPaths[path] = folder.Path;
-                    }
-
-                    FolderSortItem currentFolder;
-                    if (folderName.Length == 0) edit.Sync.ServerPath = content.Path;
-                    else if (content.Folders.TryFirst(f => f.Name == folderName, out currentFolder) ||
-                        content.Folders.TrySingle(f => f.Name.ToLower() == searchKey, out currentFolder))
-                    {
-                        edit.Sync.ServerPath = content.Path.GetChildPathParts(currentFolder).ToArray();
-                    }
-
-                    sender.ItemsSource = string.IsNullOrWhiteSpace(searchKey) ?
-                        content.Folders : content.Folders.Where(f => f.Name.ToLower().Contains(searchKey));
-                }
-                else
-                {
-                    sender.ItemsSource = null;
-                    edit.Sync.ServerPath = content?.Path;
-                }
-            }
-
-            string actualPath;
-            string namePath = sender.Text.TrimEnd(config.DirectorySeparatorChar);
-            bool exists = folderPaths.TryGetValue(namePath, out actualPath) && await edit.Api.FolderExists(actualPath);
-            sinServerPathValid.Symbol = exists ? Symbol.Accept : Symbol.Dislike;
-        }
-
-        private void AsbServerPath_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
-        {
-            Config config = edit.Api.Config;
-            FolderSortItem suggestion = args.ChosenSuggestion is FolderSortItem ? (FolderSortItem)args.ChosenSuggestion : (FolderSortItem)sender.Items[0];
-            string parentPath = config.GetParentPath(sender.Text);
-
-            sender.Text = config.JoinPaths(parentPath, suggestion.Name) + config.DirectorySeparatorChar;
-            sender.Focus(FocusState.Keyboard);
+            FolderPicking picking = FolderPicking.Folder(edit.Api, edit.Sync.ServerPath?.LastOrDefault().Path);
+            Frame.Navigate(typeof(PickerPage), picking);
+            PathPart[] serverPath = await picking.Task;
+            if (serverPath != null) edit.Sync.ServerPath = serverPath;
         }
 
         private async void IbnSelectLocalFolder_Click(object sender, RoutedEventArgs e)

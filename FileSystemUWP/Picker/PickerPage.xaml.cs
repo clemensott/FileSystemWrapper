@@ -1,5 +1,8 @@
 ﻿using FileSystemCommon;
+using FileSystemCommon.Models.FileSystem;
 using FileSystemUWP.Models;
+using StdOttStandard.Linq;
+using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -43,8 +46,8 @@ namespace FileSystemUWP.Picker
                     break;
             }
 
-            await pcView.SetCurrentFolder(picking.SuggestedStartLocation);
             pcView.Api = picking.Api;
+            await pcView.SetCurrentFolder(picking.SuggestedStartLocation);
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -54,7 +57,7 @@ namespace FileSystemUWP.Picker
 
         private void PcView_FileSelected(object sender, FileSystemItem e)
         {
-            picking.SetResult(e.FullPath);
+            picking.SetResult(e.PathParts);
             Frame.GoBack();
         }
 
@@ -63,7 +66,7 @@ namespace FileSystemUWP.Picker
             switch (picking.Type)
             {
                 case FileSystemPickType.Folder:
-                    picking.SetResult(pcView.CurrentFolder?.FullPath);
+                    picking.SetResult(pcView.CurrentFolder?.PathParts);
                     Frame.GoBack();
                     break;
 
@@ -78,8 +81,13 @@ namespace FileSystemUWP.Picker
 
                     if (!namePicking.Task.IsCompleted) return;
 
-                    string path = picking.Api.Config.JoinPaths(pcView.CurrentFolder?.FullPath, name);
-                    picking.SetResult(path);
+                    PathPart[] filePathParts = (pcView.CurrentFolder?.PathParts).ToNotNull().ConcatParams(new PathPart()
+                    {
+                        Name = name,
+                        Path = picking.Api.Config.JoinPaths(pcView.CurrentFolder?.FullPath, name),
+                    }).ToArray();
+
+                    picking.SetResult(filePathParts);
                     Frame.GoBack();
                     break;
             }
@@ -88,6 +96,44 @@ namespace FileSystemUWP.Picker
         private void AbbCancel_Click(object sender, RoutedEventArgs e)
         {
             Frame.GoBack();
+        }
+
+        private async void AbbToParent_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                FileSystemItem? lastFolder = pcView.CurrentFolder;
+                FileSystemSortItem? lastSortFolder = null;
+                if (lastFolder.HasValue)
+                {
+                    lastSortFolder = FileSystemSortItem.FromItem(lastFolder.Value);
+                }
+
+                await pcView.SetParent();
+                if (lastSortFolder.HasValue)
+                {
+                    pcView.ScrollToFileItemName(lastSortFolder.Value);
+                }
+            }
+            catch { }
+        }
+
+        private async void AbbRefesh_Click(object sender, RoutedEventArgs e)
+        {
+            Control control = (Control)sender;
+            try
+            {
+                control.IsEnabled = false;
+
+                await pcView.UpdateCurrentFolderItems();
+            }
+            finally
+            {
+                // Enabling button again does scroll for some misterious reason
+                double offset = pcView.GetVerticalScrollOffset();
+                control.IsEnabled = true;
+                pcView.SetVerticalScrollOffset(offset);
+            }
         }
     }
 }

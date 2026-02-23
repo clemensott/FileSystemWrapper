@@ -5,8 +5,13 @@
     xmlns:local="using:FileSystemUWP.Picker"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:con="using:StdOttUwp.Converters"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <con:FalsyConverter x:Key="invertCon"/>
+    </Page.Resources>
 
     <Grid>
         <local:PickerControl x:Name="pcView" FileSelected="PcView_FileSelected"/>
@@ -19,6 +24,9 @@
                 <AppBarButton Name="abbSelect" Icon="Accept" Label="Select"
                               Visibility="Collapsed" Click="AbbSelect_Click"/>
                 <AppBarButton Icon="Cancel" Label="Cancel" Click="AbbCancel_Click"/>
+                <AppBarButton Icon="Up" Label="To Parent" Click="AbbToParent_Click"/>
+                <AppBarButton Icon="Refresh" Label="Refresh" Click="AbbRefesh_Click"
+                              IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
             </CommandBar.PrimaryCommands>
         </CommandBar>
     </Page.BottomAppBar>

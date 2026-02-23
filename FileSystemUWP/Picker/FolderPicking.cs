@@ -1,9 +1,10 @@
-﻿using FileSystemCommonUWP.API;
+﻿using FileSystemCommon.Models.FileSystem;
+using FileSystemCommonUWP.API;
 using System.Threading.Tasks;
 
 namespace FileSystemUWP.Picker
 {
-    class FolderPicking : TaskCompletionSource<string>
+    class FolderPicking : TaskCompletionSource<PathPart[]>
     {
         public Api Api { get; }
 
