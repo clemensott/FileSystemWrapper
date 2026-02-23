@@ -11,6 +11,7 @@ using FileSystemUWP.Util;
 using StdOttStandard.Linq;
 using StdOttUwp;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -365,12 +366,19 @@ namespace FileSystemUWP
 
             picker.FileTypeFilter.Add("*");
 
-            StorageFile srcFile = await picker.PickSingleFileAsync();
-            string path = viewModel.Api.Config.JoinPaths(pcView.CurrentFolder.Value.FullPath, srcFile.Name);
+            IReadOnlyList<StorageFile> srcFiles = await picker.PickMultipleFilesAsync();
+            if (srcFiles.Count == 0) return;
+            foreach (( int index, StorageFile srcFile) in srcFiles.WithIndex())
+            {
+                if (srcFile == null) return;
 
-            await UiUtils.TryAgain("Try again?", "Uplaod file error",
-                () => viewModel.Api.UploadFile(path, srcFile),
-                viewModel.BackgroundOperations, "Uploading file...");
+                string path = viewModel.Api.Config.JoinPaths(pcView.CurrentFolder.Value.FullPath, srcFile.Name);
+
+                await UiUtils.TryAgain("Try again?", "Uplaod file error",
+                    () => viewModel.Api.UploadFile(path, srcFile),
+                    viewModel.BackgroundOperations, $"Uploading file ({index} / {srcFiles.Count})");
+            }
+
             await pcView.UpdateCurrentFolderItems();
         }
 

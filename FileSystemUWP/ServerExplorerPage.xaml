@@ -83,7 +83,7 @@
                               IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
                 <AppBarButton Icon="NewFolder" Label="New folder" Click="AbbNewFolder_Click"
                               IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
-                <AppBarButton Icon="Upload" Label="Upload file" Click="AbbUploadFile_Click"
+                <AppBarButton Icon="Upload" Label="Upload file(s)" Click="AbbUploadFile_Click"
                               IsEnabled="{Binding ElementName=pcView,Path=IsUpdating,Converter={StaticResource invertCon}}"/>
                 <AppBarSeparator />
                 <AppBarButton Icon="Sync" Label="Open syncs" Click="AbbOpenSyncs_Click"/>
