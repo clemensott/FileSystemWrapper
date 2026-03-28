@@ -72,7 +72,7 @@ export default function () {
                     />
                 </FormGroup>
                 <FormGroup>
-                    <Label>Username</Label>
+                    <Label>Password</Label>
                     <Input
                         type="password"
                         invalid={isPasswordInvalid}
